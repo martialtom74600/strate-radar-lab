@@ -47,6 +47,8 @@ jobs:
           # Vitrine Strate Studio — POST https://www.strate-studio.fr/api/audits/ingest (même secret que la route Next)
           RADAR_INGEST_SECRET: ${{ secrets.RADAR_INGEST_SECRET }}
           RADAR_STUDIO_ORIGIN: ${{ vars.RADAR_STUDIO_ORIGIN || 'https://www.strate-studio.fr' }}
+          # true ponctuellement : log du corps de réponse en cas d'échec ingest (diagnostic 500)
+          RADAR_INGEST_DEBUG: ${{ vars.RADAR_INGEST_DEBUG || 'false' }}
         run: npm run dev
 
       - name: Pousser rapport, export, shadow pages et SQLite

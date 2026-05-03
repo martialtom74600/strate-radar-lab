@@ -96,6 +96,11 @@ const baseEnvSchema = z.object({
   RADAR_AUDIT_EXPIRES_AT: z.preprocess(optionalTrimmedNonEmpty, z.string().optional()),
   /** Version du schéma payload envoyé (max 64 caractères). */
   RADAR_AUDIT_PAYLOAD_VERSION: z.preprocess(optionalTrimmedNonEmpty, z.string().max(64).optional()),
+  /**
+   * Si true : en échec ingest, loggue le corps HTTP brut (tronqué) dans la console — utile quand l’API ne renvoie pas `detail`.
+   * À activer ponctuellement (ex. variable dépôt GitHub), ne pas laisser en prod SI le corps pourrait contenir des données sensibles.
+   */
+  RADAR_INGEST_DEBUG: z.preprocess(boolFromEnv, z.boolean()).default(false),
 });
 
 export type RawEnv = z.infer<typeof baseEnvSchema>;

@@ -242,6 +242,8 @@ export async function postAuditIngest(args: {
   readonly ingestUrl: string;
   readonly secret: string;
   readonly body: AuditIngestPayload;
+  /** Log le corps de réponse brut sur erreur (ex. `RADAR_INGEST_DEBUG`). */
+  readonly logRawResponseOnError?: boolean;
 }): Promise<{ ok: true; id: string; slug: string } | { ok: false; status: number; message: string }> {
   const res = await fetch(args.ingestUrl, {
     method: 'POST',
@@ -310,6 +312,11 @@ export async function postAuditIngest(args: {
       .join(' ')
       .trim();
 
+  if (args.logRawResponseOnError === true && text.length > 0) {
+    const trunc = text.length > 4000 ? `${text.slice(0, 4000)}…` : text;
+    console.error(`[Strate Studio] Réponse HTTP ${res.status} (corps brut, debug) :\n${trunc}`);
+  }
+
   return { ok: false, status: res.status, message: message || errMsg };
 }
 
@@ -371,7 +378,12 @@ export async function publishStudioAuditsIfConfigured(
         accessToken,
       });
 
-      const out = await postAuditIngest({ ingestUrl, secret, body });
+      const out = await postAuditIngest({
+        ingestUrl,
+        secret,
+        body,
+        logRawResponseOnError: config.RADAR_INGEST_DEBUG,
+      });
 
       if (out.ok) {
         const publicUrl = publicAuditUrl(origin, out.slug || slug, accessToken);
