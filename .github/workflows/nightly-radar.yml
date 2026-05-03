@@ -77,7 +77,16 @@ jobs:
           REPORT_URL="https://github.com/${REPO}/blob/${BRANCH}/rapport_matinal.md"
           COUNT=$(node -p "try { require('./data/shadow-sites-export.json').diamonds.length } catch (e) { 0 }" 2>/dev/null || echo 0)
           CITY=$(node -p "try { require('./data/shadow-sites-export.json').cityLabel || '—' } catch (e) { '—' }" 2>/dev/null || echo '—')
-          MSG="$(printf '%s\n' "✅ Strate Radar — run OK" "Zone : ${CITY}" "Pépites (export) : ${COUNT}" "Rapport : ${REPORT_URL}")"
+          MSG=$'✅ Strate Radar — run OK\nZone : '"${CITY}"
+          if [ -f data/heartbeat.json ]; then
+            CAMP_LINE=$(node -p "try { const h=require('./data/heartbeat.json'); (h.campaign && h.campaign.city && h.campaign.category) ? ('Campagne : '+h.campaign.city+' × '+h.campaign.category) : '' } catch (e) { '' }" 2>/dev/null || echo "")
+            RUN_DIA=$(node -p "try { const h=require('./data/heartbeat.json'); (typeof h.diamondsFound==='number') ? ('Diamants (run) : '+h.diamondsFound) : '' } catch (e) { '' }" 2>/dev/null || echo "")
+            HB_AT=$(node -p "try { const h=require('./data/heartbeat.json'); h.lastRunIso ? ('Run (UTC) : '+h.lastRunIso) : '' } catch (e) { '' }" 2>/dev/null || echo "")
+            [ -n "${CAMP_LINE}" ] && MSG="${MSG}"$'\n'"${CAMP_LINE}"
+            [ -n "${RUN_DIA}" ] && MSG="${MSG}"$'\n'"${RUN_DIA}"
+            [ -n "${HB_AT}" ] && MSG="${MSG}"$'\n'"${HB_AT}"
+          fi
+          MSG="${MSG}"$'\n'"Pépites (export) : ${COUNT}"$'\n'"Rapport : ${REPORT_URL}"
           curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
             --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
             --data-urlencode "text=${MSG}" \
