@@ -34,11 +34,10 @@ jobs:
           GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
           GOOGLE_PAGESPEED_API_KEY: ${{ secrets.GOOGLE_PAGESPEED_API_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-          GROQ_MODEL: ${{ vars.GROQ_MODEL }}
+          # Var vide / absente → défaut (évite `""` qui cassait Zod sur le runner)
+          GROQ_MODEL: ${{ vars.GROQ_MODEL || 'llama-3.3-70b-versatile' }}
           # Secret ou variable dépôt (beaucoup stockent la ville en secret — les deux passent).
           RADAR_SEARCH_LOCATION: ${{ secrets.RADAR_SEARCH_LOCATION || vars.RADAR_SEARCH_LOCATION }}
-          RADAR_DIAMOND_LOCATION_HINTS: ${{ vars.RADAR_DIAMOND_LOCATION_HINTS }}
-          SERPAPI_GOOGLE_DOMAIN: ${{ vars.SERPAPI_GOOGLE_DOMAIN }}
           RADAR_VERBOSE: 'false'
         run: npm run dev
 

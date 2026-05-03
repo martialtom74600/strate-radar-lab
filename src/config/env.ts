@@ -7,10 +7,24 @@ function boolFromEnv(value: unknown): boolean {
   return s === 'true' || s === '1' || s === 'yes';
 }
 
-/** GitHub Actions laisse souvent des `""` quand `vars.*` est absent — traiter comme non défini pour Zod (.default / .optional). */
-function emptyStringToUndefined(value: unknown): unknown {
-  if (value === '') return undefined;
-  return value;
+/** Chaîne d’env vide / blanche (souvent `vars.*` absent sur GitHub) → undefined. */
+function optionalTrimmedNonEmpty(value: unknown): unknown {
+  if (value === undefined || value === null) return undefined;
+  const s = String(value).trim();
+  return s === '' ? undefined : s;
+}
+
+const DEFAULT_GROQ_MODEL = 'llama-3.3-70b-versatile';
+const DEFAULT_RADAR_SEARCH_LOCATION = 'Annecy, France';
+
+function groqModelFromEnv(value: unknown): string {
+  const t = optionalTrimmedNonEmpty(value);
+  return typeof t === 'string' && t.length > 0 ? t : DEFAULT_GROQ_MODEL;
+}
+
+function radarSearchLocationFromEnv(value: unknown): string {
+  const t = optionalTrimmedNonEmpty(value);
+  return typeof t === 'string' && t.length > 0 ? t : DEFAULT_RADAR_SEARCH_LOCATION;
 }
 
 const baseEnvSchema = z.object({
@@ -22,15 +36,12 @@ const baseEnvSchema = z.object({
   SERPAPI_API_KEY: z.string().optional(),
   GOOGLE_PAGESPEED_API_KEY: z.string().optional(),
   GROQ_API_KEY: z.string().optional(),
-  GROQ_MODEL: z.preprocess(
-    emptyStringToUndefined,
-    z.string().min(1).default('llama-3.3-70b-versatile'),
-  ),
+  GROQ_MODEL: z.preprocess(groqModelFromEnv, z.string().min(1)),
   SERPAPI_CONCURRENCY: z.coerce.number().int().positive().max(50).default(3),
   PAGESPEED_CONCURRENCY: z.coerce.number().int().positive().max(50).default(2),
   STRATE_RADAR_DB_PATH: z.string().min(1).default('data/strate-radar.sqlite'),
   RADAR_SEARCH_Q: z.string().min(1).default('boulangerie artisanale'),
-  RADAR_SEARCH_LOCATION: z.string().min(1).default('Annecy, France'),
+  RADAR_SEARCH_LOCATION: z.preprocess(radarSearchLocationFromEnv, z.string().min(1)),
   RADAR_REPORT_PATH: z.string().min(1).default('rapport_matinal.md'),
   /** Export JSON pour génération « shadow site » (pépites du jour). */
   RADAR_SHADOW_EXPORT_PATH: z.string().min(1).default('data/shadow-sites-export.json'),
@@ -40,7 +51,7 @@ const baseEnvSchema = z.object({
   RADAR_AUTO_GENERATE_SHADOW_PAGES: z.preprocess(boolFromEnv, z.boolean()).default(true),
   /** Domaine Google (mocks / ancien flux SerpApi — optionnel). */
   SERPAPI_GOOGLE_DOMAIN: z.preprocess(
-    emptyStringToUndefined,
+    optionalTrimmedNonEmpty,
     z.string().min(1).optional(),
   ),
   /** Objectif de profils « Diamant » par run (pagination Places jusqu’à concurrence). */
@@ -48,7 +59,10 @@ const baseEnvSchema = z.object({
   /** Pages Text Search max par intention (≈ 20 résultats/page — garde-fou coûts). */
   RADAR_SERP_MAX_PAGES: z.coerce.number().int().min(1).max(10).default(3),
   /** Sous-chaînes pour valider la zone (adresse / titre Maps), séparées par des virgules. */
-  RADAR_DIAMOND_LOCATION_HINTS: z.string().optional(),
+  RADAR_DIAMOND_LOCATION_HINTS: z.preprocess(
+    optionalTrimmedNonEmpty,
+    z.string().optional(),
+  ),
   /** Enchaîne les catégories `DIAMOND_SEED_CATEGORIES` + ville (si trend-driven désactivé). */
   RADAR_USE_SEED_LIST: z.preprocess(boolFromEnv, z.boolean()).default(true),
   /** Prospection pilotée par Google Suggest (intentions locales du moment) — remplace le grainage statique quand actif. */
