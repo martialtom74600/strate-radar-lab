@@ -7,6 +7,12 @@ function boolFromEnv(value: unknown): boolean {
   return s === 'true' || s === '1' || s === 'yes';
 }
 
+/** GitHub Actions laisse souvent des `""` quand `vars.*` est absent — traiter comme non défini pour Zod (.default / .optional). */
+function emptyStringToUndefined(value: unknown): unknown {
+  if (value === '') return undefined;
+  return value;
+}
+
 const baseEnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   STRATE_RADAR_SIMULATION: z.preprocess(boolFromEnv, z.boolean()).default(false),
@@ -16,7 +22,10 @@ const baseEnvSchema = z.object({
   SERPAPI_API_KEY: z.string().optional(),
   GOOGLE_PAGESPEED_API_KEY: z.string().optional(),
   GROQ_API_KEY: z.string().optional(),
-  GROQ_MODEL: z.string().min(1).default('llama-3.3-70b-versatile'),
+  GROQ_MODEL: z.preprocess(
+    emptyStringToUndefined,
+    z.string().min(1).default('llama-3.3-70b-versatile'),
+  ),
   SERPAPI_CONCURRENCY: z.coerce.number().int().positive().max(50).default(3),
   PAGESPEED_CONCURRENCY: z.coerce.number().int().positive().max(50).default(2),
   STRATE_RADAR_DB_PATH: z.string().min(1).default('data/strate-radar.sqlite'),
@@ -30,7 +39,10 @@ const baseEnvSchema = z.object({
   /** Après export JSON, générer automatiquement les HTML Shadow Pages. */
   RADAR_AUTO_GENERATE_SHADOW_PAGES: z.preprocess(boolFromEnv, z.boolean()).default(true),
   /** Domaine Google (mocks / ancien flux SerpApi — optionnel). */
-  SERPAPI_GOOGLE_DOMAIN: z.string().min(1).optional(),
+  SERPAPI_GOOGLE_DOMAIN: z.preprocess(
+    emptyStringToUndefined,
+    z.string().min(1).optional(),
+  ),
   /** Objectif de profils « Diamant » par run (pagination Places jusqu’à concurrence). */
   RADAR_TARGET_DIAMOND_COUNT: z.coerce.number().int().min(1).max(20).default(5),
   /** Pages Text Search max par intention (≈ 20 résultats/page — garde-fou coûts). */
