@@ -75,6 +75,16 @@ const baseEnvSchema = z.object({
   RADAR_VERBOSE: z.preprocess(boolFromEnv, z.boolean()).default(true),
   /** Timeout fetch HTML pour la matrice Strate (ms). */
   RADAR_FETCH_TIMEOUT_MS: z.coerce.number().int().min(3000).max(120_000).default(15_000),
+  /**
+   * Pilotage autonome matrice Ville × métier (Groq + SQLite) — désactive Trend Catcher et enchaîne une seule paire par run.
+   */
+  RADAR_CAMPAIGN_MODE: z.preprocess(boolFromEnv, z.boolean()).default(false),
+  /**
+   * Villes cibles, séparées par | (ex. `Annecy, France|Lyon, France`). Jamais figé dans le code : uniquement ici ou villes suggérées persistées en base.
+   */
+  TARGET_CITIES: z.preprocess(optionalTrimmedNonEmpty, z.string().optional()),
+  /** Durée de validité du cache Groq des ~50 métiers (jours). */
+  RADAR_CAMPAIGN_CATEGORY_CACHE_TTL_DAYS: z.coerce.number().int().min(1).max(90).default(7),
 });
 
 export type RawEnv = z.infer<typeof baseEnvSchema>;

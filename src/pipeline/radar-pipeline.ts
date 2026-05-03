@@ -49,7 +49,13 @@ import {
 } from '../services/serp/index.js';
 import type { SerpLocalResult } from '../services/serp/schemas.js';
 import {
+  applyCampaignSaturationIfNeeded,
+  resolveNextCampaignPair,
+} from '../lib/campaign-manager.js';
+import {
+  CampaignRepository,
   closeDatabase,
+  migrateCampaignTables,
   migrateDiamondRescanGuard,
   migrateProspectsTable,
   migrateRadarPlaceLastOutcome,
@@ -132,6 +138,8 @@ export type RadarPipelineResult = {
   readonly serpApiStopMessage?: string;
   /** Fiches écartées par le Gatekeeper IA (non-commercial / institutionnel). */
   readonly gatekeeperExclusions: readonly GatekeeperExclusion[];
+  /** Run en mode campagne autonome (matrice ville × métier). */
+  readonly campaign?: { readonly city: string; readonly category: string };
 };
 
 export type RunRadarPipelineOptions = {
@@ -437,13 +445,17 @@ export async function runRadarPipeline(
   const recentDays = config.RADAR_SQLITE_RECENT_DAYS;
   const locationHints = parseDiamondLocationHints(config.RADAR_DIAMOND_LOCATION_HINTS);
 
-  const cityLocation = options.search.location ?? config.RADAR_SEARCH_LOCATION;
-  const demandDrivenMode = config.RADAR_TREND_DRIVEN;
+  let cityLocation = options.search.location ?? config.RADAR_SEARCH_LOCATION;
+  let demandDrivenMode = config.RADAR_TREND_DRIVEN;
+  let seeds: string[] = [];
+  let multiCategoryMode = false;
+  let campaignPair: { city: string; category: string } | undefined;
+  let campaignRepo: CampaignRepository | undefined;
 
-  let seeds: string[];
-  let multiCategoryMode: boolean;
-
-  if (demandDrivenMode) {
+  if (config.RADAR_CAMPAIGN_MODE) {
+    demandDrivenMode = false;
+    multiCategoryMode = true;
+  } else if (demandDrivenMode) {
     radarVerbose(
       config,
       '\n📈 Trend Catcher · intentions locales (Google Suggest, gratuit)…',
@@ -469,14 +481,31 @@ export async function runRadarPipeline(
     multiCategoryMode = false;
   }
 
-  const seedCategoriesResolved = seeds;
-  const trendQueriesResolved = seeds;
-
   const db = await openDatabase(config.STRATE_RADAR_DB_PATH);
   await migrateProspectsTable(db);
   await migrateDiamondRescanGuard(db);
   await migrateRadarPlaceLastOutcome(db);
   await migrateRadarWeekPlaceOutcome(db);
+
+  if (config.RADAR_CAMPAIGN_MODE) {
+    await migrateCampaignTables(db);
+    campaignRepo = new CampaignRepository(db);
+    const groqCampaign = createGroqClient(config);
+    const pair = await resolveNextCampaignPair(config, campaignRepo, groqCampaign, {
+      bootstrapAnchorCity: options.search.location ?? config.RADAR_SEARCH_LOCATION,
+    });
+    campaignPair = pair;
+    cityLocation = pair.city;
+    seeds = [pair.category];
+    radarVerbose(
+      config,
+      `\n🎯 Campagne autonome · couple : « ${pair.city} » × « ${pair.category} »`,
+    );
+  }
+
+  const seedCategoriesResolved = seeds;
+  const trendQueriesResolved = seeds;
+
   const repo = new ProspectRepository(db);
 
   const serpBudget = { used: 0, max: serpApiCallsMax };
@@ -630,14 +659,27 @@ export async function runRadarPipeline(
     }${serpApiStoppedEarly ? ' (arrêt HTTP 429)' : ''} ——\n`,
   );
 
+  if (campaignPair !== undefined && campaignRepo !== undefined) {
+    await campaignRepo.recordRun(
+      campaignPair.city,
+      campaignPair.category,
+      diamondsFound,
+      generatedAtIso,
+    );
+    await applyCampaignSaturationIfNeeded(campaignRepo, campaignPair.city);
+  }
+
   await closeDatabase(db);
 
   const searchSummary: RadarSearchParams = {
-    q: demandDrivenMode
-      ? `Demand-driven · ${seeds.length} intention(s) Suggest`
-      : multiCategoryMode
-        ? `Grainage multi-métiers (${seeds.length} familles)`
-        : options.search.q,
+    q:
+      campaignPair !== undefined
+        ? `Campagne · ${campaignPair.category}`
+        : demandDrivenMode
+          ? `Demand-driven · ${seeds.length} intention(s) Suggest`
+          : multiCategoryMode
+            ? `Grainage multi-métiers (${seeds.length} familles)`
+            : options.search.q,
     location: options.search.location ?? cityLocation,
     ...(options.search.hl !== undefined ? { hl: options.search.hl } : {}),
     ...(options.search.gl !== undefined ? { gl: options.search.gl } : {}),
@@ -661,5 +703,6 @@ export async function runRadarPipeline(
     serpApiStoppedEarly,
     ...(serpApiStopMessage !== undefined ? { serpApiStopMessage } : {}),
     gatekeeperExclusions,
+    ...(campaignPair !== undefined ? { campaign: campaignPair } : {}),
   };
 }

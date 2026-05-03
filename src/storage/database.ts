@@ -244,6 +244,219 @@ export async function migrateRadarWeekPlaceOutcome(db: sqlite3.Database): Promis
   );
 }
 
+export async function migrateCampaignTables(db: sqlite3.Database): Promise<void> {
+  await run(
+    db,
+    `
+    CREATE TABLE IF NOT EXISTS campaign_run (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      city TEXT NOT NULL,
+      category TEXT NOT NULL,
+      run_at TEXT NOT NULL,
+      diamonds_found INTEGER NOT NULL
+    )
+    `,
+    [],
+  );
+  await run(
+    db,
+    `CREATE INDEX IF NOT EXISTS idx_campaign_run_city_id ON campaign_run (city, id DESC)`,
+    [],
+  );
+
+  await run(
+    db,
+    `
+    CREATE TABLE IF NOT EXISTS campaign_category_cache (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      categories_json TEXT NOT NULL,
+      generated_at TEXT NOT NULL
+    )
+    `,
+    [],
+  );
+
+  await run(
+    db,
+    `
+    CREATE TABLE IF NOT EXISTS campaign_city_state (
+      city TEXT PRIMARY KEY,
+      priority INTEGER NOT NULL DEFAULT 100,
+      source TEXT NOT NULL DEFAULT 'env',
+      updated_at TEXT NOT NULL
+    )
+    `,
+    [],
+  );
+}
+
+function allRows<T extends Record<string, unknown>>(
+  db: sqlite3.Database,
+  sql: string,
+  params: ReadonlyArray<string | number | null>,
+): Promise<T[]> {
+  return new Promise((resolve, reject) => {
+    db.all(sql, params as unknown[], (err: Error | null, rows: unknown) => {
+      if (err) reject(err);
+      else resolve(rows as T[]);
+    });
+  });
+}
+
+export type CampaignRunRow = {
+  id: number;
+  city: string;
+  category: string;
+  run_at: string;
+  diamonds_found: number;
+};
+
+/** Persistance matrice campagne (villes × métiers) et cache Groq. */
+export class CampaignRepository {
+  constructor(private readonly db: sqlite3.Database) {}
+
+  async syncEnvCities(cities: readonly string[]): Promise<void> {
+    const now = new Date().toISOString();
+    for (const city of cities) {
+      const c = city.trim();
+      if (!c) continue;
+      await run(
+        this.db,
+        `INSERT OR IGNORE INTO campaign_city_state (city, priority, source, updated_at)
+         VALUES (?, 100, 'env', ?)`,
+        [c, now],
+      );
+    }
+  }
+
+  async upsertGroqCities(cities: readonly string[]): Promise<void> {
+    const now = new Date().toISOString();
+    for (const city of cities) {
+      const c = city.trim();
+      if (!c) continue;
+      await run(
+        this.db,
+        `INSERT INTO campaign_city_state (city, priority, source, updated_at)
+         VALUES (?, 100, 'groq', ?)
+         ON CONFLICT(city) DO UPDATE SET
+           priority = CASE WHEN priority <= 0 THEN 100 ELSE priority END,
+           source = 'groq',
+           updated_at = excluded.updated_at`,
+        [c, now],
+      );
+    }
+  }
+
+  async getActiveCities(): Promise<string[]> {
+    const rows = await allRows<{ city: string }>(
+      this.db,
+      `SELECT city FROM campaign_city_state WHERE priority > 0 ORDER BY priority DESC, city ASC`,
+      [],
+    );
+    return rows.map((r) => r.city);
+  }
+
+  async deprioritizeCity(city: string): Promise<void> {
+    await run(
+      this.db,
+      `UPDATE campaign_city_state SET priority = 0, updated_at = ? WHERE city = ?`,
+      [new Date().toISOString(), city],
+    );
+  }
+
+  async recordRun(
+    city: string,
+    category: string,
+    diamondsFound: number,
+    runAtIso: string,
+  ): Promise<void> {
+    await run(
+      this.db,
+      `INSERT INTO campaign_run (city, category, run_at, diamonds_found) VALUES (?, ?, ?, ?)`,
+      [city, category, runAtIso, diamondsFound],
+    );
+  }
+
+  async getLastRunAt(city: string, category: string): Promise<string | null> {
+    const row = await getRow(
+      this.db,
+      `SELECT run_at AS run_at FROM campaign_run WHERE city = ? AND category = ? ORDER BY id DESC LIMIT 1`,
+      [city, category],
+    );
+    if (!row || !('run_at' in row) || typeof (row as { run_at: unknown }).run_at !== 'string') {
+      return null;
+    }
+    return (row as { run_at: string }).run_at;
+  }
+
+  async getRunsForCityNewestFirst(city: string): Promise<
+    Pick<CampaignRunRow, 'category' | 'diamonds_found'>[]
+  > {
+    return allRows<{ category: string; diamonds_found: number }>(
+      this.db,
+      `SELECT category, diamonds_found FROM campaign_run WHERE city = ? ORDER BY id DESC`,
+      [city],
+    );
+  }
+
+  async getLastRunCity(): Promise<string | null> {
+    const row = await getRow(
+      this.db,
+      `SELECT city AS city FROM campaign_run ORDER BY id DESC LIMIT 1`,
+      [],
+    );
+    if (!row || !('city' in row) || typeof (row as { city: unknown }).city !== 'string') return null;
+    return (row as { city: string }).city;
+  }
+
+  async getCachedCategoryPayload(): Promise<{ categories: string[]; generatedAt: string } | null> {
+    const row = await getRow(
+      this.db,
+      `SELECT categories_json AS categories_json, generated_at AS generated_at FROM campaign_category_cache WHERE id = 1`,
+      [],
+    );
+    if (
+      !row ||
+      !('categories_json' in row) ||
+      typeof (row as { categories_json: unknown }).categories_json !== 'string' ||
+      !('generated_at' in row) ||
+      typeof (row as { generated_at: unknown }).generated_at !== 'string'
+    ) {
+      return null;
+    }
+    try {
+      const parsed = JSON.parse((row as { categories_json: string }).categories_json) as unknown;
+      if (!Array.isArray(parsed)) return null;
+      const categories = parsed.filter((x): x is string => typeof x === 'string' && x.trim().length > 0);
+      return {
+        categories,
+        generatedAt: (row as { generated_at: string }).generated_at,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  async setCachedCategories(categories: readonly string[], generatedAtIso: string): Promise<void> {
+    await run(
+      this.db,
+      `INSERT INTO campaign_category_cache (id, categories_json, generated_at)
+       VALUES (1, ?, ?)
+       ON CONFLICT(id) DO UPDATE SET categories_json = excluded.categories_json, generated_at = excluded.generated_at`,
+      [JSON.stringify([...categories]), generatedAtIso],
+    );
+  }
+
+  async isCategoryCacheFresh(maxAgeDays: number): Promise<boolean> {
+    const payload = await this.getCachedCategoryPayload();
+    if (!payload) return false;
+    const t = Date.parse(payload.generatedAt);
+    if (Number.isNaN(t)) return false;
+    const maxMs = Math.max(1, Math.min(90, maxAgeDays)) * 86_400_000;
+    return Date.now() - t < maxMs;
+  }
+}
+
 export async function closeDatabase(db: sqlite3.Database): Promise<void> {
   return new Promise((resolve, reject) => {
     db.close((err) => (err ? reject(err) : resolve()));

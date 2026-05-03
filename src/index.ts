@@ -1,4 +1,5 @@
 import { loadConfig } from './config/index.js';
+import { writeHeartbeatFile } from './lib/heartbeat.js';
 import {
   buildShadowSitesPayload,
   writeShadowSitesExportFile,
@@ -28,6 +29,16 @@ async function main(): Promise<void> {
 
   const outPath = await writeRapportMatinalFile(config.RADAR_REPORT_PATH, result);
   console.log(`Rapport écrit : ${outPath}`);
+
+  const hbPath = await writeHeartbeatFile('data/heartbeat.json', {
+    lastRunIso: result.generatedAtIso,
+    workflow: process.env.GITHUB_ACTIONS === 'true' ? 'nightly-radar' : 'local',
+    campaign: result.campaign ?? null,
+    diamondsFound: result.diamondsFound,
+  });
+  if (config.RADAR_VERBOSE) {
+    console.log(`Heartbeat : ${hbPath}`);
+  }
 
   if (result.serpApiStoppedEarly) {
     console.warn(

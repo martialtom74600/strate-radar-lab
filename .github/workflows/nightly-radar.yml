@@ -40,6 +40,9 @@ jobs:
           GROQ_MODEL: ${{ vars.GROQ_MODEL || 'llama-3.3-70b-versatile' }}
           # Secret ou variable dépôt (beaucoup stockent la ville en secret — les deux passent).
           RADAR_SEARCH_LOCATION: ${{ secrets.RADAR_SEARCH_LOCATION || vars.RADAR_SEARCH_LOCATION }}
+          # Campagne autonome (matrice villes | métiers Groq) — variables dépôt optionnelles
+          RADAR_CAMPAIGN_MODE: ${{ vars.RADAR_CAMPAIGN_MODE || 'false' }}
+          TARGET_CITIES: ${{ vars.TARGET_CITIES }}
           RADAR_VERBOSE: 'false'
         run: npm run dev
 
@@ -48,12 +51,12 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # Même chemin que STRATE_RADAR_DB_PATH par défaut (mémoire lieux / diamants entre les runs CI)
-          git add rapport_matinal.md data/shadow-sites-export.json data/shadow-pages/
+          git add rapport_matinal.md data/shadow-sites-export.json data/shadow-pages/ data/heartbeat.json
           if [ -f data/strate-radar.sqlite ]; then git add data/strate-radar.sqlite; fi
           if git diff --staged --quiet; then
             echo "Aucun changement à committer."
           else
-            git commit -m "chore(radar): nightly rapport, export, shadow pages et SQLite"
+            git commit -m "chore(radar): nightly rapport, export, shadow pages, heartbeat et SQLite"
             # Remote peut avoir avancé (push local / autre job) pendant le run ~6 min
             git pull --rebase origin "${{ github.ref_name }}"
             git push
