@@ -1,37 +1,18 @@
 {
-  "generatedAtIso": "2026-05-03T21:22:23.220Z",
+  "generatedAtIso": "2026-05-03T21:25:43.038Z",
   "cityLabel": "ANNECY",
-  "diamonds": [
-    {
-      "name": "Mobile Access",
-      "metier": null,
-      "address": "25 Rue Sommeiller, 74000 Annecy",
-      "rating": 4.9,
-      "reviews": 160,
-      "lost_revenue_pitch": "Avec un volume d’avis qui prouve le flux, l’absence totale de site vous fait perdre une part importante des contacts qui veulent passer à l’action après Maps — au profit des concurrents déjà cliquables en un tap.",
-      "maps_cover_image_url": null,
-      "diamond_pain": "diamant_brut",
-      "seed_category": "urgence telephone",
-      "place_id": "ChIJlZnqUfePi0cRqsyJQIgatzE",
-      "trending_query": "urgence telephone",
-      "strate_score_total": 100,
-      "strate_is_diamant_brut": true,
-      "strate_failures_vulgarized": [
-        "Pas de site web : le trafic Maps ne trouve aucune passerelle de conversion en ligne."
-      ]
-    }
-  ],
+  "diamonds": [],
   "demand_driven_mode": true,
   "trending_queries_used": [
     "service",
     "service parking",
     "depannage",
+    "depannage 74",
     "construction",
     "reservation festival",
     "urgence hopital",
     "restauration",
     "renovation le beret",
-    "urgence telephone",
-    "construction le vieux"
+    "urgence telephone"
   ]
 }
