@@ -52,3 +52,38 @@ jobs:
             git commit -m "chore(radar): nightly rapport, export et shadow pages"
             git push
           fi
+
+      - name: Notifier Telegram (succès)
+        if: success()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -z "${TELEGRAM_BOT_TOKEN}" ] || [ -z "${TELEGRAM_CHAT_ID}" ]; then
+            echo "Telegram ignoré : définir les secrets TELEGRAM_BOT_TOKEN et TELEGRAM_CHAT_ID."
+            exit 0
+          fi
+          REPO="${{ github.repository }}"
+          BRANCH="${{ github.ref_name }}"
+          REPORT_URL="https://github.com/${REPO}/blob/${BRANCH}/rapport_matinal.md"
+          COUNT=$(node -p "try { require('./data/shadow-sites-export.json').diamonds.length } catch (e) { 0 }" 2>/dev/null || echo 0)
+          CITY=$(node -p "try { require('./data/shadow-sites-export.json').cityLabel || '—' } catch (e) { '—' }" 2>/dev/null || echo '—')
+          MSG="$(printf '%s\n' "✅ Strate Radar — run OK" "Zone : ${CITY}" "Pépites (export) : ${COUNT}" "Rapport : ${REPORT_URL}")"
+          curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=${MSG}" \
+            | grep -q '"ok":true' || echo "Avertissement : envoi Telegram échoué (le run radar est OK)."
+
+      - name: Notifier Telegram (échec)
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -z "${TELEGRAM_BOT_TOKEN}" ] || [ -z "${TELEGRAM_CHAT_ID}" ]; then exit 0; fi
+          RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          MSG="❌ Strate Radar — échec du workflow. Logs : ${RUN_URL}"
+          curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=${MSG}" \
+            || true

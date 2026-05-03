@@ -9,8 +9,21 @@ Le workflow `.github/workflows/nightly-radar.yml` exécute la pipeline **toutes 
 | `GOOGLE_PLACES_API_KEY` | Oui (mode live) | Clé [Places API](https://developers.google.com/maps/documentation/places/web-service/op-overview) — Text Search (pack local + résolution site). |
 | `GOOGLE_PAGESPEED_API_KEY` | Oui (mode live) | Clé [PageSpeed Insights API](https://developers.google.com/speed/docs/insights/v5/get-started). |
 | `GROQ_API_KEY` | Oui (mode live) | Clé [Groq Console](https://console.groq.com/keys). |
+| `TELEGRAM_BOT_TOKEN` | Non | [Bot Telegram](https://core.telegram.org/bots/tutorial) : token fourni par [@BotFather](https://t.me/BotFather) après `/newbot`. |
+| `TELEGRAM_CHAT_ID` | Non | Identifiant du chat qui recevra le message (voir ci-dessous). |
 
 > Les noms **doivent** correspondre à ceux du tableau (le code lit `GOOGLE_PLACES_API_KEY`, pas `PLACES_KEY`).
+
+### Notification Telegram (téléphone)
+
+1. Sur Telegram, ouvre **@BotFather** → `/newbot` → choisir un nom et un username → copier le **token** → secret GitHub `TELEGRAM_BOT_TOKEN`.
+2. Démarre une conversation avec **ton bot** (touche Démarrer / envoie un message).
+3. Récupère ton **chat id** : dans un navigateur, ouvre  
+   `https://api.telegram.org/bot<TOKEN>/getUpdates`  
+   (remplace `<TOKEN>` par le token) et repère `"chat":{"id": 123456789` → secret GitHub `TELEGRAM_CHAT_ID` (le nombre, peut être négatif pour un groupe).
+4. Push le workflow : après chaque run **réussi**, tu reçois un message avec le nombre de pépites et le lien vers `rapport_matinal.md` sur GitHub. En cas d’échec, un message avec le lien vers les logs Actions.
+
+Sans ces deux secrets, le workflow **ignore** l’étape Telegram (aucune erreur).
 
 ## Variables dépôt (optionnel, `vars`)
 
