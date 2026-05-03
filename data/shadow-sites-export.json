@@ -1,91 +1,19 @@
 {
-  "generatedAtIso": "2026-05-03T16:08:33.099Z",
+  "generatedAtIso": "2026-05-03T21:18:52.359Z",
   "cityLabel": "ANNECY",
   "diamonds": [
     {
-      "name": "AS Plomberie 74-Urgence Dépannage Plombier Annecy",
-      "metier": "plumber",
-      "address": "141 Av. de Genève, 74940 Annecy",
-      "rating": 4.9,
-      "reviews": 126,
-      "lost_revenue_pitch": "Avec un volume d’avis qui prouve le flux, l’absence totale de site vous fait perdre une part importante des contacts qui veulent passer à l’action après Maps — au profit des concurrents déjà cliquables en un tap.",
-      "maps_cover_image_url": null,
-      "diamond_pain": "diamant_brut",
-      "seed_category": "depannage",
-      "place_id": "ChIJPapzfgyFi0cRhyt4rOwB5tg",
-      "trending_query": "depannage",
-      "strate_score_total": 100,
-      "strate_is_diamant_brut": true,
-      "strate_failures_vulgarized": [
-        "Pas de site web : le trafic Maps ne trouve aucune passerelle de conversion en ligne."
-      ]
-    },
-    {
-      "name": "Pont Perrière",
-      "metier": "bridge",
-      "address": "74000 Annecy",
-      "rating": 4.8,
-      "reviews": 299,
-      "lost_revenue_pitch": "Avec un volume d’avis qui prouve le flux, l’absence totale de site vous fait perdre une part importante des contacts qui veulent passer à l’action après Maps — au profit des concurrents déjà cliquables en un tap.",
-      "maps_cover_image_url": null,
-      "diamond_pain": "diamant_brut",
-      "seed_category": "construction",
-      "place_id": "ChIJlfZN7d6Pi0cRg9yZGW2_Vpg",
-      "trending_query": "construction",
-      "strate_score_total": 100,
-      "strate_is_diamant_brut": true,
-      "strate_failures_vulgarized": [
-        "Pas de site web : le trafic Maps ne trouve aucune passerelle de conversion en ligne."
-      ]
-    },
-    {
-      "name": "Wamy's Annecy",
-      "metier": "fast_food_restaurant",
-      "address": "19 Av. de Chambéry, 74000 Annecy",
+      "name": "Phone discount",
+      "metier": "cell_phone_store",
+      "address": "10 bis Av. de Chambéry, 74000 Annecy",
       "rating": 4.6,
-      "reviews": 1099,
+      "reviews": 76,
       "lost_revenue_pitch": "Avec un volume d’avis qui prouve le flux, l’absence totale de site vous fait perdre une part importante des contacts qui veulent passer à l’action après Maps — au profit des concurrents déjà cliquables en un tap.",
       "maps_cover_image_url": null,
       "diamond_pain": "diamant_brut",
-      "seed_category": "restauration",
-      "place_id": "ChIJYStGuxSFi0cRQMTLFdtWsWE",
-      "trending_query": "restauration",
-      "strate_score_total": 100,
-      "strate_is_diamant_brut": true,
-      "strate_failures_vulgarized": [
-        "Pas de site web : le trafic Maps ne trouve aucune passerelle de conversion en ligne."
-      ]
-    },
-    {
-      "name": "Le Comptoir des Loges - by Folie Royale",
-      "metier": "restaurant",
-      "address": "35 Rue Sainte-Claire, 74000 Annecy",
-      "rating": 4.8,
-      "reviews": 470,
-      "lost_revenue_pitch": "Avec un volume d’avis qui prouve le flux, l’absence totale de site vous fait perdre une part importante des contacts qui veulent passer à l’action après Maps — au profit des concurrents déjà cliquables en un tap.",
-      "maps_cover_image_url": null,
-      "diamond_pain": "diamant_brut",
-      "seed_category": "restauration",
-      "place_id": "ChIJsRYJOfmPi0cRdApGVVyWbWI",
-      "trending_query": "restauration",
-      "strate_score_total": 100,
-      "strate_is_diamant_brut": true,
-      "strate_failures_vulgarized": [
-        "Pas de site web : le trafic Maps ne trouve aucune passerelle de conversion en ligne."
-      ]
-    },
-    {
-      "name": "Restaurant Plein Sud",
-      "metier": "restaurant",
-      "address": "3 Rue Jean-Jacques Rousseau, 74000 Annecy",
-      "rating": 4.5,
-      "reviews": 910,
-      "lost_revenue_pitch": "Avec un volume d’avis qui prouve le flux, l’absence totale de site vous fait perdre une part importante des contacts qui veulent passer à l’action après Maps — au profit des concurrents déjà cliquables en un tap.",
-      "maps_cover_image_url": null,
-      "diamond_pain": "diamant_brut",
-      "seed_category": "restauration",
-      "place_id": "ChIJ_7dnk7yPi0cR6qER_muHL70",
-      "trending_query": "restauration",
+      "seed_category": "urgence telephone",
+      "place_id": "ChIJo8fvKVaFi0cRXCxr3zsickI",
+      "trending_query": "urgence telephone",
       "strate_score_total": 100,
       "strate_is_diamant_brut": true,
       "strate_failures_vulgarized": [
@@ -98,12 +26,12 @@
     "service",
     "service parking",
     "depannage",
+    "depannage 74",
     "construction",
     "reservation festival",
     "urgence hopital",
     "restauration",
     "renovation le beret",
-    "urgence telephone",
-    "construction le vieux"
+    "urgence telephone"
   ]
 }
