@@ -1,6 +1,6 @@
 # 📡 Strate Radar — acquisition autonome
 
-**Date :** dimanche 3 mai 2026 à 17:20
+**Date :** dimanche 3 mai 2026 à 15:46
 **Zone :** Annecy, France
 **Recherche :** Demand-driven · 10 intention(s) Suggest
 **Semaine ISO :** `2026-W18`
@@ -58,17 +58,40 @@ _Qualification : trésorerie Maps (avis > 50, note > 4.2) + zone ; puis **Strate
 - **Temps & automatisation :** Une seule landing ou mini-site reliée à la fiche Maps permet de centraliser réservations, devis et suivi — sans doubler la saisie entre « avis Google » et votre agenda.
 - **Conversion :** Positionner la prise de contact comme prolongement naturel de la fiche (même nom, même promesse, tel et mail cliquables) pour ne plus perdre les recherches mobile « près de moi ».
 
-### 💎 GARAGE MAZET AUTO
+### 💎 AS Plomberie 74-Urgence Dépannage Plombier Annecy
 
 > ### ⚠️ Value-at-Risk (modèle statique — bypass IA)
 > 
 > **Avec un volume d’avis qui prouve le flux, l’absence totale de site vous fait perdre une part importante des contacts qui veulent passer à l’action après Maps — au profit des concurrents déjà cliquables en un tap.**
 
 - **Douleur :** Diamant brut — aucun site web, 100/100 (bypass matrice)
-- **Métier (Maps) :** car_repair
+- **Métier (Maps) :** plumber
 - **Grainage :** depannage
-- **Note / avis :** 4.6 (66 avis)
-- **Adresse :** 9 Av. des Vieux Moulins, 74600 Annecy
+- **Note / avis :** 4.9 (126 avis)
+- **Adresse :** 141 Av. de Genève, 74940 Annecy
+- **Site :** _aucun site résolu (Maps + organique)_
+
+#### Strate Score
+
+- **Total :** 100/100 — _Diamant brut : pas d’analyse technique (fetch / Groq conversion / PageSpeed non exécutés)._
+
+#### Arguments de vente (modèle statique)
+
+- **Accroche :** Diamant brut : vous captez déjà la demande locale sur Maps, mais sans site vous ne convertissez pas le trafic qualifié.
+- **Temps & automatisation :** Une seule landing ou mini-site reliée à la fiche Maps permet de centraliser réservations, devis et suivi — sans doubler la saisie entre « avis Google » et votre agenda.
+- **Conversion :** Positionner la prise de contact comme prolongement naturel de la fiche (même nom, même promesse, tel et mail cliquables) pour ne plus perdre les recherches mobile « près de moi ».
+
+### 💎 Pont Perrière
+
+> ### ⚠️ Value-at-Risk (modèle statique — bypass IA)
+> 
+> **Avec un volume d’avis qui prouve le flux, l’absence totale de site vous fait perdre une part importante des contacts qui veulent passer à l’action après Maps — au profit des concurrents déjà cliquables en un tap.**
+
+- **Douleur :** Diamant brut — aucun site web, 100/100 (bypass matrice)
+- **Métier (Maps) :** bridge
+- **Grainage :** construction
+- **Note / avis :** 4.8 (299 avis)
+- **Adresse :** 74000 Annecy
 - **Site :** _aucun site résolu (Maps + organique)_
 
 #### Strate Score
@@ -89,32 +112,9 @@ _Qualification : trésorerie Maps (avis > 50, note > 4.2) + zone ; puis **Strate
 
 - **Douleur :** Diamant brut — aucun site web, 100/100 (bypass matrice)
 - **Métier (Maps) :** doctor
-- **Grainage :** urgence hopital
+- **Grainage :** urgence telephone
 - **Note / avis :** 4.6 (118 avis)
 - **Adresse :** 11 Rue Blaise Pascal, 74600 Annecy
-- **Site :** _aucun site résolu (Maps + organique)_
-
-#### Strate Score
-
-- **Total :** 100/100 — _Diamant brut : pas d’analyse technique (fetch / Groq conversion / PageSpeed non exécutés)._
-
-#### Arguments de vente (modèle statique)
-
-- **Accroche :** Diamant brut : vous captez déjà la demande locale sur Maps, mais sans site vous ne convertissez pas le trafic qualifié.
-- **Temps & automatisation :** Une seule landing ou mini-site reliée à la fiche Maps permet de centraliser réservations, devis et suivi — sans doubler la saisie entre « avis Google » et votre agenda.
-- **Conversion :** Positionner la prise de contact comme prolongement naturel de la fiche (même nom, même promesse, tel et mail cliquables) pour ne plus perdre les recherches mobile « près de moi ».
-
-### 💎 Restaurant Chez Monique
-
-> ### ⚠️ Value-at-Risk (modèle statique — bypass IA)
-> 
-> **Avec un volume d’avis qui prouve le flux, l’absence totale de site vous fait perdre une part importante des contacts qui veulent passer à l’action après Maps — au profit des concurrents déjà cliquables en un tap.**
-
-- **Douleur :** Diamant brut — aucun site web, 100/100 (bypass matrice)
-- **Métier (Maps) :** restaurant
-- **Grainage :** restauration
-- **Note / avis :** 4.4 (2964 avis)
-- **Adresse :** 31 Rue Sainte-Claire, 74000 Annecy
 - **Site :** _aucun site résolu (Maps + organique)_
 
 #### Strate Score
@@ -132,10 +132,17 @@ _Qualification : trésorerie Maps (avis > 50, note > 4.2) + zone ; puis **Strate
 ## 📊 Synthèse run
 
 - **Pépites obtenues :** 5 / 5
-- **Fiches Maps parcourues :** 258
-- **Requêtes recherche locale (plafond run) :** 81 / 150
+- **Fiches Maps parcourues :** 209
+- **Requêtes recherche locale (plafond run) :** 63 / 150
 - **Export JSON Shadow Site :** `data/shadow-sites-export.json`
-- **Écartements Gatekeeper (non-commercial) :** 0
+- **Écartements Gatekeeper (non-commercial) :** 2
+
+## Entités non-commerciales écartées
+
+_Filtrage Gatekeeper (IA + bypass si niveau de prix Maps renseigné)._
+
+- **Service Carte Grise - Annecy** — Entité publique liée à l'administration
+- **Accueil de proximité (état-civil et formalités administratives)** — Entité publique fournissant des services administratifs
 
 ---
 

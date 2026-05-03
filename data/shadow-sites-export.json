@@ -1,5 +1,5 @@
 {
-  "generatedAtIso": "2026-05-03T15:20:24.527Z",
+  "generatedAtIso": "2026-05-03T15:46:06.944Z",
   "cityLabel": "ANNECY",
   "diamonds": [
     {
@@ -39,17 +39,35 @@
       ]
     },
     {
-      "name": "GARAGE MAZET AUTO",
-      "metier": "car_repair",
-      "address": "9 Av. des Vieux Moulins, 74600 Annecy",
-      "rating": 4.6,
-      "reviews": 66,
+      "name": "AS Plomberie 74-Urgence Dépannage Plombier Annecy",
+      "metier": "plumber",
+      "address": "141 Av. de Genève, 74940 Annecy",
+      "rating": 4.9,
+      "reviews": 126,
       "lost_revenue_pitch": "Avec un volume d’avis qui prouve le flux, l’absence totale de site vous fait perdre une part importante des contacts qui veulent passer à l’action après Maps — au profit des concurrents déjà cliquables en un tap.",
       "maps_cover_image_url": null,
       "diamond_pain": "diamant_brut",
       "seed_category": "depannage",
-      "place_id": "ChIJySWUJqqai0cR0sfGON2EdGQ",
+      "place_id": "ChIJPapzfgyFi0cRhyt4rOwB5tg",
       "trending_query": "depannage",
+      "strate_score_total": 100,
+      "strate_is_diamant_brut": true,
+      "strate_failures_vulgarized": [
+        "Pas de site web : le trafic Maps ne trouve aucune passerelle de conversion en ligne."
+      ]
+    },
+    {
+      "name": "Pont Perrière",
+      "metier": "bridge",
+      "address": "74000 Annecy",
+      "rating": 4.8,
+      "reviews": 299,
+      "lost_revenue_pitch": "Avec un volume d’avis qui prouve le flux, l’absence totale de site vous fait perdre une part importante des contacts qui veulent passer à l’action après Maps — au profit des concurrents déjà cliquables en un tap.",
+      "maps_cover_image_url": null,
+      "diamond_pain": "diamant_brut",
+      "seed_category": "construction",
+      "place_id": "ChIJlfZN7d6Pi0cRg9yZGW2_Vpg",
+      "trending_query": "construction",
       "strate_score_total": 100,
       "strate_is_diamant_brut": true,
       "strate_failures_vulgarized": [
@@ -65,27 +83,9 @@
       "lost_revenue_pitch": "Avec un volume d’avis qui prouve le flux, l’absence totale de site vous fait perdre une part importante des contacts qui veulent passer à l’action après Maps — au profit des concurrents déjà cliquables en un tap.",
       "maps_cover_image_url": null,
       "diamond_pain": "diamant_brut",
-      "seed_category": "urgence hopital",
+      "seed_category": "urgence telephone",
       "place_id": "ChIJbdu8yYqPi0cR3nv61YuM-B8",
-      "trending_query": "urgence hopital",
-      "strate_score_total": 100,
-      "strate_is_diamant_brut": true,
-      "strate_failures_vulgarized": [
-        "Pas de site web : le trafic Maps ne trouve aucune passerelle de conversion en ligne."
-      ]
-    },
-    {
-      "name": "Restaurant Chez Monique",
-      "metier": "restaurant",
-      "address": "31 Rue Sainte-Claire, 74000 Annecy",
-      "rating": 4.4,
-      "reviews": 2964,
-      "lost_revenue_pitch": "Avec un volume d’avis qui prouve le flux, l’absence totale de site vous fait perdre une part importante des contacts qui veulent passer à l’action après Maps — au profit des concurrents déjà cliquables en un tap.",
-      "maps_cover_image_url": null,
-      "diamond_pain": "diamant_brut",
-      "seed_category": "restauration",
-      "place_id": "ChIJBd0eP_mPi0cRl-oMhu3YC_g",
-      "trending_query": "restauration",
+      "trending_query": "urgence telephone",
       "strate_score_total": 100,
       "strate_is_diamant_brut": true,
       "strate_failures_vulgarized": [
@@ -98,12 +98,12 @@
     "service",
     "service parking",
     "depannage",
-    "urgence hopital",
     "construction",
     "reservation festival",
+    "urgence telephone",
+    "urgence hopital",
     "restauration",
     "renovation le beret",
-    "construction le vieux",
-    "urgence telephone"
+    "construction le vieux"
   ]
 }
