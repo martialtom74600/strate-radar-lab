@@ -289,7 +289,28 @@ export async function postAuditIngest(args: {
       ? (json as { error: string }).error
       : text.slice(0, 500) || res.statusText;
 
-  return { ok: false, status: res.status, message: errMsg };
+  let detail = '';
+  if (json && typeof json === 'object' && json !== null && 'detail' in json) {
+    const d = (json as { detail: unknown }).detail;
+    detail =
+      typeof d === 'string'
+        ? d
+        : d !== undefined
+          ? JSON.stringify(d).slice(0, 800)
+          : '';
+  }
+  const issues =
+    json && typeof json === 'object' && json !== null && 'issues' in json
+      ? JSON.stringify((json as { issues: unknown }).issues).slice(0, 800)
+      : '';
+
+  const message =
+    [errMsg, detail && `(detail: ${detail})`, issues && `(issues: ${issues})`]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+
+  return { ok: false, status: res.status, message: message || errMsg };
 }
 
 /**
