@@ -1,43 +1,7 @@
 {
-  "generatedAtIso": "2026-05-03T15:46:06.944Z",
+  "generatedAtIso": "2026-05-03T16:08:33.099Z",
   "cityLabel": "ANNECY",
   "diamonds": [
-    {
-      "name": "Parking de l'hôtel de Ville",
-      "metier": "parking_lot",
-      "address": "9 Espl. de l'Hôtel de ville, 74000 Annecy",
-      "rating": 4.3,
-      "reviews": 114,
-      "lost_revenue_pitch": "Avec un volume d’avis qui prouve le flux, l’absence totale de site vous fait perdre une part importante des contacts qui veulent passer à l’action après Maps — au profit des concurrents déjà cliquables en un tap.",
-      "maps_cover_image_url": null,
-      "diamond_pain": "diamant_brut",
-      "seed_category": "service parking",
-      "place_id": "ChIJY26EWwCPi0cR4u9S3yC87-I",
-      "trending_query": "service parking",
-      "strate_score_total": 100,
-      "strate_is_diamant_brut": true,
-      "strate_failures_vulgarized": [
-        "Pas de site web : le trafic Maps ne trouve aucune passerelle de conversion en ligne."
-      ]
-    },
-    {
-      "name": "BL AUTO",
-      "metier": "service",
-      "address": "647 Rte des Futaies, 74370 Annecy",
-      "rating": 4.9,
-      "reviews": 138,
-      "lost_revenue_pitch": "Avec un volume d’avis qui prouve le flux, l’absence totale de site vous fait perdre une part importante des contacts qui veulent passer à l’action après Maps — au profit des concurrents déjà cliquables en un tap.",
-      "maps_cover_image_url": null,
-      "diamond_pain": "diamant_brut",
-      "seed_category": "depannage",
-      "place_id": "ChIJw7Aqoo2Pi0cRNlXmLg2A8Jo",
-      "trending_query": "depannage",
-      "strate_score_total": 100,
-      "strate_is_diamant_brut": true,
-      "strate_failures_vulgarized": [
-        "Pas de site web : le trafic Maps ne trouve aucune passerelle de conversion en ligne."
-      ]
-    },
     {
       "name": "AS Plomberie 74-Urgence Dépannage Plombier Annecy",
       "metier": "plumber",
@@ -75,17 +39,53 @@
       ]
     },
     {
-      "name": "Maison Médicale du Garde Annecy-Seynod",
-      "metier": "doctor",
-      "address": "11 Rue Blaise Pascal, 74600 Annecy",
+      "name": "Wamy's Annecy",
+      "metier": "fast_food_restaurant",
+      "address": "19 Av. de Chambéry, 74000 Annecy",
       "rating": 4.6,
-      "reviews": 118,
+      "reviews": 1099,
       "lost_revenue_pitch": "Avec un volume d’avis qui prouve le flux, l’absence totale de site vous fait perdre une part importante des contacts qui veulent passer à l’action après Maps — au profit des concurrents déjà cliquables en un tap.",
       "maps_cover_image_url": null,
       "diamond_pain": "diamant_brut",
-      "seed_category": "urgence telephone",
-      "place_id": "ChIJbdu8yYqPi0cR3nv61YuM-B8",
-      "trending_query": "urgence telephone",
+      "seed_category": "restauration",
+      "place_id": "ChIJYStGuxSFi0cRQMTLFdtWsWE",
+      "trending_query": "restauration",
+      "strate_score_total": 100,
+      "strate_is_diamant_brut": true,
+      "strate_failures_vulgarized": [
+        "Pas de site web : le trafic Maps ne trouve aucune passerelle de conversion en ligne."
+      ]
+    },
+    {
+      "name": "Le Comptoir des Loges - by Folie Royale",
+      "metier": "restaurant",
+      "address": "35 Rue Sainte-Claire, 74000 Annecy",
+      "rating": 4.8,
+      "reviews": 470,
+      "lost_revenue_pitch": "Avec un volume d’avis qui prouve le flux, l’absence totale de site vous fait perdre une part importante des contacts qui veulent passer à l’action après Maps — au profit des concurrents déjà cliquables en un tap.",
+      "maps_cover_image_url": null,
+      "diamond_pain": "diamant_brut",
+      "seed_category": "restauration",
+      "place_id": "ChIJsRYJOfmPi0cRdApGVVyWbWI",
+      "trending_query": "restauration",
+      "strate_score_total": 100,
+      "strate_is_diamant_brut": true,
+      "strate_failures_vulgarized": [
+        "Pas de site web : le trafic Maps ne trouve aucune passerelle de conversion en ligne."
+      ]
+    },
+    {
+      "name": "Restaurant Plein Sud",
+      "metier": "restaurant",
+      "address": "3 Rue Jean-Jacques Rousseau, 74000 Annecy",
+      "rating": 4.5,
+      "reviews": 910,
+      "lost_revenue_pitch": "Avec un volume d’avis qui prouve le flux, l’absence totale de site vous fait perdre une part importante des contacts qui veulent passer à l’action après Maps — au profit des concurrents déjà cliquables en un tap.",
+      "maps_cover_image_url": null,
+      "diamond_pain": "diamant_brut",
+      "seed_category": "restauration",
+      "place_id": "ChIJ_7dnk7yPi0cR6qER_muHL70",
+      "trending_query": "restauration",
       "strate_score_total": 100,
       "strate_is_diamant_brut": true,
       "strate_failures_vulgarized": [
@@ -100,10 +100,10 @@
     "depannage",
     "construction",
     "reservation festival",
-    "urgence telephone",
     "urgence hopital",
     "restauration",
     "renovation le beret",
+    "urgence telephone",
     "construction le vieux"
   ]
 }
