@@ -41,15 +41,17 @@ jobs:
           RADAR_VERBOSE: 'false'
         run: npm run dev
 
-      - name: Pousser rapport, export et shadow pages
+      - name: Pousser rapport, export, shadow pages et SQLite
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Même chemin que STRATE_RADAR_DB_PATH par défaut (mémoire lieux / diamants entre les runs CI)
           git add rapport_matinal.md data/shadow-sites-export.json data/shadow-pages/
+          if [ -f data/strate-radar.sqlite ]; then git add data/strate-radar.sqlite; fi
           if git diff --staged --quiet; then
             echo "Aucun changement à committer."
           else
-            git commit -m "chore(radar): nightly rapport, export et shadow pages"
+            git commit -m "chore(radar): nightly rapport, export, shadow pages et SQLite"
             git push
           fi
 

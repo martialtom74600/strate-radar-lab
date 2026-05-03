@@ -1,6 +1,14 @@
 # Déploiement — Strate Radar (GitHub Actions nocturne)
 
-Le workflow `.github/workflows/nightly-radar.yml` exécute la pipeline **toutes les nuits** (cron UTC), écrit `rapport_matinal.md`, `data/shadow-sites-export.json` et les HTML dans `data/shadow-pages/`, puis tente un **commit + push** sur la branche courante.
+Le workflow `.github/workflows/nightly-radar.yml` exécute la pipeline **toutes les nuits** (cron UTC), écrit `rapport_matinal.md`, `data/shadow-sites-export.json`, les HTML dans `data/shadow-pages/` et met à jour **`data/strate-radar.sqlite`** (mémoire des lieux déjà traités / disqualifiés), puis tente un **commit + push** sur la branche courante.
+
+### Mémoire SQLite sur GitHub (important)
+
+Le fichier **`data/strate-radar.sqlite`** est **versionné** dans le dépôt pour que chaque run CI réutilise la même base que le run précédent (fenêtre `RADAR_SQLITE_RECENT_DAYS`, outcomes diamant / disqualifié, cache PageSpeed par URL). Sans ça, chaque nuit repartait **à zéro** et consommait de nouveau les mêmes appels API.
+
+- **Premier run** : la base est créée par la pipeline puis **ajoutée au commit** par le bot.
+- **Conflits Git** : le fichier est traité comme **binaire** (`.gitattributes`) ; ne lance pas deux pushes concurrents sur `main`. En cas de conflit après un `git pull`, préfère garder **la version distante** (`theirs`) si le dernier run CI est la référence : `git checkout --theirs data/strate-radar.sqlite` puis `git add` et continue le merge.
+- En local, `git pull` avant de travailler évite de diverger trop de la base « serveur ».
 
 ## Secrets GitHub (Settings → Secrets and variables → Actions)
 

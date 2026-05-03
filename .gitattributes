@@ -1,0 +1,2 @@
+# Évite les merges texte corrompus sur le binaire SQLite versionné pour CI.
+data/strate-radar.sqlite binary
