@@ -1,0 +1,30 @@
+{
+  "name": "strate-radar",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Strate Radar — sourcing local, audit PageSpeed, analyse IA (pipeline modulaire)",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "generate:shadows": "tsx src/pipeline/generate-shadow-pages.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "groq-sdk": "^0.15.0",
+    "p-limit": "^6.2.0",
+    "sqlite3": "^5.1.7",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

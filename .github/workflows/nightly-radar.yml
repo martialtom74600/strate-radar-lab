@@ -1,0 +1,54 @@
+# Prospection nocturne : rapport + export JSON (Shadow Site).
+# Horaire : ~04h à Paris en hiver (UTC+1) — ajuster le cron si besoin (GitHub = UTC).
+
+name: Nightly Strate Radar
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: strate-radar-nightly
+  cancel-in-progress: false
+
+jobs:
+  radar:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Exécuter Strate Radar (live)
+        env:
+          STRATE_RADAR_SIMULATION: 'false'
+          NODE_ENV: production
+          GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
+          GOOGLE_PAGESPEED_API_KEY: ${{ secrets.GOOGLE_PAGESPEED_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GROQ_MODEL: ${{ vars.GROQ_MODEL }}
+          RADAR_SEARCH_LOCATION: ${{ vars.RADAR_SEARCH_LOCATION }}
+          RADAR_DIAMOND_LOCATION_HINTS: ${{ vars.RADAR_DIAMOND_LOCATION_HINTS }}
+          SERPAPI_GOOGLE_DOMAIN: ${{ vars.SERPAPI_GOOGLE_DOMAIN }}
+          RADAR_VERBOSE: 'false'
+        run: npm run dev
+
+      - name: Pousser rapport, export et shadow pages
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add rapport_matinal.md data/shadow-sites-export.json data/shadow-pages/
+          if git diff --staged --quiet; then
+            echo "Aucun changement à committer."
+          else
+            git commit -m "chore(radar): nightly rapport, export et shadow pages"
+            git push
+          fi
