@@ -15,6 +15,11 @@ export {
   renderRapportMatinal,
   writeRapportMatinalFile,
 } from './rapport-matinal.js';
+export type {
+  AuditIngestPayload,
+  StrateRadarAuditPayload,
+} from '../lib/strate-studio/audit-payload.js';
+export type { StudioIngestSuccess } from '../lib/strate-studio/audit-ingest.js';
 export {
   buildShadowSitesPayload,
   writeShadowSitesExportFile,

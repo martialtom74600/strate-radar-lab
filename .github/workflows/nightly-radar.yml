@@ -44,6 +44,9 @@ jobs:
           RADAR_CAMPAIGN_MODE: ${{ vars.RADAR_CAMPAIGN_MODE || 'false' }}
           TARGET_CITIES: ${{ vars.TARGET_CITIES }}
           RADAR_VERBOSE: 'false'
+          # Vitrine Strate Studio — POST https://www.strate-studio.fr/api/audits/ingest (même secret que la route Next)
+          RADAR_INGEST_SECRET: ${{ secrets.RADAR_INGEST_SECRET }}
+          RADAR_STUDIO_ORIGIN: ${{ vars.RADAR_STUDIO_ORIGIN || 'https://www.strate-studio.fr' }}
         run: npm run dev
 
       - name: Pousser rapport, export, shadow pages et SQLite

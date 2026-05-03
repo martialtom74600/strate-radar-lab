@@ -5,6 +5,8 @@ import { extractLighthouseScoresPercent } from '../lib/lighthouse.js';
 
 import { STRATE_DIAMOND_THRESHOLD, type StrateScoreResult } from '../lib/strate-scorer.js';
 
+import { stablePlaceKey } from '../lib/place-key.js';
+import type { StudioIngestSuccess } from '../lib/strate-studio/audit-ingest.js';
 import type { DiamondPainType } from '../lib/diamond.js';
 import type { PipelineStrateScore, RadarPipelineResult } from './radar-pipeline.js';
 
@@ -56,7 +58,11 @@ function formatStrateScoreSection(s: PipelineStrateScore | undefined): string[] 
 }
 
 /** Rapport « acquisition autonome » : uniquement les pépites + Value-at-Risk IA. */
-export function renderRapportMatinal(result: RadarPipelineResult): string {
+/** @param studioByPlaceKey clés = `stablePlaceKey(serp)` · liens vitrine après ingest réussi. */
+export function renderRapportMatinal(
+  result: RadarPipelineResult,
+  studioByPlaceKey?: ReadonlyMap<string, StudioIngestSuccess>,
+): string {
   const dateLabel = new Date(result.generatedAtIso).toLocaleString('fr-FR', {
     dateStyle: 'full',
     timeStyle: 'short',
@@ -95,6 +101,15 @@ export function renderRapportMatinal(result: RadarPipelineResult): string {
           ``,
           ...pepites.flatMap((l) => {
             const pitch = l.diamondHunterPitch;
+            const pk = stablePlaceKey(l.serp);
+            const vitrine = studioByPlaceKey?.get(pk);
+            const vitrineLine =
+              vitrine !== undefined
+                ? [
+                    `- **Audit vitrine (Strate Studio) :** ${vitrine.publicUrl}`,
+                    ``,
+                  ]
+                : [];
             const perfBlock =
               l.pageSpeed !== null
                 ? (() => {
@@ -127,6 +142,7 @@ export function renderRapportMatinal(result: RadarPipelineResult): string {
               `- **Adresse :** ${l.serp.address ?? '—'}`,
               siteLine,
               ``,
+              ...vitrineLine,
               ...formatStrateScoreSection(l.strateScore),
               ...(pitch
                 ? [
@@ -148,6 +164,7 @@ export function renderRapportMatinal(result: RadarPipelineResult): string {
           ``,
         ].join('\n');
 
+  const vitrineCount = studioByPlaceKey?.size ?? 0;
   const synth = [
     `## 📊 Synthèse run`,
     ``,
@@ -162,7 +179,8 @@ export function renderRapportMatinal(result: RadarPipelineResult): string {
             : []),
         ]
       : []),
-    `- **Export JSON Shadow Site :** \`data/shadow-sites-export.json\``,
+    `- **Audits vitrine Strate Studio :** ${vitrineCount > 0 ? `${vitrineCount} publication(s) — liens sous chaque pépite` : '_aucun envoi (configurez RADAR_INGEST_SECRET) ou échec API_'}`,
+    `- **Export JSON local (Shadow) :** \`data/shadow-sites-export.json\``,
     `- **Écartements Gatekeeper (non-commercial) :** ${result.gatekeeperExclusions.length}`,
     ``,
   ].join('\n');
@@ -196,8 +214,9 @@ export function renderRapportMatinal(result: RadarPipelineResult): string {
 export async function writeRapportMatinalFile(
   reportPath: string,
   result: RadarPipelineResult,
+  studioByPlaceKey?: ReadonlyMap<string, StudioIngestSuccess>,
 ): Promise<string> {
-  const md = renderRapportMatinal(result);
+  const md = renderRapportMatinal(result, studioByPlaceKey);
   const resolved = path.resolve(process.cwd(), reportPath);
   await fs.writeFile(resolved, md, 'utf8');
   return resolved;

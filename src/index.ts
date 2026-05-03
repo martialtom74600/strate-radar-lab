@@ -1,5 +1,6 @@
 import { loadConfig } from './config/index.js';
 import { writeHeartbeatFile } from './lib/heartbeat.js';
+import { publishStudioAuditsIfConfigured } from './lib/strate-studio/audit-ingest.js';
 import {
   buildShadowSitesPayload,
   writeShadowSitesExportFile,
@@ -27,7 +28,13 @@ async function main(): Promise<void> {
     },
   });
 
-  const outPath = await writeRapportMatinalFile(config.RADAR_REPORT_PATH, result);
+  const { successes: studioAuditLinks } = await publishStudioAuditsIfConfigured(config, result);
+
+  const outPath = await writeRapportMatinalFile(
+    config.RADAR_REPORT_PATH,
+    result,
+    studioAuditLinks,
+  );
   console.log(`Rapport écrit : ${outPath}`);
 
   const hbPath = await writeHeartbeatFile('data/heartbeat.json', {

@@ -85,6 +85,17 @@ const baseEnvSchema = z.object({
   TARGET_CITIES: z.preprocess(optionalTrimmedNonEmpty, z.string().optional()),
   /** Durée de validité du cache Groq des ~50 métiers (jours). */
   RADAR_CAMPAIGN_CATEGORY_CACHE_TTL_DAYS: z.coerce.number().int().min(1).max(90).default(7),
+  /** Origine du site vitrine Strate Studio (sans slash final). POST = {origin}/api/audits/ingest */
+  RADAR_STUDIO_ORIGIN: z.preprocess((v) => {
+    const t = optionalTrimmedNonEmpty(v);
+    return typeof t === 'string' && t.length > 0 ? t : 'https://www.strate-studio.fr';
+  }, z.string().url()),
+  /** Secret Bearer partagé avec la route /api/audits/ingest (Authorization: Bearer …). */
+  RADAR_INGEST_SECRET: z.preprocess(optionalTrimmedNonEmpty, z.string().optional()),
+  /** Optionnel — expiration du lien audit (ISO 8601). */
+  RADAR_AUDIT_EXPIRES_AT: z.preprocess(optionalTrimmedNonEmpty, z.string().optional()),
+  /** Version du schéma payload envoyé (max 64 caractères). */
+  RADAR_AUDIT_PAYLOAD_VERSION: z.preprocess(optionalTrimmedNonEmpty, z.string().max(64).optional()),
 });
 
 export type RawEnv = z.infer<typeof baseEnvSchema>;
