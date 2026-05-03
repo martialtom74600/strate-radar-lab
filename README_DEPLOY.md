@@ -7,7 +7,7 @@ Le workflow `.github/workflows/nightly-radar.yml` exécute la pipeline **toutes 
 Le fichier **`data/strate-radar.sqlite`** est **versionné** dans le dépôt pour que chaque run CI réutilise la même base que le run précédent (fenêtre `RADAR_SQLITE_RECENT_DAYS`, outcomes diamant / disqualifié, cache PageSpeed par URL). Sans ça, chaque nuit repartait **à zéro** et consommait de nouveau les mêmes appels API.
 
 - **Premier run** : la base est créée par la pipeline puis **ajoutée au commit** par le bot.
-- **Conflits Git** : le fichier est traité comme **binaire** (`.gitattributes`) ; ne lance pas deux pushes concurrents sur `main`. En cas de conflit après un `git pull`, préfère garder **la version distante** (`theirs`) si le dernier run CI est la référence : `git checkout --theirs data/strate-radar.sqlite` puis `git add` et continue le merge.
+- Si **vous poussez sur `main`** pendant qu’un run nocturne tourne (~6 min d’API), le bot peut avoir besoin d’un **`git pull --rebase` avant `git push`** : c’est maintenant fait automatiquement dans le workflow. En cas de **conflit** (ex. SQLite modifié des deux côtés), le job échoue : résoudre à la main ou garder une version de la base.
 - En local, `git pull` avant de travailler évite de diverger trop de la base « serveur ».
 
 ## Secrets GitHub (Settings → Secrets and variables → Actions)

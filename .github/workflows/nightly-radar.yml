@@ -19,6 +19,8 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -52,6 +54,8 @@ jobs:
             echo "Aucun changement à committer."
           else
             git commit -m "chore(radar): nightly rapport, export, shadow pages et SQLite"
+            # Remote peut avoir avancé (push local / autre job) pendant le run ~6 min
+            git pull --rebase origin "${{ github.ref_name }}"
             git push
           fi
 
