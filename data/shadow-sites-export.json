@@ -1,18 +1,18 @@
 {
-  "generatedAtIso": "2026-05-03T21:18:52.359Z",
+  "generatedAtIso": "2026-05-03T21:22:23.220Z",
   "cityLabel": "ANNECY",
   "diamonds": [
     {
-      "name": "Phone discount",
-      "metier": "cell_phone_store",
-      "address": "10 bis Av. de Chambéry, 74000 Annecy",
-      "rating": 4.6,
-      "reviews": 76,
+      "name": "Mobile Access",
+      "metier": null,
+      "address": "25 Rue Sommeiller, 74000 Annecy",
+      "rating": 4.9,
+      "reviews": 160,
       "lost_revenue_pitch": "Avec un volume d’avis qui prouve le flux, l’absence totale de site vous fait perdre une part importante des contacts qui veulent passer à l’action après Maps — au profit des concurrents déjà cliquables en un tap.",
       "maps_cover_image_url": null,
       "diamond_pain": "diamant_brut",
       "seed_category": "urgence telephone",
-      "place_id": "ChIJo8fvKVaFi0cRXCxr3zsickI",
+      "place_id": "ChIJlZnqUfePi0cRqsyJQIgatzE",
       "trending_query": "urgence telephone",
       "strate_score_total": 100,
       "strate_is_diamant_brut": true,
@@ -26,12 +26,12 @@
     "service",
     "service parking",
     "depannage",
-    "depannage 74",
     "construction",
     "reservation festival",
     "urgence hopital",
     "restauration",
     "renovation le beret",
-    "urgence telephone"
+    "urgence telephone",
+    "construction le vieux"
   ]
 }
