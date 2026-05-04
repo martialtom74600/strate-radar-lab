@@ -1,6 +1,10 @@
 import { loadConfig } from './config/index.js';
 import { writeHeartbeatFile } from './lib/heartbeat.js';
-import { publishStudioAuditsIfConfigured } from './lib/strate-studio/audit-ingest.js';
+import {
+  publishStudioAuditsIfConfigured,
+  radarLineToStrateAuditPayload,
+} from './lib/strate-studio/audit-ingest.js';
+import { extendAuditPayloadWithHighValue } from './lib/strate-studio/audit-hv-enrichment.js';
 import {
   buildShadowSitesPayload,
   writeShadowSitesExportFile,
@@ -26,6 +30,18 @@ async function main(): Promise<void> {
       gl: 'fr',
     },
   });
+
+  const debugIngestLine = result.lines.find(
+    (l) => l.conversionBadge === 'DIAMANT' && l.diamondHunterPitch !== undefined,
+  );
+  if (debugIngestLine) {
+    const payload = await extendAuditPayloadWithHighValue(
+      debugIngestLine,
+      result,
+      radarLineToStrateAuditPayload(debugIngestLine),
+    );
+    console.log('DEBUG_FULL_PAYLOAD:', JSON.stringify(payload, null, 2));
+  }
 
   const { successes: studioAuditLinks } = await publishStudioAuditsIfConfigured(config, result);
 
