@@ -45,10 +45,8 @@ const baseEnvSchema = z.object({
   RADAR_REPORT_PATH: z.string().min(1).default('rapport_matinal.md'),
   /** Export JSON pour génération « shadow site » (pépites du jour). */
   RADAR_SHADOW_EXPORT_PATH: z.string().min(1).default('data/shadow-sites-export.json'),
-  /** Dossier des landing HTML « Shadow Pages » (audit express). */
+  /** Dossier cible pour `npm run generate:shadows` (pas généré par le run radar). */
   RADAR_SHADOW_PAGES_DIR: z.string().min(1).default('data/shadow-pages'),
-  /** Après export JSON, générer automatiquement les HTML Shadow Pages. */
-  RADAR_AUTO_GENERATE_SHADOW_PAGES: z.preprocess(boolFromEnv, z.boolean()).default(true),
   /** Domaine Google (mocks / ancien flux SerpApi — optionnel). */
   SERPAPI_GOOGLE_DOMAIN: z.preprocess(
     optionalTrimmedNonEmpty,

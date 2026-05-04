@@ -10,11 +10,14 @@ export const strateRadarAuditStrateScoreSchema = z
   })
   .passthrough();
 
-export const strateRadarAuditPayloadSchema = z.object({
-  strateScore: strateRadarAuditStrateScoreSchema,
-  metrics: z.union([z.record(z.unknown()), z.array(z.unknown())]),
-  content: z.union([z.record(z.unknown()), z.array(z.unknown()), z.string()]),
-});
+/** Base strateStudio + enveloppes HV (visuals, business_intelligence, competition, copywriting, technical_metrics…). */
+export const strateRadarAuditPayloadSchema = z
+  .object({
+    strateScore: strateRadarAuditStrateScoreSchema,
+    metrics: z.union([z.record(z.unknown()), z.array(z.unknown())]),
+    content: z.union([z.record(z.unknown()), z.array(z.unknown()), z.string()]),
+  })
+  .passthrough();
 
 export const auditIngestBodySchema = z.object({
   slug: z

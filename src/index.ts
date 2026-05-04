@@ -5,7 +5,6 @@ import {
   buildShadowSitesPayload,
   writeShadowSitesExportFile,
 } from './pipeline/shadow-export.js';
-import { generateShadowPagesFromExport } from './pipeline/generate-shadow-pages.js';
 import { runRadarPipeline, writeRapportMatinalFile } from './pipeline/index.js';
 
 async function main(): Promise<void> {
@@ -65,16 +64,6 @@ async function main(): Promise<void> {
     trending_queries_used: result.trendQueriesResolved,
   });
   console.log(`Export Shadow Site : ${shadowPath} (${diamonds.length} pépite(s))`);
-
-  if (config.RADAR_AUTO_GENERATE_SHADOW_PAGES && diamonds.length > 0) {
-    const pages = await generateShadowPagesFromExport({
-      exportPath: config.RADAR_SHADOW_EXPORT_PATH,
-      outputDir: config.RADAR_SHADOW_PAGES_DIR,
-    });
-    console.log(
-      `Shadow Pages HTML : ${pages.length} fichier(s) dans ${config.RADAR_SHADOW_PAGES_DIR}`,
-    );
-  }
 
   console.log(
     `Diamants : ${result.diamondsFound}/${result.targetDiamondCount} · Fiches : ${result.totalBusinessesScanned} · Requêtes (run) : ${result.serpApiCallsUsed}/${result.serpApiCallsMax}`,

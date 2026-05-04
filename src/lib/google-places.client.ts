@@ -16,13 +16,17 @@ import type { GoogleLocalSearchParams, GoogleOrganicSearchParams } from '../serv
 
 const PLACES_TEXT_SEARCH_URL = 'https://places.googleapis.com/v1/places:searchText';
 
-/** Sans espace (exigence Google FieldMask). + id / primaryType / nextPageToken pour pagination et clé stable. */
+/** Sans espace (exigence Google FieldMask). + localisation et photos hero pour audits vitrine. */
 const FIELD_MASK =
-  'places.id,places.displayName,places.rating,places.userRatingCount,places.websiteUri,places.formattedAddress,places.priceLevel,places.primaryType,places.types,nextPageToken';
+  'places.id,places.displayName,places.rating,places.userRatingCount,places.websiteUri,places.formattedAddress,places.priceLevel,places.primaryType,places.types,places.location,places.photos,nextPageToken';
 
 type PlacesDisplayName = {
   readonly text?: string;
   readonly languageCode?: string;
+};
+
+type GooglePlacePhoto = {
+  readonly name?: string;
 };
 
 type GooglePlaceRaw = {
@@ -36,6 +40,11 @@ type GooglePlaceRaw = {
   readonly priceLevel?: string;
   readonly primaryType?: string;
   readonly types?: readonly string[];
+  readonly location?: {
+    readonly latitude?: number;
+    readonly longitude?: number;
+  };
+  readonly photos?: readonly GooglePlacePhoto[];
 };
 
 type PlacesTextSearchResponseBody = {
@@ -55,6 +64,21 @@ function mapPriceLevelToLabel(level: string | undefined): string | undefined {
   return m[level] ?? undefined;
 }
 
+/** URL publique de rendu photo Places (clé en query — usage serveur / lien audit privé). `name` = chemin Places, ex. `places/ChIJ…/photos/Aw…`. */
+export function buildPlacesPhotoMediaUrl(photoResourceName: string, apiKey: string): string {
+  const name = photoResourceName.trim().replace(/^\/+|\/+$/g, '');
+  const key = apiKey.trim();
+  if (!name || !key) return '';
+  return `https://places.googleapis.com/v1/${name}/media?maxHeightPx=900&maxWidthPx=1200&key=${encodeURIComponent(key)}`;
+}
+
+function pickFirstPhotoName(place: GooglePlaceRaw): string | undefined {
+  const list = place.photos;
+  if (!list || list.length === 0) return undefined;
+  const n = list[0]?.name?.trim();
+  return n && n.length > 0 ? n : undefined;
+}
+
 function extractPlaceId(place: GooglePlaceRaw): string | undefined {
   const id = place.id?.trim();
   if (id) return id;
@@ -64,12 +88,23 @@ function extractPlaceId(place: GooglePlaceRaw): string | undefined {
   return m?.[1]?.trim() || undefined;
 }
 
-function mapPlaceToLocalResult(place: GooglePlaceRaw, position: number): SerpLocalResult {
+function mapPlaceToLocalResult(
+  place: GooglePlaceRaw,
+  position: number,
+  placesApiKey: string | undefined,
+): SerpLocalResult {
   const title = place.displayName?.text?.trim() || 'Établissement';
   const placeId = extractPlaceId(place);
   const priceLabel = mapPriceLevelToLabel(place.priceLevel);
   const primary = place.primaryType?.trim();
   const placeTypes = place.types?.map((t) => String(t).trim()).filter((t) => t.length > 0);
+  const lat = place.location?.latitude;
+  const lng = place.location?.longitude;
+  const photoName = pickFirstPhotoName(place);
+  const thumb =
+    photoName !== undefined && placesApiKey !== undefined && placesApiKey.trim() !== ''
+      ? buildPlacesPhotoMediaUrl(photoName, placesApiKey)
+      : undefined;
 
   return {
     position,
@@ -88,6 +123,13 @@ function mapPlaceToLocalResult(place: GooglePlaceRaw, position: number): SerpLoc
     ...(priceLabel !== undefined && priceLabel !== '' ? { price: priceLabel } : {}),
     ...(primary !== undefined && primary !== '' ? { type: primary } : {}),
     ...(placeTypes !== undefined && placeTypes.length > 0 ? { types: [...placeTypes] } : {}),
+    ...(typeof lat === 'number' &&
+    typeof lng === 'number' &&
+    !Number.isNaN(lat) &&
+    !Number.isNaN(lng)
+      ? { gps_coordinates: { latitude: lat, longitude: lng } }
+      : {}),
+    ...(thumb !== undefined && thumb !== '' ? { thumbnail: thumb } : {}),
   };
 }
 
@@ -179,7 +221,7 @@ function createGooglePlacesLiveClient(config: AppConfig): SerpClient {
       const data = await postSearchText(apiKey, body);
       const rawPlaces = data.places ?? [];
       const local_results: SerpLocalResult[] = rawPlaces.map((p, i) =>
-        mapPlaceToLocalResult(p, i + 1),
+        mapPlaceToLocalResult(p, i + 1, apiKey),
       );
 
       return {

@@ -11,6 +11,7 @@ import {
   type AuditIngestPayload,
   type StrateRadarAuditPayload,
 } from './audit-payload.js';
+import { extendAuditPayloadWithHighValue } from './audit-hv-enrichment.js';
 
 const DEFAULT_PAYLOAD_VERSION = '1.0.0';
 
@@ -359,7 +360,11 @@ export async function publishStudioAuditsIfConfigured(
     const placeKey = stablePlaceKey(line.serp);
     let slug = buildAuditSlug(line, result.reportCityDisplayName);
     const accessToken = generateAuditAccessToken();
-    const payload = radarLineToStrateAuditPayload(line);
+    const payload = await extendAuditPayloadWithHighValue(
+      line,
+      result,
+      radarLineToStrateAuditPayload(line),
+    );
 
     const baseBody: Omit<AuditIngestPayload, 'slug' | 'accessToken'> = {
       payload,

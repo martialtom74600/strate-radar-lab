@@ -140,6 +140,10 @@ export type RadarPipelineResult = {
   readonly gatekeeperExclusions: readonly GatekeeperExclusion[];
   /** Run en mode campagne autonome (matrice ville × métier). */
   readonly campaign?: { readonly city: string; readonly category: string };
+  /**
+   * Toutes les fiches Maps distinctes rencontrées pendant le crawl (benchmark concurrentiel géo ± source unique).
+   */
+  readonly localCandidatesPool: readonly SerpLocalResult[];
 };
 
 export type RunRadarPipelineOptions = {
@@ -516,6 +520,7 @@ export async function runRadarPipeline(
   const groqClient = createGroqClient(config);
 
   const lines: RadarPipelineLine[] = [];
+  const localCandidatesByKey = new Map<string, SerpLocalResult>();
   const gatekeeperExclusions: GatekeeperExclusion[] = [];
   let diamondsFound = 0;
   let totalBusinessesScanned = 0;
@@ -600,6 +605,10 @@ export async function runRadarPipeline(
       }
 
       const locals = maps.local_results ?? [];
+      for (const snapshot of locals) {
+        const lk = stablePlaceKey(snapshot);
+        if (!localCandidatesByKey.has(lk)) localCandidatesByKey.set(lk, snapshot);
+      }
       radarVerbose(config, `   → ${locals.length} résultat(s) Maps`);
       if (locals.length === 0) {
         radarVerbose(config, `   (plus de résultats pour cette famille → suivante)`);
@@ -703,6 +712,7 @@ export async function runRadarPipeline(
     serpApiStoppedEarly,
     ...(serpApiStopMessage !== undefined ? { serpApiStopMessage } : {}),
     gatekeeperExclusions,
+    localCandidatesPool: [...localCandidatesByKey.values()],
     ...(campaignPair !== undefined ? { campaign: campaignPair } : {}),
   };
 }

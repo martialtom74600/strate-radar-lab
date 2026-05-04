@@ -1,4 +1,4 @@
-# Prospection nocturne : rapport + export JSON (Shadow Site).
+# Prospection nocturne : rapport Markdown + JSON export / ingest vitrine · pas de HTML local (pages côté site mère via API).
 # Horaire : ~04h à Paris en hiver (UTC+1) — ajuster le cron si besoin (GitHub = UTC).
 
 name: Nightly Strate Radar
@@ -51,17 +51,17 @@ jobs:
           RADAR_INGEST_DEBUG: ${{ vars.RADAR_INGEST_DEBUG || 'false' }}
         run: npm run dev
 
-      - name: Pousser rapport, export, shadow pages et SQLite
+      - name: Pousser rapport, export et SQLite
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # Même chemin que STRATE_RADAR_DB_PATH par défaut (mémoire lieux / diamants entre les runs CI)
-          git add rapport_matinal.md data/shadow-sites-export.json data/shadow-pages/ data/heartbeat.json
+          git add rapport_matinal.md data/shadow-sites-export.json data/heartbeat.json
           if [ -f data/strate-radar.sqlite ]; then git add data/strate-radar.sqlite; fi
           if git diff --staged --quiet; then
             echo "Aucun changement à committer."
           else
-            git commit -m "chore(radar): nightly rapport, export, shadow pages, heartbeat et SQLite"
+            git commit -m "chore(radar): nightly rapport, export, heartbeat et SQLite"
             # Remote peut avoir avancé (push local / autre job) pendant le run ~6 min
             git pull --rebase origin "${{ github.ref_name }}"
             git push

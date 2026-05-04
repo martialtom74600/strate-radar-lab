@@ -89,6 +89,7 @@ function buildDiamondSystemPrompt(): string {
     'Tu dois estimer un MANQUE À GAGNER plutôt crédible (ordre de grandeur en perte de prospects ou de contacts qualifiés par mois), en croisant le métier, le volume d’avis, les signaux et l’urgence de la trendingQuery.',
     'La mention chiffrée est EXPLICATIVE et PÉDAGOGIQUE — pas une promesse juridique de CA.',
     'Réponds en français par UN objet JSON avec **exactement** les clés : headline, gainTempsEtAutomatisation, anglePrimeConversion, lost_revenue_pitch.',
+    'headline : **maximum 10 mots**, une seule phrase, choc + chiffre ou contraste (douleur métier × trafic Maps / mobile). Pas de jargon creux.',
     'lost_revenue_pitch : une phrase percutante façon pitch téléphonique ; intégrer FOMO + douleur réelle si trendingQuery est présente.',
     'Ton : précis, orienté conversion locale, mobile-first, et ROI pour convaincre un dirigeant pressé.',
   ].join('\n');

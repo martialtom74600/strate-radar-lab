@@ -1,6 +1,6 @@
 # Déploiement — Strate Radar (GitHub Actions nocturne)
 
-Le workflow `.github/workflows/nightly-radar.yml` exécute la pipeline **toutes les nuits** (cron UTC), écrit `rapport_matinal.md`, `data/shadow-sites-export.json`, les HTML dans `data/shadow-pages/` et met à jour **`data/strate-radar.sqlite`** (mémoire des lieux déjà traités / disqualifiés), puis tente un **commit + push** sur la branche courante.
+Le workflow `.github/workflows/nightly-radar.yml` exécute la pipeline **toutes les nuits** (cron UTC), écrit `rapport_matinal.md`, `data/shadow-sites-export.json`, **`data/heartbeat.json`**, envoie les audits vers la vitrine via **`POST …/api/audits/ingest`** (secret `RADAR_INGEST_SECRET`), puis met à jour **`data/strate-radar.sqlite`** et tente un **commit + push**. Les pages HTML ne sont **pas** générées dans ce dépôt — la vitrine / site mère les construit à partir de l’API. Pour générer des HTML en local : `npm run generate:shadows`.
 
 ### Mémoire SQLite sur GitHub (important)
 
