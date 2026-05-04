@@ -1,37 +1,19 @@
 {
-  "generatedAtIso": "2026-05-04T09:28:32.104Z",
+  "generatedAtIso": "2026-05-04T12:35:24.268Z",
   "cityLabel": "ANNECY",
   "diamonds": [
     {
-      "name": "Parking de l'hôtel de Ville",
-      "metier": "parking_lot",
-      "address": "9 Espl. de l'Hôtel de ville, 74000 Annecy",
-      "rating": 4.3,
-      "reviews": 114,
-      "lost_revenue_pitch": "Avec un volume d’avis qui prouve le flux, l’absence totale de site vous fait perdre une part importante des contacts qui veulent passer à l’action après Maps — au profit des concurrents déjà cliquables en un tap.",
-      "maps_cover_image_url": "https://places.googleapis.com/v1/places/ChIJY26EWwCPi0cR4u9S3yC87-I/photos/Ab43m-tJjOd--fltRXyz36WMYZi5vejeDCTTmu0lJr1tfrdwWHZmCbAcbFPgAshxpJLKuK2ptynLwtcN3-49jwwGKHq3byehxr0nH0hjPX2a0r8RJwtceITXkieNBSbAOY_cqq-7xPKN8bJQh7GpkF99ubY6oNdYYKxAnY55TJJUzapukxqqz88f6fWwvU5TFl_ypGIpib-SKj4jQAKnlfD4Ru4mXPX4xDhCmcNVI69u3f25cP0YFDyps4Ds7Q48AdLNG7cwy0w5EQMfzv0pZiEPlri5jAgvjHR_R-c9xvPG4fVD6wyVPu5JSCT1FxR9SJmU1do1ncbcInESirzvFqYIyJ96YFPUpJJIZpU87gkpwEFFfaXh7-Ma-9zsQX2vcWEknIwY3jgExuMWz39zxmkSIEUJFwi4KUBeAS2KouvybAetAfswqY_3EnMcM5RKxl97/media?maxHeightPx=900&maxWidthPx=1200&key=AIzaSyDLEqutvbZGmrRLhNan2V6syb4YE_zfXV4",
-      "diamond_pain": "diamant_brut",
-      "seed_category": "service parking",
-      "place_id": "ChIJY26EWwCPi0cR4u9S3yC87-I",
-      "trending_query": "service parking",
-      "strate_score_total": 100,
-      "strate_is_diamant_brut": true,
-      "strate_failures_vulgarized": [
-        "Pas de site web : le trafic Maps ne trouve aucune passerelle de conversion en ligne."
-      ]
-    },
-    {
-      "name": "BL AUTO",
-      "metier": "service",
-      "address": "647 Rte des Futaies, 74370 Annecy",
+      "name": "AS Plomberie 74-Urgence Dépannage Plombier Annecy",
+      "metier": "plumber",
+      "address": "141 Av. de Genève, 74940 Annecy",
       "rating": 4.9,
-      "reviews": 138,
+      "reviews": 126,
       "lost_revenue_pitch": "Avec un volume d’avis qui prouve le flux, l’absence totale de site vous fait perdre une part importante des contacts qui veulent passer à l’action après Maps — au profit des concurrents déjà cliquables en un tap.",
-      "maps_cover_image_url": "https://places.googleapis.com/v1/places/ChIJw7Aqoo2Pi0cRNlXmLg2A8Jo/photos/Ab43m-uqHzUtDT9XjbBEzgw1wP6gnpJ4KeEh5wrT3uEWq0FPsBsx1dW4pj8CWyfbtaBQQ991oVcEmqiH-bvEuEorDn78wTdCyBEezCdswF7q-UnkA7W4XUWVDfQrM_vef1L3scWCNuETIIe7-lNoiXG-gyQdtSBqeTIMzJpRfe4Xlv-dpZrfOFWJwc3unT65aIfM46Dlbzgauk2P6xS8bvGedchpwjJteE996kqgN0Oys86EsIO6B7uvQUssOfAMbGDyyTp-nuZR_03t1NM-u9cg96a8N29G_rzkhLwiFI4sOn7XWw/media?maxHeightPx=900&maxWidthPx=1200&key=AIzaSyDLEqutvbZGmrRLhNan2V6syb4YE_zfXV4",
+      "maps_cover_image_url": "https://places.googleapis.com/v1/places/ChIJPapzfgyFi0cRhyt4rOwB5tg/photos/Ab43m-sTpQPNc4-ZjOihoQNIYaIwxhQL-7QxqmoLoyr_lkudCyFKnSxf_tkqaNwgYfoGQk2rq8amaN1Zvn8b6Cq35XT8lNBSo8p0Tc1DqL7OPCrOS-_TWpdILqrT0_kN6UO_JzNzQ3tveuZgfmBaj3_hEIu5jQyt82pFs9VLi_pwOR9AXzE5z7MRDUpYBpvOJVRbQDaT6h24LMg-ZeUnpObrr3Zb9qY16GKGTHgEZDwwzaQpUg_Hejs0WCpSJ1fnNZ2GL3VNGcW3qazTwPqqBI_Ad6qJeUt3qCwlzKOwGxaslbh4Rw/media?maxHeightPx=900&maxWidthPx=1200&key=AIzaSyDLEqutvbZGmrRLhNan2V6syb4YE_zfXV4",
       "diamond_pain": "diamant_brut",
-      "seed_category": "depannage",
-      "place_id": "ChIJw7Aqoo2Pi0cRNlXmLg2A8Jo",
-      "trending_query": "depannage",
+      "seed_category": "depannage 74",
+      "place_id": "ChIJPapzfgyFi0cRhyt4rOwB5tg",
+      "trending_query": "depannage 74",
       "strate_score_total": 100,
       "strate_is_diamant_brut": true,
       "strate_failures_vulgarized": [
@@ -39,34 +21,16 @@
       ]
     },
     {
-      "name": "Pont Perrière",
-      "metier": "bridge",
-      "address": "74000 Annecy",
-      "rating": 4.8,
-      "reviews": 299,
-      "lost_revenue_pitch": "Avec un volume d’avis qui prouve le flux, l’absence totale de site vous fait perdre une part importante des contacts qui veulent passer à l’action après Maps — au profit des concurrents déjà cliquables en un tap.",
-      "maps_cover_image_url": "https://places.googleapis.com/v1/places/ChIJlfZN7d6Pi0cRg9yZGW2_Vpg/photos/Ab43m-ty_PMUkk3x4YwtA3SRoqqlAxYeP-C1owgfvLaTCcRni5lDRLEUxhzW9H9Sf6seoYXi9L3ydIq3on8YzD9mNYTec4GcKiHy9OGrA4qAOwDFxjuGLN3eSfeQB64QcxpDLZWgOTsH3fuGpmefr9jCtpbUjXCMtxRteRrNdVxPdW4r7xPR34FdunVzJ0UGbaYtyMRnktKR5o0QoUq34rNPaBuCDduI0Z6IY2jb81Vn_L8tZUltIuaHHD5JibOb0v5s5DOJxkaC8xl7aP50dSxt_0Gl1wsG7opFb2ehLtwFZ6FvIELPKTuSgI11IPw-eilS0tw1dol2df69ZOIPx7rf3I1aWgwOV9_4MFrx7CjvClBPqUi72wqlQE-zRKiA3AbxII5JVUA76g-5Em-9zZK_WN6nS6OETryzBmha5D2kIwE/media?maxHeightPx=900&maxWidthPx=1200&key=AIzaSyDLEqutvbZGmrRLhNan2V6syb4YE_zfXV4",
-      "diamond_pain": "diamant_brut",
-      "seed_category": "construction",
-      "place_id": "ChIJlfZN7d6Pi0cRg9yZGW2_Vpg",
-      "trending_query": "construction",
-      "strate_score_total": 100,
-      "strate_is_diamant_brut": true,
-      "strate_failures_vulgarized": [
-        "Pas de site web : le trafic Maps ne trouve aucune passerelle de conversion en ligne."
-      ]
-    },
-    {
-      "name": "Restaurant Chez Monique",
+      "name": "Restaurant Sidi Bou annecy",
       "metier": "restaurant",
-      "address": "31 Rue Sainte-Claire, 74000 Annecy",
-      "rating": 4.4,
-      "reviews": 2963,
+      "address": "17 Av. de Cran, 74000 Annecy",
+      "rating": 4.6,
+      "reviews": 61,
       "lost_revenue_pitch": "Avec un volume d’avis qui prouve le flux, l’absence totale de site vous fait perdre une part importante des contacts qui veulent passer à l’action après Maps — au profit des concurrents déjà cliquables en un tap.",
-      "maps_cover_image_url": "https://places.googleapis.com/v1/places/ChIJBd0eP_mPi0cRl-oMhu3YC_g/photos/Ab43m-tnewd4RYNweNu0HB18wEQT2Kau_3aq68SfqfPKgKYttG8NkDvhktHI3DVtpyM9ulGOUqmrOBOuwNocGV164fCh6RsIt-TKMgi4dNFYv4pFyYe4tL_9c80yRuREYODh3NfsrAJuj-NcfoOGVVwOj6NSDJtjN8RFgDCkUbWiPxpCkcLqiN2GIQ1xhZbgg8tShz2QZyQa3BU_gTwvWJZxDQTF-sJpmodw6ef6tk1_IFLH2numpEwTmF2rt8dYVwnOc7Ha8CCHNLsP73KMLn6HWMv_ebgguFJ-c6xyIDU1lYHzgA/media?maxHeightPx=900&maxWidthPx=1200&key=AIzaSyDLEqutvbZGmrRLhNan2V6syb4YE_zfXV4",
+      "maps_cover_image_url": "https://places.googleapis.com/v1/places/ChIJZyDIzUOFi0cR1iarfDAQeaU/photos/Ab43m-vSI1ZMYkAdrYI130Hk7aZC9iJlc4Pubz3gbyScmYM92gpkFR67a_MloR2LYUvlX1QkX8uWjZ5QDCZzU-qa_bKXRuXXn6pCjH8SNJ5tGXjblVEwsM-IspZ0XVsyNoz2FcO42Ky8XPC2xcYPWiFCs48tmCle_jdQXMgoi0OP93A5pNCk4TPMdMlHXe6AqEpmPmTK45MO_4ZTWtd19IMbxYguxAdR_VistUXW0xUIkjbIyt0QWH15mGcnhhjWEYy5H1Juy_x1uYTnyg0Ox46eqXB2knS1LG_QLzvWaCqnwf_XNQ/media?maxHeightPx=900&maxWidthPx=1200&key=AIzaSyDLEqutvbZGmrRLhNan2V6syb4YE_zfXV4",
       "diamond_pain": "diamant_brut",
       "seed_category": "restauration",
-      "place_id": "ChIJBd0eP_mPi0cRl-oMhu3YC_g",
+      "place_id": "ChIJZyDIzUOFi0cR1iarfDAQeaU",
       "trending_query": "restauration",
       "strate_score_total": 100,
       "strate_is_diamant_brut": true,
@@ -75,17 +39,53 @@
       ]
     },
     {
-      "name": "Wamy's Annecy",
-      "metier": "fast_food_restaurant",
-      "address": "19 Av. de Chambéry, 74000 Annecy",
+      "name": "Phone discount",
+      "metier": "cell_phone_store",
+      "address": "10 bis Av. de Chambéry, 74000 Annecy",
       "rating": 4.6,
-      "reviews": 1100,
+      "reviews": 76,
       "lost_revenue_pitch": "Avec un volume d’avis qui prouve le flux, l’absence totale de site vous fait perdre une part importante des contacts qui veulent passer à l’action après Maps — au profit des concurrents déjà cliquables en un tap.",
-      "maps_cover_image_url": "https://places.googleapis.com/v1/places/ChIJYStGuxSFi0cRQMTLFdtWsWE/photos/Ab43m-syWIXSoNMwiEJ9-CPFgNpxRpuBFHBlHyrErTdvwz_UcJMFZFhUvXybZhZtdl0w4M4jrfYIJPmDqDfD3aB0O0XoaU4t46EBpetnkTKTfg4Mg6ZxkcjEwkA4AzhAo6KfGZ-4MEDX8ibXS8Kry0Zot2a5uwBDsns8U5krxesVieOaJ1lyjcqVcxBuKf4DePUx7ok8IBaZRAGgqZHUUl4HQ8Ie0eBiFCRKe_2FMqW7XWQQBFq2BoSw6Q-W5wYBSxmJbg6e-ezzAc65JPCI28SyMwg3YOeDj5prXJZuMeypSulyuA/media?maxHeightPx=900&maxWidthPx=1200&key=AIzaSyDLEqutvbZGmrRLhNan2V6syb4YE_zfXV4",
+      "maps_cover_image_url": "https://places.googleapis.com/v1/places/ChIJo8fvKVaFi0cRXCxr3zsickI/photos/Ab43m-tIJFIdhRYhQa3YzMUFWPn0TW-xv8PXreh8xTC72M5UD5hO_jMKsP5BLM3QzrlwpEpoEV991CMIArsSGkYq0ulsfL3sGNcWlanzfUbi7iJvLHNTZiT0CoMQn2KFho0AafFvc9Ne0qjcUVCmODek3XLZTXWCjkAl_xhExVsrufjpRH2dldd_HPPRt9w8ziTrZ5ATpFZJ5XBpvfPJ-GuemwebWmLzp3Jyt2aD7lF-E4ZLR3zvsKPANbIWI8VaX1yzkc_tkLSptYklqm5vUrnFonXjy_jrjaLoSalJUTZMjoiPNQ51SVeh8hfd1tTwSvKbgCXdncl2bFnAtUfjDpw16ixPIIONeRvoT7axqQs2-zsIYX08UWAdlLed6aqvgLB18TBZ74Fvm42Pki-9pRUEJHoXzd4OXSkwKGjJKhQnc_ATMXW2/media?maxHeightPx=900&maxWidthPx=1200&key=AIzaSyDLEqutvbZGmrRLhNan2V6syb4YE_zfXV4",
       "diamond_pain": "diamant_brut",
-      "seed_category": "restauration",
-      "place_id": "ChIJYStGuxSFi0cRQMTLFdtWsWE",
-      "trending_query": "restauration",
+      "seed_category": "urgence telephone",
+      "place_id": "ChIJo8fvKVaFi0cRXCxr3zsickI",
+      "trending_query": "urgence telephone",
+      "strate_score_total": 100,
+      "strate_is_diamant_brut": true,
+      "strate_failures_vulgarized": [
+        "Pas de site web : le trafic Maps ne trouve aucune passerelle de conversion en ligne."
+      ]
+    },
+    {
+      "name": "Mobile Access",
+      "metier": null,
+      "address": "25 Rue Sommeiller, 74000 Annecy",
+      "rating": 4.9,
+      "reviews": 160,
+      "lost_revenue_pitch": "Avec un volume d’avis qui prouve le flux, l’absence totale de site vous fait perdre une part importante des contacts qui veulent passer à l’action après Maps — au profit des concurrents déjà cliquables en un tap.",
+      "maps_cover_image_url": "https://places.googleapis.com/v1/places/ChIJlZnqUfePi0cRqsyJQIgatzE/photos/Ab43m-svkooclSZCHFtT86jEeHcM2uPGzHl5PeP3CazV5UpfgOfZ5lM87mSrm1QP4wr-v-EocPgGe3-6AIBj8Krxo43QYANoo_i9RK7AF7hEtaVLUyX4AjeD0asbIM1YisfMTsnyzYvrLtTWa6SvNFZNQRKciduuqKo5xtnIhn_wdWE5V-WX_A4f6go5olvneHJxzJ6We5oLvLs5bjRTB-vuNqkZiV74bSMckdsCLJCXn36kRovPI18Uj2pfQuJynL1ccZeeGzivF8Gpcy_nvFnlF9N4z_sCWLfHGa-8fVTmBErVP1OKj_ZQ5Tg4MVOU2PXXum9CSxv9NvUU_yAKWQha6G5PlLXvtXZzGLQQsBjHR7lpDWTCtfbJkKzrSd90PRjCXinoqa3ub69KRROzXTfqO9poUejpAgoBOyuVHAevK82NUXFq/media?maxHeightPx=900&maxWidthPx=1200&key=AIzaSyDLEqutvbZGmrRLhNan2V6syb4YE_zfXV4",
+      "diamond_pain": "diamant_brut",
+      "seed_category": "urgence telephone",
+      "place_id": "ChIJlZnqUfePi0cRqsyJQIgatzE",
+      "trending_query": "urgence telephone",
+      "strate_score_total": 100,
+      "strate_is_diamant_brut": true,
+      "strate_failures_vulgarized": [
+        "Pas de site web : le trafic Maps ne trouve aucune passerelle de conversion en ligne."
+      ]
+    },
+    {
+      "name": "Maison Médicale du Garde Annecy-Seynod",
+      "metier": "doctor",
+      "address": "11 Rue Blaise Pascal, 74600 Annecy",
+      "rating": 4.6,
+      "reviews": 118,
+      "lost_revenue_pitch": "Avec un volume d’avis qui prouve le flux, l’absence totale de site vous fait perdre une part importante des contacts qui veulent passer à l’action après Maps — au profit des concurrents déjà cliquables en un tap.",
+      "maps_cover_image_url": "https://places.googleapis.com/v1/places/ChIJbdu8yYqPi0cR3nv61YuM-B8/photos/Ab43m-vgDzfnu7MaY0zB8nd-NGKZk7Inft7kyl6g4xxMWrudkZujLmU2QBakuvneN2EmP4f7byk0Zpnc62BunaNTN7AExUe6iuhB6gI-rVyR3RSMAvdUC_U2qfT2mswAIX4wbyLgEG9m0gO_aWJMZm16LlhyZt3Vcd6o93ABvHLCB-dfuBxgGBPPeGQaVtduUaGuMALofvNvhfg2wlqZuKxKroHh9cnsKR8S6BDvsTcBhtmU0kXahLt9J-IzA01MUk_D5hLJU7HXBB9dwJ8FXM5lk4beS-3Lx6lUY3CJt7hYMDRFJQ/media?maxHeightPx=900&maxWidthPx=1200&key=AIzaSyDLEqutvbZGmrRLhNan2V6syb4YE_zfXV4",
+      "diamond_pain": "diamant_brut",
+      "seed_category": "urgence telephone",
+      "place_id": "ChIJbdu8yYqPi0cR3nv61YuM-B8",
+      "trending_query": "urgence telephone",
       "strate_score_total": 100,
       "strate_is_diamant_brut": true,
       "strate_failures_vulgarized": [
@@ -98,12 +98,12 @@
     "service",
     "service parking",
     "depannage",
-    "construction",
+    "depannage 74",
     "reservation festival",
+    "construction",
     "urgence hopital",
     "restauration",
     "renovation le beret",
-    "urgence telephone",
-    "construction le vieux"
+    "urgence telephone"
   ]
 }
