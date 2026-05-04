@@ -3,7 +3,7 @@
 **Date :** dimanche 3 mai 2026 à 23:52
 **Zone :** Annecy, France
 **Recherche :** Demand-driven · 10 intention(s) Suggest
-**Semaine ISO :** `2026-W18`
+**Semaine ISO :** `2026-W19`
 **Mode :** demand-driven (10 intentions Suggest)
 
 ---
@@ -147,6 +147,8 @@ _Qualification : trésorerie Maps (avis > 50, note > 4.2) + zone ; puis **Strate
 - **Audits vitrine Strate Studio :** 5 publication(s) — liens sous chaque pépite
 - **Export JSON local (Shadow) :** `data/shadow-sites-export.json`
 - **Écartements Gatekeeper (non-commercial) :** 2
+
+---
 
 ## Entités non-commerciales écartées
 
