@@ -1,6 +1,6 @@
 {
-  "lastRunIso": "2026-05-03T21:52:23.933Z",
-  "workflow": "local",
+  "lastRunIso": "2026-05-04T09:28:32.104Z",
+  "workflow": "nightly-radar",
   "campaign": null,
   "diamondsFound": 5
 }
