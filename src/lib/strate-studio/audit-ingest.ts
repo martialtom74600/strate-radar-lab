@@ -304,23 +304,27 @@ export async function postAuditIngest(args: {
     json = null;
   }
 
-  if (res.status === 201) {
+  const httpOk = res.status >= 200 && res.status < 300;
+  const bodyObj =
+    json !== null && typeof json === 'object' ? (json as Record<string, unknown>) : null;
+
+  if (httpOk) {
+    if (bodyObj !== null && bodyObj.ok === false) {
+      const failMsg =
+        typeof bodyObj.error === 'string'
+          ? bodyObj.error
+          : typeof bodyObj.message === 'string'
+            ? bodyObj.message
+            : text.slice(0, 500) || 'Réponse ok: false sans détail.';
+      return { ok: false, status: res.status, message: failMsg };
+    }
+
     const id =
-      json &&
-      typeof json === 'object' &&
-      json !== null &&
-      'id' in json &&
-      typeof (json as { id: unknown }).id === 'string'
-        ? (json as { id: string }).id
+      bodyObj !== null && typeof bodyObj.id === 'string'
+        ? bodyObj.id
         : '';
     const slug =
-      json &&
-      typeof json === 'object' &&
-      json !== null &&
-      'slug' in json &&
-      typeof (json as { slug: unknown }).slug === 'string'
-        ? (json as { slug: string }).slug
-        : args.body.slug;
+      bodyObj !== null && typeof bodyObj.slug === 'string' ? bodyObj.slug : args.body.slug;
     return { ok: true, id, slug };
   }
 
