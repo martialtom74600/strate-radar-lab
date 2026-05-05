@@ -8,6 +8,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import type { ShadowSiteExportRecord } from './shadow-export.js';
+import { googleMapsRawSchema, type GoogleMapsRaw } from '../lib/strate-studio/audit-payload.js';
 
 export type GenerateShadowPagesOptions = {
   readonly exportPath: string;
@@ -44,6 +45,39 @@ function fileBaseForDiamond(rec: ShadowSiteExportRecord): string {
   return `${slug}-${h}`;
 }
 
+function coerceGoogleMapsRaw(
+  o: Record<string, unknown>,
+  name: string,
+  metier: string | null,
+  address: string | null,
+  rating: number | null,
+  reviews: number | null,
+  placeId: string | null,
+  mapsCover: string | null,
+  seedCategory: string | null,
+  trendingQuery: string,
+): GoogleMapsRaw {
+  const raw = o.google_maps_raw;
+  if (raw && typeof raw === 'object') {
+    const parsed = googleMapsRawSchema.safeParse(raw);
+    if (parsed.success) return parsed.data;
+  }
+  return googleMapsRawSchema.parse({
+    title: name,
+    address,
+    rating,
+    reviews,
+    type: metier,
+    types: [],
+    price: null,
+    gps_coordinates: null,
+    thumbnail: mapsCover,
+    place_id: placeId,
+    trendingQuery,
+    seedCategory,
+  });
+}
+
 function coerceDiamonds(raw: unknown): ShadowSiteExportRecord[] {
   if (!raw || typeof raw !== 'object') return [];
   const d = (raw as { diamonds?: unknown }).diamonds;
@@ -52,9 +86,10 @@ function coerceDiamonds(raw: unknown): ShadowSiteExportRecord[] {
   for (const row of d) {
     if (!row || typeof row !== 'object') continue;
     const o = row as Record<string, unknown>;
-    if (typeof o.name !== 'string' || typeof o.lost_revenue_pitch !== 'string') continue;
+    if (typeof o.name !== 'string') continue;
     const pain = o.diamond_pain;
     if (
+      pain !== 'diamant_creation' &&
       pain !== 'diamant_brut' &&
       pain !== 'strate_matrix' &&
       pain !== 'no_website' &&
@@ -63,29 +98,67 @@ function coerceDiamonds(raw: unknown): ShadowSiteExportRecord[] {
     ) {
       continue;
     }
+    const lost_revenue_pitch = typeof o.lost_revenue_pitch === 'string' ? o.lost_revenue_pitch : null;
+    const metier = typeof o.metier === 'string' ? o.metier : null;
+    const address = typeof o.address === 'string' ? o.address : null;
+    const rating = typeof o.rating === 'number' ? o.rating : null;
+    const reviews = typeof o.reviews === 'number' ? o.reviews : null;
+    const maps_cover_image_url =
+      typeof o.maps_cover_image_url === 'string' ? o.maps_cover_image_url : null;
+    const seed_category = typeof o.seed_category === 'string' ? o.seed_category : null;
+    const place_id = typeof o.place_id === 'string' ? o.place_id : null;
+    const trending_query =
+      typeof o.trending_query === 'string'
+        ? o.trending_query
+        : typeof o.seed_category === 'string'
+          ? o.seed_category
+          : 'recherches locales à forte intention';
+
+    const isCreationPain = pain === 'diamant_creation' || pain === 'diamant_brut';
+    const conversionBadge =
+      o.conversion_badge === 'DIAMANT_CREATION' || o.conversion_badge === 'DIAMANT_REFONTE'
+        ? o.conversion_badge
+        : pain === 'strate_matrix'
+          ? 'DIAMANT_REFONTE'
+          : isCreationPain
+            ? 'DIAMANT_CREATION'
+            : 'DIAMANT_REFONTE';
+
     out.push({
       name: o.name,
-      metier: typeof o.metier === 'string' ? o.metier : null,
-      address: typeof o.address === 'string' ? o.address : null,
-      rating: typeof o.rating === 'number' ? o.rating : null,
-      reviews: typeof o.reviews === 'number' ? o.reviews : null,
-      lost_revenue_pitch: o.lost_revenue_pitch,
-      maps_cover_image_url:
-        typeof o.maps_cover_image_url === 'string' ? o.maps_cover_image_url : null,
-      diamond_pain: pain,
-      seed_category: typeof o.seed_category === 'string' ? o.seed_category : null,
-      place_id: typeof o.place_id === 'string' ? o.place_id : null,
-      trending_query:
-        typeof o.trending_query === 'string'
-          ? o.trending_query
-          : typeof o.seed_category === 'string'
-            ? o.seed_category
-            : 'recherches locales à forte intention',
+      metier,
+      address,
+      rating,
+      reviews,
+      lost_revenue_pitch,
+      google_maps_raw: coerceGoogleMapsRaw(
+        o,
+        o.name,
+        metier,
+        address,
+        rating,
+        reviews,
+        place_id,
+        maps_cover_image_url,
+        seed_category,
+        trending_query,
+      ),
+      maps_cover_image_url,
+      diamond_pain:
+        pain === 'diamant_brut' || pain === 'diamant_creation'
+          ? 'diamant_creation'
+          : (pain as ShadowSiteExportRecord['diamond_pain']),
+      conversion_badge: conversionBadge,
+      seed_category,
+      place_id,
+      trending_query,
       strate_score_total: typeof o.strate_score_total === 'number' ? o.strate_score_total : 0,
-      strate_is_diamant_brut:
-        typeof o.strate_is_diamant_brut === 'boolean'
-          ? o.strate_is_diamant_brut
-          : pain === 'diamant_brut',
+      strate_is_diamant_creation:
+        typeof o.strate_is_diamant_creation === 'boolean'
+          ? o.strate_is_diamant_creation
+          : typeof o.strate_is_diamant_brut === 'boolean'
+            ? o.strate_is_diamant_brut
+            : isCreationPain,
       strate_failures_vulgarized: Array.isArray(o.strate_failures_vulgarized)
         ? (o.strate_failures_vulgarized as unknown[]).filter((x): x is string => typeof x === 'string')
         : [],
@@ -108,7 +181,7 @@ function buildCurrentPainBullets(rec: ShadowSiteExportRecord): string[] {
     'Pas de parcours de réservation / devis clair en moins de trois clics.',
     'Signaux de confiance et sécurité web perfectibles (perception « insécurité » côté utilisateur).',
   ];
-  if (rec.strate_is_diamant_brut) {
+  if (rec.strate_is_diamant_creation) {
     return [
       'Aucun site relié à votre trafic Maps : la demande locale ne convertit pas en rendez-vous.',
       'Vous dépendez entièrement des plateformes tierces pour la prise de contact.',
@@ -127,7 +200,7 @@ function buildPageHtml(
   auditGeneratedAtIso: string,
 ): string {
   const cityDisplay = cityLabel.trim() || 'votre zone';
-  const score = rec.strate_is_diamant_brut ? 100 : Math.max(0, Math.min(100, rec.strate_score_total));
+  const score = rec.strate_is_diamant_creation ? 100 : Math.max(0, Math.min(100, rec.strate_score_total));
   const monthlyLeak = estimateMonthlyLeakClients(rec);
   const painLeft = buildCurrentPainBullets(rec);
   const leftLis = painLeft
@@ -150,7 +223,10 @@ function buildPageHtml(
 
   const circumference = 2 * Math.PI * 44;
   const dashOffset = circumference * (1 - score / 100);
-  const pitchBlock = escapeHtml(rec.lost_revenue_pitch);
+  const pitchBlock = escapeHtml(
+    rec.lost_revenue_pitch ??
+      'Données sources : voir l’export JSON (`google_maps_raw`) — aucun pitch généré par le radar pour cette fiche.',
+  );
 
   const endMs = new Date(auditGeneratedAtIso).getTime() + 72 * 3600 * 1000;
   const endIso = new Date(endMs).toISOString();
@@ -549,14 +625,14 @@ function buildPageHtml(
     <section class="card">
       <h2>Performance &amp; diagnostic</h2>
       ${
-        rec.strate_is_diamant_brut
+        rec.strate_is_diamant_creation
           ? `<div class="viz-row seal">
         <div>
           <div class="seal-ring"><div class="seal-inner">
             <strong>POTENTIEL INEXPLOITÉ</strong>
             <em>100%</em>
           </div></div>
-          <p style="margin:1.25rem 0 0;text-align:center;font-size:0.88rem;color:var(--muted);max-width:280px;margin-left:auto;margin-right:auto">Diamant brut : trafic Maps massif sans site de conversion — priorité stratégique maximale.</p>
+          <p style="margin:1.25rem 0 0;text-align:center;font-size:0.88rem;color:var(--muted);max-width:280px;margin-left:auto;margin-right:auto">Diamant création : trafic Maps sans site propriétaire — opportunité « site neuf ».</p>
         </div>
         <div class="pitch"><p>${pitchBlock}</p></div>
       </div>`

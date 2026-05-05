@@ -1,22 +1,30 @@
 /**
- * Client Google Places API (Text Search — nouveau endpoint REST).
+ * Client Google Places API (Text Search).
  * @see https://developers.google.com/maps/documentation/places/web-service/text-search
  */
 
 import type { AppConfig } from '../config/index.js';
 import { StrateRadarError } from './errors.js';
 import { withRetry } from './retry.js';
-import { createSerpClient, type SerpClient } from '../services/serp/serp.client.js';
-import type {
-  SerpGoogleLocalResponse,
-  SerpLocalResult,
+import { MOCK_SERP_GOOGLE_ORGANIC_RESPONSE } from '../services/serp/organic-mock.js';
+import {
+  serpGoogleOrganicResponseSchema,
+  type SerpGoogleOrganicResponse,
+} from '../services/serp/organic-schemas.js';
+import { MOCK_SERP_GOOGLE_LOCAL_RESPONSE } from '../services/serp/mock-data.js';
+import {
+  serpGoogleLocalResponseSchema,
+  type SerpGoogleLocalResponse,
+  type SerpLocalResult,
 } from '../services/serp/schemas.js';
-import type { SerpGoogleOrganicResponse } from '../services/serp/organic-schemas.js';
-import type { GoogleLocalSearchParams, GoogleOrganicSearchParams } from '../services/serp/serp.client.js';
+import type {
+  GoogleLocalSearchParams,
+  GoogleOrganicSearchParams,
+  SerpClient,
+} from '../services/serp/search-client.types.js';
 
 const PLACES_TEXT_SEARCH_URL = 'https://places.googleapis.com/v1/places:searchText';
 
-/** Sans espace (exigence Google FieldMask). + localisation et photos hero pour audits vitrine. */
 const FIELD_MASK =
   'places.id,places.displayName,places.rating,places.userRatingCount,places.websiteUri,places.formattedAddress,places.priceLevel,places.primaryType,places.types,places.location,places.photos,nextPageToken';
 
@@ -64,7 +72,6 @@ function mapPriceLevelToLabel(level: string | undefined): string | undefined {
   return m[level] ?? undefined;
 }
 
-/** URL publique de rendu photo Places (clé en query — usage serveur / lien audit privé). `name` = chemin Places, ex. `places/ChIJ…/photos/Aw…`. */
 export function buildPlacesPhotoMediaUrl(photoResourceName: string, apiKey: string): string {
   const name = photoResourceName.trim().replace(/^\/+|\/+$/g, '');
   const key = apiKey.trim();
@@ -194,6 +201,25 @@ function emptyLocalPack(q: string, location: string | undefined): SerpGoogleLoca
   };
 }
 
+function createGooglePlacesSimulationClient(): SerpClient {
+  return {
+    async searchGoogleLocal(params: GoogleLocalSearchParams): Promise<SerpGoogleLocalResponse> {
+      if (params.pageToken !== undefined && params.pageToken !== '') {
+        const base = structuredClone(MOCK_SERP_GOOGLE_LOCAL_RESPONSE);
+        base.local_results = [];
+        base.search_metadata = { ...base.search_metadata, id: 'mock-places-empty-page' };
+        return serpGoogleLocalResponseSchema.parse(base);
+      }
+      return serpGoogleLocalResponseSchema.parse(structuredClone(MOCK_SERP_GOOGLE_LOCAL_RESPONSE));
+    },
+    async searchGoogleOrganic(
+      _params: GoogleOrganicSearchParams,
+    ): Promise<SerpGoogleOrganicResponse> {
+      return serpGoogleOrganicResponseSchema.parse(structuredClone(MOCK_SERP_GOOGLE_ORGANIC_RESPONSE));
+    },
+  };
+}
+
 function createGooglePlacesLiveClient(config: AppConfig): SerpClient {
   const apiKey = config.GOOGLE_PLACES_API_KEY?.trim();
   if (!apiKey) {
@@ -285,13 +311,9 @@ function createGooglePlacesLiveClient(config: AppConfig): SerpClient {
   };
 }
 
-/**
- * Mode réel : Google Places Text Search (+ même API pour le « deep » site web).
- * Mode simulation : conserve les mocks SerpApi existants (aucune clé Places requise).
- */
 export function createRadarSearchClient(config: AppConfig): SerpClient {
   if (config.simulation) {
-    return createSerpClient(config);
+    return createGooglePlacesSimulationClient();
   }
   return createGooglePlacesLiveClient(config);
 }

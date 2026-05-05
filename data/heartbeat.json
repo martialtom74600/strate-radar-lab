@@ -1,6 +1,14 @@
 {
-  "lastRunIso": "2026-05-04T09:28:32.104Z",
-  "workflow": "nightly-radar",
+  "lastRunIso": "2026-05-05T12:02:05.701Z",
+  "workflow": "local",
   "campaign": null,
-  "diamondsFound": 5
+  "diamondsFound": 20,
+  "creationsFound": 15,
+  "refontesFound": 5,
+  "targetCreationCount": 15,
+  "targetRefonteCount": 5,
+  "totalBusinessesScanned": 276,
+  "placesRequestsUsed": 43,
+  "placesRequestsMax": 150,
+  "placesStoppedEarly": false
 }

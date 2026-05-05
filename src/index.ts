@@ -32,10 +32,10 @@ async function main(): Promise<void> {
   });
 
   const debugIngestLine = result.lines.find(
-    (l) => l.conversionBadge === 'DIAMANT' && l.diamondHunterPitch !== undefined,
+    (l) => l.conversionBadge === 'DIAMANT_CREATION' || l.conversionBadge === 'DIAMANT_REFONTE',
   );
   if (debugIngestLine) {
-    const payload = await extendAuditPayloadWithHighValue(
+    const payload = extendAuditPayloadWithHighValue(
       debugIngestLine,
       result,
       radarLineToStrateAuditPayload(debugIngestLine),
@@ -56,18 +56,26 @@ async function main(): Promise<void> {
     lastRunIso: result.generatedAtIso,
     workflow: process.env.GITHUB_ACTIONS === 'true' ? 'nightly-radar' : 'local',
     campaign: result.campaign ?? null,
-    diamondsFound: result.diamondsFound,
+    diamondsFound: result.creationsFound + result.refontesFound,
+    creationsFound: result.creationsFound,
+    refontesFound: result.refontesFound,
+    targetCreationCount: result.targetCreationCount,
+    targetRefonteCount: result.targetRefonteCount,
+    totalBusinessesScanned: result.totalBusinessesScanned,
+    placesRequestsUsed: result.placesRequestsUsed,
+    placesRequestsMax: result.placesRequestsMax,
+    placesStoppedEarly: result.placesStoppedEarly,
   });
   if (config.RADAR_VERBOSE) {
     console.log(`Heartbeat : ${hbPath}`);
   }
 
-  if (result.serpApiStoppedEarly) {
+  if (result.placesStoppedEarly) {
     console.warn(
       '\n⚠ Google Places : run interrompu (souvent HTTP 429 — quota). Rapport et export reflètent les résultats **jusqu’à l’arrêt**.',
     );
-    if (result.serpApiStopMessage) {
-      console.warn(`   ${result.serpApiStopMessage}`);
+    if (result.placesStopMessage) {
+      console.warn(`   ${result.placesStopMessage}`);
     }
   }
 
@@ -79,10 +87,10 @@ async function main(): Promise<void> {
     demand_driven_mode: result.demandDrivenMode,
     trending_queries_used: result.trendQueriesResolved,
   });
-  console.log(`Export Shadow Site : ${shadowPath} (${diamonds.length} pépite(s))`);
+  console.log(`Export Shadow Site : ${shadowPath} (${diamonds.length} lead(s))`);
 
   console.log(
-    `Diamants : ${result.diamondsFound}/${result.targetDiamondCount} · Fiches : ${result.totalBusinessesScanned} · Requêtes (run) : ${result.serpApiCallsUsed}/${result.serpApiCallsMax}`,
+    `Leads : création ${result.creationsFound}/${result.targetCreationCount} · refonte ${result.refontesFound}/${result.targetRefonteCount} · Fiches : ${result.totalBusinessesScanned} · Requêtes Places (run) : ${result.placesRequestsUsed}/${result.placesRequestsMax}`,
   );
 }
 

@@ -594,45 +594,4 @@ export class ProspectRepository {
       [placeKey, outcome],
     );
   }
-
-  /** @deprecated */
-  async getWeekPlaceOutcome(
-    placeKey: string,
-    weekBucket: string,
-  ): Promise<'diamond' | 'disqualified' | null> {
-    return new Promise((resolve, reject) => {
-      this.db.get(
-        `SELECT outcome FROM radar_week_place_outcome WHERE place_key = ? AND week_bucket = ?`,
-        [placeKey, weekBucket],
-        (err: Error | null, row: unknown) => {
-          if (err) reject(err);
-          else {
-            const raw =
-              row &&
-              typeof row === 'object' &&
-              row !== null &&
-              'outcome' in row &&
-              typeof (row as { outcome: unknown }).outcome === 'string'
-                ? (row as { outcome: string }).outcome
-                : null;
-            if (raw === 'diamond' || raw === 'disqualified') resolve(raw);
-            else resolve(null);
-          }
-        },
-      );
-    });
-  }
-
-  async recordWeekPlaceOutcome(
-    placeKey: string,
-    weekBucket: string,
-    outcome: 'diamond' | 'disqualified',
-  ): Promise<void> {
-    await run(
-      this.db,
-      `INSERT OR REPLACE INTO radar_week_place_outcome (place_key, week_bucket, outcome, recorded_at)
-       VALUES (?, ?, ?, datetime('now'))`,
-      [placeKey, weekBucket, outcome],
-    );
-  }
 }

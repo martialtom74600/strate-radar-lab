@@ -3,6 +3,29 @@ import { z } from 'zod';
 /** Kebab-case strict (aligné radarIngestBodySchema côté vitrine). */
 export const studioAuditSlugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
+/** Données Maps / SERP pures + contexte de recherche (sans texte généré par le radar). */
+export const googleMapsRawSchema = z.object({
+  title: z.string(),
+  address: z.string().nullable(),
+  rating: z.number().nullable(),
+  reviews: z.number().nullable(),
+  type: z.string().nullable(),
+  types: z.array(z.string()),
+  price: z.string().nullable(),
+  gps_coordinates: z
+    .object({
+      latitude: z.number(),
+      longitude: z.number(),
+    })
+    .nullable(),
+  thumbnail: z.string().nullable(),
+  place_id: z.string().nullable(),
+  trendingQuery: z.string(),
+  seedCategory: z.string().nullable(),
+});
+
+export type GoogleMapsRaw = z.infer<typeof googleMapsRawSchema>;
+
 export const strateRadarAuditStrateScoreSchema = z
   .object({
     overall: z.number().optional(),
@@ -10,12 +33,13 @@ export const strateRadarAuditStrateScoreSchema = z
   })
   .passthrough();
 
-/** Base strateStudio + enveloppes HV (visuals, business_intelligence, competition, copywriting, technical_metrics…). */
+/** Payload d’ingest vitrine : Strate + métriques + contenu + `googleMapsRaw`. */
 export const strateRadarAuditPayloadSchema = z
   .object({
     strateScore: strateRadarAuditStrateScoreSchema,
     metrics: z.union([z.record(z.unknown()), z.array(z.unknown())]),
     content: z.union([z.record(z.unknown()), z.array(z.unknown()), z.string()]),
+    googleMapsRaw: googleMapsRawSchema,
   })
   .passthrough();
 

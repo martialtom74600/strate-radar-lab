@@ -7,8 +7,10 @@ import type { StrateScoreResult } from '../strate-scorer.js';
 import type { RadarPipelineLine, RadarPipelineResult } from '../../pipeline/radar-pipeline.js';
 import {
   auditIngestBodySchema,
+  googleMapsRawSchema,
   studioAuditSlugRegex,
   type AuditIngestPayload,
+  type GoogleMapsRaw,
   type StrateRadarAuditPayload,
 } from './audit-payload.js';
 import { extendAuditPayloadWithHighValue } from './audit-hv-enrichment.js';
@@ -146,35 +148,66 @@ function metricsFromLine(line: RadarPipelineLine): Record<string, unknown> {
     mapsType: line.serp.type ?? null,
     trendingQuery: line.trendingQuery ?? null,
     seedCategory: line.seedCategory ?? null,
+    leadKind: line.conversionBadge ?? null,
   };
 }
 
-export function radarLineToStrateAuditPayload(line: RadarPipelineLine): StrateRadarAuditPayload {
-  const pitch = line.diamondHunterPitch;
-  const sc = line.strateScore;
+export function buildGoogleMapsRaw(line: RadarPipelineLine): GoogleMapsRaw {
+  const serp = line.serp;
+  const g = serp.gps_coordinates;
+  const gps =
+    g &&
+    typeof g.latitude === 'number' &&
+    typeof g.longitude === 'number' &&
+    !Number.isNaN(g.latitude) &&
+    !Number.isNaN(g.longitude)
+      ? { latitude: g.latitude, longitude: g.longitude }
+      : null;
 
-  if (sc === undefined || sc.isDiamantBrut || sc.matrix === null) {
+  return googleMapsRawSchema.parse({
+    title: serp.title,
+    address: serp.address !== undefined && serp.address.trim() !== '' ? serp.address : null,
+    rating:
+      typeof serp.rating === 'number' && !Number.isNaN(serp.rating) ? serp.rating : null,
+    reviews:
+      typeof serp.reviews === 'number' && !Number.isNaN(serp.reviews) ? serp.reviews : null,
+    type: serp.type !== undefined && serp.type.trim() !== '' ? serp.type : null,
+    types: serp.types !== undefined ? [...serp.types] : [],
+    price: serp.price !== undefined && serp.price.trim() !== '' ? serp.price : null,
+    gps_coordinates: gps,
+    thumbnail:
+      serp.thumbnail !== undefined && serp.thumbnail.trim() !== '' ? serp.thumbnail : null,
+    place_id: serp.place_id !== undefined && serp.place_id.trim() !== '' ? serp.place_id : null,
+    trendingQuery: line.trendingQuery.trim(),
+    seedCategory:
+      line.seedCategory !== undefined && line.seedCategory.trim() !== ''
+        ? line.seedCategory
+        : null,
+  });
+}
+
+export function radarLineToStrateAuditPayload(line: RadarPipelineLine): StrateRadarAuditPayload {
+  const sc = line.strateScore;
+  const googleMapsRaw = buildGoogleMapsRaw(line);
+  const leadKind = line.conversionBadge;
+
+  if (leadKind === 'DIAMANT_CREATION') {
     return {
+      leadKind,
+      googleMapsRaw,
       strateScore: {
         overall: sc?.total ?? 100,
-        byStrate: { diamant_brut: 100 },
-        mode: 'diamant_brut',
+        byStrate: { diamant_creation: 100 },
+        mode: 'diamant_creation',
       },
       metrics: metricsFromLine(line),
       content: {
         title: line.serp.title,
-        summary: pitch?.headline ?? 'Prospect fort trafic Maps sans site web résolu.',
-        lost_revenue_pitch: pitch?.lost_revenue_pitch ?? null,
-        pitch: pitch
-          ? {
-              headline: pitch.headline,
-              gainTempsEtAutomatisation: pitch.gainTempsEtAutomatisation,
-              anglePrimeConversion: pitch.anglePrimeConversion,
-            }
-          : null,
+        summary: null,
+        lost_revenue_pitch: null,
+        pitch: null,
         findings: [],
-        recommendedNextStep:
-          pitch?.anglePrimeConversion ?? 'Proposer un site vitrine relié à la fiche Maps.',
+        recommendedNextStep: null,
         maps: {
           address: line.serp.address ?? null,
           rating: line.serp.rating ?? null,
@@ -184,46 +217,68 @@ export function radarLineToStrateAuditPayload(line: RadarPipelineLine): StrateRa
     };
   }
 
-  const m = sc.matrix;
-  const findings = buildFindings(m);
+  if (leadKind === 'DIAMANT_REFONTE' && sc?.matrix !== undefined && sc.matrix !== null) {
+    const m = sc.matrix;
+    const findings = buildFindings(m);
+    return {
+      leadKind,
+      googleMapsRaw,
+      strateScore: {
+        overall: m.total,
+        mode: 'diamant_refonte',
+        byStrate: {
+          pilier1_potentiel_financier: m.pilier1.earned,
+          pilier2_dette_technique: m.pilier2.earned,
+          pilier3_conversion_ux_locale: m.pilier3.earned,
+          ...(m.pilier4 !== undefined
+            ? { pilier4_performance_lighthouse: m.pilier4.earned }
+            : {}),
+        },
+        pilierMax: {
+          pilier1: m.pilier1.max,
+          pilier2: m.pilier2.max,
+          pilier3: m.pilier3.max,
+          ...(m.pilier4 !== undefined ? { pilier4: m.pilier4.max } : {}),
+        },
+      },
+      metrics: metricsFromLine(line),
+      content: {
+        title: line.serp.title,
+        summary: null,
+        lost_revenue_pitch: null,
+        pitch: null,
+        findings,
+        recommendedNextStep: null,
+        maps: {
+          address: line.serp.address ?? null,
+          rating: line.serp.rating ?? null,
+          reviews: line.serp.reviews ?? null,
+          category: line.serp.type ?? null,
+        },
+      },
+    };
+  }
+
   return {
+    leadKind: leadKind ?? 'DIAMANT_REFONTE',
+    googleMapsRaw,
     strateScore: {
-      overall: m.total,
-      byStrate: {
-        pilier1_potentiel_financier: m.pilier1.earned,
-        pilier2_dette_technique: m.pilier2.earned,
-        pilier3_conversion_ux_locale: m.pilier3.earned,
-        ...(m.pilier4 !== undefined
-          ? { pilier4_performance_lighthouse: m.pilier4.earned }
-          : {}),
-      },
-      pilierMax: {
-        pilier1: m.pilier1.max,
-        pilier2: m.pilier2.max,
-        pilier3: m.pilier3.max,
-        ...(m.pilier4 !== undefined ? { pilier4: m.pilier4.max } : {}),
-      },
+      overall: sc?.total ?? 0,
+      byStrate: {},
+      mode: 'incomplet',
     },
     metrics: metricsFromLine(line),
     content: {
       title: line.serp.title,
-      summary: pitch?.headline ?? `Strate Score ${m.total}/100 — points de friction listés ci-dessous.`,
-      lost_revenue_pitch: pitch?.lost_revenue_pitch ?? null,
-      pitch: pitch
-        ? {
-            headline: pitch.headline,
-            gainTempsEtAutomatisation: pitch.gainTempsEtAutomatisation,
-            anglePrimeConversion: pitch.anglePrimeConversion,
-          }
-        : null,
-      findings,
-      recommendedNextStep:
-        pitch?.anglePrimeConversion ?? 'Audit technique + parcours mobile-first.',
+      summary: null,
+      lost_revenue_pitch: null,
+      pitch: null,
+      findings: [],
+      recommendedNextStep: null,
       maps: {
         address: line.serp.address ?? null,
         rating: line.serp.rating ?? null,
         reviews: line.serp.reviews ?? null,
-        category: line.serp.type ?? null,
       },
     },
   };
@@ -246,14 +301,24 @@ export async function postAuditIngest(args: {
   /** Log le corps de réponse brut sur erreur (ex. `RADAR_INGEST_DEBUG`). */
   readonly logRawResponseOnError?: boolean;
 }): Promise<{ ok: true; id: string; slug: string } | { ok: false; status: number; message: string }> {
-  const res = await fetch(args.ingestUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${args.secret}`,
-    },
-    body: JSON.stringify(args.body),
-  });
+  let res: Response;
+  try {
+    res = await fetch(args.ingestUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${args.secret}`,
+      },
+      body: JSON.stringify(args.body),
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    let extra = '';
+    if (e instanceof Error && e.cause instanceof Error) {
+      extra = e.cause.message ? ` — ${e.cause.message}` : '';
+    }
+    return { ok: false, status: 0, message: `fetch ingest : ${msg}${extra}`.trim() };
+  }
 
   const text = await res.text();
   let json: unknown;
@@ -349,7 +414,7 @@ export async function publishStudioAuditsIfConfigured(
   const origin = config.RADAR_STUDIO_ORIGIN.trim().replace(/\/$/, '');
   const ingestUrl = ingestUrlFromOrigin(origin);
   const lines = result.lines.filter(
-    (l) => l.conversionBadge === 'DIAMANT' && l.diamondHunterPitch !== undefined,
+    (l) => l.conversionBadge === 'DIAMANT_CREATION' || l.conversionBadge === 'DIAMANT_REFONTE',
   );
 
   const jobId = `radar_${result.weekBucket}_${result.generatedAtIso}`.slice(0, 128);
@@ -360,7 +425,7 @@ export async function publishStudioAuditsIfConfigured(
     const placeKey = stablePlaceKey(line.serp);
     let slug = buildAuditSlug(line, result.reportCityDisplayName);
     const accessToken = generateAuditAccessToken();
-    const payload = await extendAuditPayloadWithHighValue(
+    const payload = extendAuditPayloadWithHighValue(
       line,
       result,
       radarLineToStrateAuditPayload(line),

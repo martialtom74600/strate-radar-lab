@@ -27,18 +27,26 @@ function radarSearchLocationFromEnv(value: unknown): string {
   return typeof t === 'string' && t.length > 0 ? t : DEFAULT_RADAR_SEARCH_LOCATION;
 }
 
+function envOptionalIntInRange(min: number, max: number) {
+  return (value: unknown): number | undefined => {
+    const t = optionalTrimmedNonEmpty(value);
+    if (t === undefined) return undefined;
+    const n = Number(String(t));
+    if (!Number.isFinite(n)) return undefined;
+    const i = Math.trunc(n);
+    if (i < min || i > max) return undefined;
+    return i;
+  };
+}
+
 const baseEnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   STRATE_RADAR_SIMULATION: z.preprocess(boolFromEnv, z.boolean()).default(false),
-  /** Clé API Google Cloud — Places API (Text Search). Remplace SerpApi en mode réel. */
+  /** Clé API Google Cloud — Places API (Text Search). */
   GOOGLE_PLACES_API_KEY: z.string().optional(),
-  /** @deprecated Conservé pour scripts / anciens .env ; non requis si GOOGLE_PLACES_API_KEY est défini. */
-  SERPAPI_API_KEY: z.string().optional(),
   GOOGLE_PAGESPEED_API_KEY: z.string().optional(),
   GROQ_API_KEY: z.string().optional(),
   GROQ_MODEL: z.preprocess(groqModelFromEnv, z.string().min(1)),
-  SERPAPI_CONCURRENCY: z.coerce.number().int().positive().max(50).default(3),
-  PAGESPEED_CONCURRENCY: z.coerce.number().int().positive().max(50).default(2),
   STRATE_RADAR_DB_PATH: z.string().min(1).default('data/strate-radar.sqlite'),
   RADAR_SEARCH_Q: z.string().min(1).default('boulangerie artisanale'),
   RADAR_SEARCH_LOCATION: z.preprocess(radarSearchLocationFromEnv, z.string().min(1)),
@@ -47,16 +55,24 @@ const baseEnvSchema = z.object({
   RADAR_SHADOW_EXPORT_PATH: z.string().min(1).default('data/shadow-sites-export.json'),
   /** Dossier cible pour `npm run generate:shadows` (pas généré par le run radar). */
   RADAR_SHADOW_PAGES_DIR: z.string().min(1).default('data/shadow-pages'),
-  /** Domaine Google (mocks / ancien flux SerpApi — optionnel). */
-  SERPAPI_GOOGLE_DOMAIN: z.preprocess(
-    optionalTrimmedNonEmpty,
-    z.string().min(1).optional(),
+  /** @deprecated Utiliser RADAR_TARGET_CREATION_COUNT + RADAR_TARGET_REFONTE_COUNT. Si seul ce champ est défini, quotas = 70 % création / 30 % refonte. */
+  RADAR_TARGET_DIAMOND_COUNT: z.preprocess(
+    envOptionalIntInRange(1, 100),
+    z.number().int().min(1).max(100).optional(),
   ),
-  /** Objectif de profils « Diamant » par run (pagination Places jusqu’à concurrence). */
-  RADAR_TARGET_DIAMOND_COUNT: z.coerce.number().int().min(1).max(20).default(5),
+  /** Objectif de leads « Diamant création » par run. Défaut 15 si non renseigné et pas de legacy. */
+  RADAR_TARGET_CREATION_COUNT: z.preprocess(
+    envOptionalIntInRange(0, 100),
+    z.number().int().min(0).max(100).optional(),
+  ),
+  /** Objectif de leads « Diamant refonte » (matrice) par run. Défaut 5 si non renseigné et pas de legacy. */
+  RADAR_TARGET_REFONTE_COUNT: z.preprocess(
+    envOptionalIntInRange(0, 100),
+    z.number().int().min(0).max(100).optional(),
+  ),
   /** Pages Text Search max par intention (≈ 20 résultats/page — garde-fou coûts). */
   RADAR_SERP_MAX_PAGES: z.coerce.number().int().min(1).max(10).default(3),
-  /** Sous-chaînes pour valider la zone (adresse / titre Maps), séparées par des virgules. */
+  /** @deprecated Non utilisé par le pipeline (zones implicites via la requête Places). Conservé pour compat .env. */
   RADAR_DIAMOND_LOCATION_HINTS: z.preprocess(
     optionalTrimmedNonEmpty,
     z.string().optional(),
@@ -65,8 +81,11 @@ const baseEnvSchema = z.object({
   RADAR_USE_SEED_LIST: z.preprocess(boolFromEnv, z.boolean()).default(true),
   /** Prospection pilotée par Google Suggest (intentions locales du moment) — remplace le grainage statique quand actif. */
   RADAR_TREND_DRIVEN: z.preprocess(boolFromEnv, z.boolean()).default(true),
-  /** Plafond appels Places Text Search (pack local + recherche « organique » site) par run — interne, pas la facturation Google. */
-  RADAR_MAX_SERPAPI_REQUESTS: z.coerce.number().int().min(10).max(500).default(150),
+  /**
+   * Plafond d’appels Google Places Text Search par run (pack local + résolution « organique » URL).
+   * Garde-fou interne, pas la facturation Google.
+   */
+  RADAR_MAX_PLACES_REQUESTS_PER_RUN: z.coerce.number().int().min(10).max(500).default(150),
   /** Fenêtre SQLite : ignorer un lieu déjà traité sur les N derniers jours. */
   RADAR_SQLITE_RECENT_DAYS: z.coerce.number().int().min(1).max(30).default(7),
   /** Affiche la progression en direct dans le terminal (familles, pages Places, chaque fiche). */
@@ -103,9 +122,50 @@ const baseEnvSchema = z.object({
 
 export type RawEnv = z.infer<typeof baseEnvSchema>;
 
-export type AppConfig = RawEnv & {
-  readonly simulation: boolean;
+/** Quotas finaux après résolution legacy (70/30) ou défauts 15 / 5. */
+export type LeadQuotaTargets = {
+  readonly RADAR_TARGET_CREATION_COUNT: number;
+  readonly RADAR_TARGET_REFONTE_COUNT: number;
 };
+
+export type AppConfig = Omit<RawEnv, 'RADAR_TARGET_CREATION_COUNT' | 'RADAR_TARGET_REFONTE_COUNT'> &
+  LeadQuotaTargets & {
+    readonly simulation: boolean;
+  };
+
+function envKeyProvided(key: string, env: NodeJS.ProcessEnv): boolean {
+  const v = env[key];
+  return v !== undefined && String(v).trim() !== '';
+}
+
+/** Legacy seul → 70 % création / 30 % refonte ; sinon défauts 15 et 5 si absents. */
+export function resolveLeadQuotaTargets(raw: RawEnv, env: NodeJS.ProcessEnv): LeadQuotaTargets {
+  const hasNewC = envKeyProvided('RADAR_TARGET_CREATION_COUNT', env);
+  const hasNewR = envKeyProvided('RADAR_TARGET_REFONTE_COUNT', env);
+  const legacy = raw.RADAR_TARGET_DIAMOND_COUNT;
+
+  if (!hasNewC && !hasNewR && legacy !== undefined && legacy >= 1) {
+    let c = Math.round(legacy * 0.7);
+    let r = Math.round(legacy * 0.3);
+    const sum = c + r;
+    if (sum !== legacy) {
+      r = legacy - c;
+    }
+    if (legacy >= 1 && c === 0 && r === 0) {
+      c = 1;
+      r = Math.max(0, legacy - 1);
+    }
+    return {
+      RADAR_TARGET_CREATION_COUNT: Math.max(0, c),
+      RADAR_TARGET_REFONTE_COUNT: Math.max(0, r),
+    };
+  }
+
+  return {
+    RADAR_TARGET_CREATION_COUNT: raw.RADAR_TARGET_CREATION_COUNT ?? 15,
+    RADAR_TARGET_REFONTE_COUNT: raw.RADAR_TARGET_REFONTE_COUNT ?? 5,
+  };
+}
 
 function validateKeysForLiveMode(raw: RawEnv): void {
   if (raw.STRATE_RADAR_SIMULATION) return;
@@ -120,16 +180,37 @@ function validateKeysForLiveMode(raw: RawEnv): void {
   }
 }
 
+/** Compat : ancien nom `RADAR_MAX_SERPAPI_REQUESTS` → `RADAR_MAX_PLACES_REQUESTS_PER_RUN`. */
+function normalizePlacesBudgetEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  const e = { ...env };
+  const legacy = e.RADAR_MAX_SERPAPI_REQUESTS;
+  if (
+    (e.RADAR_MAX_PLACES_REQUESTS_PER_RUN === undefined || String(e.RADAR_MAX_PLACES_REQUESTS_PER_RUN).trim() === '') &&
+    legacy !== undefined &&
+    String(legacy).trim() !== ''
+  ) {
+    e.RADAR_MAX_PLACES_REQUESTS_PER_RUN = String(legacy);
+  }
+  return e;
+}
+
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
-  const parsed = baseEnvSchema.safeParse(env);
+  const parsed = baseEnvSchema.safeParse(normalizePlacesBudgetEnv(env));
   if (!parsed.success) {
     const msg = parsed.error.flatten().fieldErrors;
     throw new Error(`Configuration invalide : ${JSON.stringify(msg)}`);
   }
   const raw = parsed.data;
   validateKeysForLiveMode(raw);
+  const quotas = resolveLeadQuotaTargets(raw, env);
+  if (quotas.RADAR_TARGET_CREATION_COUNT === 0 && quotas.RADAR_TARGET_REFONTE_COUNT === 0) {
+    throw new Error(
+      'Quotas leads : au moins l’un de RADAR_TARGET_CREATION_COUNT ou RADAR_TARGET_REFONTE_COUNT doit être > 0.',
+    );
+  }
   return {
     ...raw,
+    ...quotas,
     simulation: raw.STRATE_RADAR_SIMULATION,
   };
 }

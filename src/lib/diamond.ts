@@ -2,53 +2,38 @@ import type { SerpLocalResult } from '../services/serp/schemas.js';
 
 import type { WebsiteSource } from '../storage/database.js';
 
-/** Nombre minimal d’avis (strictement supérieur à 50). */
+/** Seuils trésorerie / pilier 1 matrice (site présent) — inchangés vs ancien « filtre luxe ». */
 export const DIAMOND_MIN_REVIEWS_EXCLUSIVE = 50;
 
-/** Note minimale Maps (strictement supérieure à 4.2). */
+/** Note minimale Maps pour le bonus « trésorerie » en matrice (strictement supérieur). */
 export const DIAMOND_MIN_RATING_EXCLUSIVE = 4.2;
+
+/**
+ * Seuil « Diamant création » : pas de site web propriétaire, uniquement réputation Maps légère.
+ * Strictement supérieur à ces valeurs.
+ */
+export const DIAMANT_CREATION_MIN_REVIEWS_EXCLUSIVE = 5;
+
+export const DIAMANT_CREATION_MIN_RATING_EXCLUSIVE = 3.5;
 
 export type DiamondPainType =
   | 'no_website'
   | 'site_not_linked_to_maps'
   | 'mobile_performance_critical'
-  /** Bypass : flux Maps sans aucun site — score forcé 100, pas d’analyse technique. */
-  | 'diamant_brut'
-  /** Diamant qualifié par la matrice Strate (≥ seuil Strate hors bypass). */
+  /** Pas de site propriétaire (ou seulement réseau / annuaire) + réputation minimale — score forcé, pas de matrice. */
+  | 'diamant_creation'
+  /** Diamant qualifié par la matrice Strate (≥ seuil) — refonte / dette technique. */
   | 'strate_matrix';
-
-/** Parse RADAR_DIAMOND_LOCATION_HINTS : sous-chaînes à retrouver dans adresse / titre. */
-export function parseDiamondLocationHints(raw: string | undefined): readonly string[] {
-  const fallback = ['annecy', 'chambéry'];
-  if (!raw?.trim()) return fallback;
-  const parsed = raw
-    .split(',')
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean);
-  return parsed.length > 0 ? parsed : fallback;
-}
-
-export function isProspectInTargetZone(
-  serp: SerpLocalResult,
-  hints: readonly string[],
-): boolean {
-  if (hints.length === 0) return true;
-  const haystack = [serp.address, serp.title].filter(Boolean).join(' ').toLowerCase();
-  return hints.some((h) => haystack.includes(h));
-}
-
-/** Preuve de flux + zone cible. */
-export function hasTreasuryAndZone(
-  serp: SerpLocalResult,
-  locationHints: readonly string[],
-): boolean {
-  if ((serp.reviews ?? 0) <= DIAMOND_MIN_REVIEWS_EXCLUSIVE) return false;
-  if ((serp.rating ?? 0) <= DIAMOND_MIN_RATING_EXCLUSIVE) return false;
-  return isProspectInTargetZone(serp, locationHints);
-}
 
 export type ResolvedWebsite = {
   readonly displayUrl: string;
   readonly normalizedUrl: string;
   readonly source: WebsiteSource;
 };
+
+/** Réputation Maps minimale pour le chemin Diamant création (sans filtre géographique sur l’adresse). */
+export function hasCreationReputation(serp: SerpLocalResult): boolean {
+  if ((serp.reviews ?? 0) <= DIAMANT_CREATION_MIN_REVIEWS_EXCLUSIVE) return false;
+  if ((serp.rating ?? 0) <= DIAMANT_CREATION_MIN_RATING_EXCLUSIVE) return false;
+  return true;
+}

@@ -45,6 +45,26 @@ function parseGatekeeperJson(raw: string): z.infer<typeof gatekeeperJsonSchema> 
   return safe.data;
 }
 
+function normalizeGatekeeperText(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '');
+}
+
+/**
+ * Parkings / stationnements : jamais des prospects création/refonte site pour une agence.
+ * Filtre dur avant bypass prix et avant Groq.
+ */
+export function isParkingInfrastructureSerp(serp: SerpLocalResult): boolean {
+  const titleHay = normalizeGatekeeperText(serp.title);
+  if (titleHay.includes('parking') || titleHay.includes('stationnement')) {
+    return true;
+  }
+  const primary = (serp.type ?? '').trim().toLowerCase();
+  return primary === 'parking' || primary === 'parking_lot';
+}
+
 /** Niveau de prix Maps renseigné (€, €€…) → signal fort de commerce (pas d’appel Groq). */
 export function hasPriceLevelCommercialSignal(serp: SerpLocalResult): boolean {
   return Boolean(serp.price?.trim());
@@ -108,6 +128,14 @@ export async function assessCommercialProspect(
   types: readonly string[],
   nameForPrompt?: string,
 ): Promise<CommercialGateAssessment> {
+  if (isParkingInfrastructureSerp(serp)) {
+    return {
+      isCommercial: false,
+      reason: 'Parking / stationnement (nom ou catégorie Maps) — hors cible commerciale.',
+      priceBypass: false,
+    };
+  }
+
   if (hasPriceLevelCommercialSignal(serp)) {
     return {
       isCommercial: true,

@@ -18,8 +18,8 @@ function painLabelFr(p: DiamondPainType): string {
       return 'Site hors Maps (ancienne règle)';
     case 'mobile_performance_critical':
       return 'Perf mobile critique (ancienne règle)';
-    case 'diamant_brut':
-      return 'Diamant brut — aucun site web, 100/100 (bypass matrice)';
+    case 'diamant_creation':
+      return 'Diamant création — pas de site propriétaire (réputation Maps), score symbolique / matrice non appliquée';
     case 'strate_matrix':
       return `Diamant Strate — matrice ≥ ${STRATE_DIAMOND_THRESHOLD} pts`;
   }
@@ -27,11 +27,11 @@ function painLabelFr(p: DiamondPainType): string {
 
 function formatStrateScoreSection(s: PipelineStrateScore | undefined): string[] {
   if (s === undefined) return [];
-  if (s.isDiamantBrut || s.matrix === null) {
+  if (s.isDiamantCreation || s.matrix === null) {
     return [
       `#### Strate Score`,
       ``,
-      `- **Total :** ${s.total}/100 — _Diamant brut : pas d’analyse technique (fetch / Groq conversion / PageSpeed non exécutés)._`,
+      `- **Total :** ${s.total}/100 — _Diamant création : pas d’analyse technique (fetch / Groq conversion / PageSpeed non exécutés)._`,
       ``,
     ];
   }
@@ -68,7 +68,9 @@ export function renderRapportMatinal(
     timeStyle: 'short',
   });
 
-  const diamants = result.lines.filter((l) => l.conversionBadge === 'DIAMANT');
+  const diamants = result.lines.filter(
+    (l) => l.conversionBadge === 'DIAMANT_CREATION' || l.conversionBadge === 'DIAMANT_REFONTE',
+  );
   const pepites = diamants.slice(0, 5);
 
   const header = [
@@ -89,7 +91,7 @@ export function renderRapportMatinal(
       ? [
           `## 💎 BUTIN DU JOUR : LES 5 PÉPITES`,
           ``,
-          `_Aucune pépite qualifiée dans les limites du run (requêtes recherche locale \`${result.serpApiCallsUsed}/${result.serpApiCallsMax}\`, seuils ou filtres)._`,
+          `_Aucune pépite qualifiée dans les limites du run (requêtes Places \`${result.placesRequestsUsed}/${result.placesRequestsMax}\`, seuils ou filtres)._`,
           ``,
           `---`,
           ``,
@@ -97,10 +99,9 @@ export function renderRapportMatinal(
       : [
           `## 💎 BUTIN DU JOUR : LES 5 PÉPITES`,
           ``,
-          `_Qualification : trésorerie Maps (avis > 50, note > 4.2) + zone ; puis **Strate Score** ≥ ${STRATE_DIAMOND_THRESHOLD}/100 sur site existant, ou **Diamant brut** à 100/100 sans aucun site (Maps + organique). Les runs demand-driven croisent les intentions **Suggest** du moment. Voir détail des piliers sous chaque fiche._`,
+          `_Qualification : **Diamant création** — pas de site propriétaire (réseaux / annuaires exclus) + avis > 5 & note > 3,5. **Diamant refonte** — site résolu + **Strate** ≥ ${STRATE_DIAMOND_THRESHOLD}/100. Intentions **Suggest** en mode demand-driven._`,
           ``,
           ...pepites.flatMap((l) => {
-            const pitch = l.diamondHunterPitch;
             const pk = stablePlaceKey(l.serp);
             const vitrine = studioByPlaceKey?.get(pk);
             const vitrineLine =
@@ -126,15 +127,21 @@ export function renderRapportMatinal(
                 ? `- **Site :** ${l.displayUrl}${l.websiteSource === 'organic_deep_search' ? ' _(découvert hors champ Maps)_' : ''}`
                 : `- **Site :** _aucun site résolu (Maps + organique)_`;
 
+            const valueAtRiskSubtitle =
+              l.diamondPain === 'diamant_creation'
+                ? '(données brutes — pas de pitch radar)'
+                : '(matrice Strate — pas d’estimation Groq)';
+            const valueAtRiskBody =
+              '_Pas d’estimation « manque à gagner » automatique — voir piliers Strate ci-dessous et `googleMapsRaw` / `google_maps_raw` côté vitrine._';
+
             const block = [
               `### 💎 ${l.serp.title}`,
               ``,
-              `> ### ⚠️ Value-at-Risk ${
-                l.diamondPain === 'diamant_brut' ? '(modèle statique — bypass IA)' : '(estimation Groq)'
-              }`,
+              `> ### ⚠️ Value-at-Risk ${valueAtRiskSubtitle}`,
               `> `,
-              `> **${pitch?.lost_revenue_pitch ?? '_(pitch indisponible)_'}**`,
+              `> **${valueAtRiskBody}**`,
               ``,
+              `- **Type lead :** ${l.conversionBadge}`,
               `- **Douleur :** ${l.diamondPain !== undefined ? painLabelFr(l.diamondPain) : '—'}`,
               `- **Métier (Maps) :** ${l.serp.type?.trim() || '—'}`,
               `- **Grainage :** ${l.seedCategory ?? '—'}`,
@@ -144,18 +151,6 @@ export function renderRapportMatinal(
               ``,
               ...vitrineLine,
               ...formatStrateScoreSection(l.strateScore),
-              ...(pitch
-                ? [
-                    `#### Arguments de vente ${
-                      l.diamondPain === 'diamant_brut' ? '(modèle statique)' : '(IA)'
-                    }`,
-                    ``,
-                    `- **Accroche :** ${pitch.headline}`,
-                    `- **Temps & automatisation :** ${pitch.gainTempsEtAutomatisation}`,
-                    `- **Conversion :** ${pitch.anglePrimeConversion}`,
-                    ``,
-                  ]
-                : []),
               ...perfBlock,
             ];
             return block;
@@ -168,14 +163,14 @@ export function renderRapportMatinal(
   const synth = [
     `## 📊 Synthèse run`,
     ``,
-    `- **Pépites obtenues :** ${result.diamondsFound} / ${result.targetDiamondCount}`,
+    `- **Création :** ${result.creationsFound} / ${result.targetCreationCount} · **Refonte :** ${result.refontesFound} / ${result.targetRefonteCount}`,
     `- **Fiches Maps parcourues :** ${result.totalBusinessesScanned}`,
-    `- **Requêtes recherche locale (plafond run) :** ${result.serpApiCallsUsed} / ${result.serpApiCallsMax}`,
-    ...(result.serpApiStoppedEarly
+    `- **Requêtes Places (plafond run) :** ${result.placesRequestsUsed} / ${result.placesRequestsMax}`,
+    ...(result.placesStoppedEarly
       ? [
           `- **⚠ Arrêt Google Places :** quota / limite (HTTP 429) — run terminé avec résultats partiels.`,
-          ...(result.serpApiStopMessage !== undefined
-            ? [`  - _${result.serpApiStopMessage.replace(/\s+/g, ' ').trim()}_`]
+          ...(result.placesStopMessage !== undefined
+            ? [`  - _${result.placesStopMessage.replace(/\s+/g, ' ').trim()}_`]
             : []),
         ]
       : []),

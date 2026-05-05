@@ -1,20 +1,23 @@
 import {
   DIAMOND_MIN_RATING_EXCLUSIVE,
   DIAMOND_MIN_REVIEWS_EXCLUSIVE,
-  hasTreasuryAndZone,
+  hasCreationReputation,
   type ResolvedWebsite,
 } from './diamond.js';
 import type { SerpLocalResult } from '../services/serp/schemas.js';
 import type { PageSpeedInsightsV5 } from '../services/pagespeed/schemas.js';
 
 /** Seuil Diamant sur la matrice Strate (hors bypass « Diamant brut »). */
-export const STRATE_DIAMOND_THRESHOLD = 60;
+export const STRATE_DIAMOND_THRESHOLD = 50;
 
-/** Score fixe bypass : entreprise à flux Maps sans site web. */
-export const STRATE_DIAMANT_BRUT_SCORE = 100;
+/** Score symbolique sur le chemin « Diamant création » (pas de matrice). */
+export const STRATE_DIAMANT_CREATION_SCORE = 100;
 
-/** Pilier 4 (PageSpeed) uniquement si pilier2 + pilier3 > cette valeur. */
-export const STRATE_PILIER4_SUM_TRIGGER_EXCLUSIVE = 40;
+/** @deprecated Alias historique */
+export const STRATE_DIAMANT_BRUT_SCORE = STRATE_DIAMANT_CREATION_SCORE;
+
+/** Pilier 4 (PageSpeed) uniquement si pilier2 + pilier3 > cette valeur (évite appels API trop tôt). */
+export const STRATE_PILIER4_SUM_TRIGGER_EXCLUSIVE = 30;
 
 export type StratePilierBreakdown = {
   readonly earned: number;
@@ -77,14 +80,13 @@ export async function fetchHtmlWithTimeout(
   }
 }
 
-/** Bypass « Diamant brut » : trésorerie + zone + aucun site (Maps ni organique). */
-export function qualifiesDiamantBrut(
+/** Chemin « Diamant création » : aucun site propriétaire résolu + réputation Maps (seuils création). */
+export function qualifiesDiamantCreation(
   serp: SerpLocalResult,
   resolved: ResolvedWebsite | null,
-  locationHints: readonly string[],
 ): boolean {
   if (resolved !== null) return false;
-  return hasTreasuryAndZone(serp, locationHints);
+  return hasCreationReputation(serp);
 }
 
 function isPremiumPriceTier(price: string | undefined): boolean {
@@ -119,6 +121,12 @@ export function scorePilier1Potential(serp: SerpLocalResult): StratePilierBreakd
       items.push(`Dynamique : palier prix premium (type €€€/$$$) (+10)`);
   }
 
+  if (earned === 0 && hasCreationReputation(serp)) {
+    const add = Math.min(5, max - earned);
+    earned += add;
+    items.push(`Potentiel local modeste (avis/note au-dessus seuil création) (+${add})`);
+  }
+
   return { earned: Math.min(earned, max), max, items };
 }
 
@@ -133,26 +141,29 @@ function isEffectivelyHttps(urlToCheck: string): boolean {
   }
 }
 
-/** Pilier 2 — dette technique (HTML + URL), max 30. */
+/** Pilier 2 — dette technique (HTML + URL), max 20. */
 export function scorePilier2Technical(
   html: string | null,
   displayUrl: string,
   finalUrl: string | null,
 ): StratePilierBreakdown {
-  const max = 30;
+  const max = 20;
   const items: string[] = [];
   let earned = 0;
 
   const urlForScheme = (finalUrl && finalUrl.length > 0 ? finalUrl : displayUrl).trim();
   if (!isEffectivelyHttps(urlForScheme)) {
-    earned += 15;
-    items.push('Faille : URL en HTTP ou non-HTTPS (+15)');
+    earned += 10;
+    items.push('Faille : URL en HTTP ou non-HTTPS (+10)');
   }
 
-  if (!html || html.length === 0) {
-    if (earned < max) {
-      earned += 10;
-      items.push('HTML indisponible — viewport non vérifiable (+10, proxy de non-responsive)');
+  if (!html || html.trim().length === 0) {
+    const room = max - earned;
+    if (room > 0) {
+      earned += room;
+      items.push(
+        'HTML indisponible, HTTP non-OK ou corps vide — analyse technique impossible (pilier 2 au plafond)',
+      );
     }
     return { earned: Math.min(earned, max), max, items };
   }
@@ -182,23 +193,19 @@ export function scorePilier2Technical(
     (scriptTags.length >= 20 && heavySyncScripts >= 5);
 
   if (legacyPattern) {
-    earned += 5;
-    const bits: string[] = [];
-    if (tableCount >= 2) bits.push(`layout <table>×${tableCount}`);
-    if (wix) bits.push('empreinte constructeur type Wix');
-    if (heavySyncScripts >= 8) bits.push(`${heavySyncScripts} scripts src sans defer/async`);
-    items.push(`Vétusté / lourdeur : ${bits.join(' · ')} (+5)`);
+    const legacyCap = 5;
+    const legacyAdd = Math.min(legacyCap, Math.max(0, max - earned));
+    if (legacyAdd > 0) {
+      earned += legacyAdd;
+      const bits: string[] = [];
+      if (tableCount >= 2) bits.push(`layout <table>×${tableCount}`);
+      if (wix) bits.push('empreinte constructeur type Wix');
+      if (heavySyncScripts >= 8) bits.push(`${heavySyncScripts} scripts src sans defer/async`);
+      items.push(`Vétusté / lourdeur : ${bits.join(' · ')} (+${legacyAdd}, plafonné)`);
+    }
   }
 
   return { earned: Math.min(earned, max), max, items };
-}
-
-const SERVICE_HINTS =
-  /boulanger|restaurant|hôtel|hotel|salon|coiff|cabinet|dent|vétér|veterin|garage|plomb|électric|electric|artisan|notaire|avocat|spa|clinique|agence|traiteur|café|cafe|coiffure|institut|beauté|mécan|pressing|plombier|épicier|boucher|primeur|pharmac|ostéopathe|kiné/i;
-
-export function isLikelyServiceBusiness(serp: SerpLocalResult): boolean {
-  const t = `${serp.type ?? ''} ${serp.title}`.toLowerCase();
-  return SERVICE_HINTS.test(t);
 }
 
 function normalizeText(s: string): string {
@@ -211,10 +218,540 @@ function normalizeText(s: string): string {
     .trim();
 }
 
+/** Phrases / mots-clés métiers de proximité (entrée normalisée sans accents). Ordre : plus long d'abord. */
+const SERVICE_HINT_TERMS: readonly string[] = [
+  'aide a domicile',
+  'aide au domicile',
+  'auxiliaire de vie',
+  'assistante maternelle',
+  'conseil en gestion',
+  'conseiller en voyages',
+  'cabinet comptable',
+  'expert comptable',
+  'controle technique',
+  'diagnostic immobilier',
+  'gestion locative',
+  'agence immobiliere',
+  'agent commercial',
+  'agent immobilier',
+  'home staging',
+  'promoteur immobilier',
+  'syndic de copropriete',
+  'traiteur evenementiel',
+  'nettoyage industriel',
+  'nettoyage de locaux',
+  'entreprise de nettoyage',
+  'desinsectisation',
+  'desinfection',
+  'deratisation',
+  '3d desinfection',
+  'pompes funebres',
+  'poissonnerie',
+  'charcuterie',
+  'fromagerie',
+  'patisserie',
+  'chocolaterie',
+  'cordonnerie',
+  'reparation express',
+  'reparation telephone',
+  'reparation mobile',
+  'depannage informatique',
+  'maintenance industrielle',
+  'installation electrique',
+  'installation sanitaire',
+  'climatisation reversible',
+  'videosurveillance',
+  'couverture zinguerie',
+  'carrosserie peinture',
+  'location voiture',
+  'location utilitaire',
+  'demenagement',
+  'auto ecole',
+  'ecole de conduite',
+  'formation continue',
+  'formation professionnelle',
+  'centre de formation',
+  'organisme de formation',
+  'salle de sport',
+  'club de sport',
+  'libre service',
+  'pressing cleaning',
+  'pressing blanchisserie',
+  'service a la personne',
+  'remise en forme',
+  'soins esthetiques',
+  'soin du visage',
+  'extension de cils',
+  'prothese ongulaire',
+  'onglerie',
+  'barbier',
+  'tatoueur',
+  'tatouage',
+  'piercing',
+  'osteopathie',
+  'psychologue',
+  'psychotherapeute',
+  'orthophoniste',
+  'orthoptiste',
+  'ophtalmologue',
+  'radiologie',
+  'laboratoire analyse',
+  'analyses medicales',
+  'veterinaire',
+  'toilettage',
+  'animalerie',
+  'jardin paysagiste',
+  'elagage abattage',
+  'espaces verts',
+  'paysagiste',
+  'ebenisterie',
+  'menuiserie',
+  'charpente',
+  'maconnerie',
+  'facadier',
+  'isolation thermique',
+  'etancheite',
+  'couvreur',
+  'zinguer',
+  'vitrier',
+  'serrurier',
+  'plombier',
+  'electricien',
+  'chauffagiste',
+  'climatisation',
+  'couverture',
+  'carreleur',
+  'platrier',
+  'staffeur',
+  'nettoyage',
+  'conciergerie',
+  'gardien',
+  'securite privee',
+  'securite incendie',
+  'surveillance',
+  'gardiennage',
+  'import export',
+  'import',
+  'export',
+  'negociant',
+  'grossiste',
+  'fournisseur',
+  'distribution',
+  'logistique',
+  'messagerie',
+  'coursier',
+  'livraison',
+  'livreur',
+  'drive',
+  'supermarche',
+  'hypermarche',
+  'superette',
+  'epicerie',
+  'primeur',
+  'primeurs',
+  'boulangerie',
+  'boucherie',
+  'rotisserie',
+  'traiteur',
+  'restaurant',
+  'brasserie',
+  'pizzeria',
+  'kebab',
+  'sushi',
+  'snack',
+  'food',
+  'cuisine',
+  'cafe',
+  'bar',
+  'hotel',
+  'motel',
+  'chambre',
+  'hebergement',
+  'gite',
+  'camping',
+  'auberge',
+  'residence',
+  'spa',
+  'hammam',
+  'sauna',
+  'massage',
+  'institut',
+  'esthetique',
+  'estheticien',
+  'cosmetique',
+  'parfumerie',
+  'coiffure',
+  'coiffeur',
+  'coiffeuse',
+  'salon',
+  'beauty',
+  'beaute',
+  'pharmacie',
+  'parapharmacie',
+  'dentaire',
+  'dentiste',
+  'orthodontiste',
+  'cabinet',
+  'clinique',
+  'medecin',
+  'docteur',
+  'pediatre',
+  'dermatologue',
+  'cardiologue',
+  'gynecologue',
+  'sage femme',
+  'infirmier',
+  'aide soignant',
+  'kinesitherapeute',
+  'kine',
+  'podologue',
+  'diabetologue',
+  'dieteticien',
+  'nutrition',
+  'opticien',
+  'audioprothesiste',
+  'prothese',
+  'orthopedie',
+  'fleuriste',
+  'papeterie',
+  'librairie',
+  'photographe',
+  'video',
+  'audiovisuel',
+  'ingenieur du son',
+  'imprimerie',
+  'copiste',
+  'relieur',
+  'papier',
+  'pressing',
+  'blanchisserie',
+  'laverie',
+  'mercerie',
+  'couture',
+  'retouches',
+  'lingerie',
+  'pret a porter',
+  'vetement',
+  'chaussure',
+  'maroquinerie',
+  'bijouterie',
+  'horlogerie',
+  'orfevre',
+  'antiquaire',
+  'brocante',
+  'depot vente',
+  'occasion',
+  'cash converter',
+  'garage',
+  'mecanique',
+  'automobile',
+  'auto',
+  'pneu',
+  'recharge',
+  'station',
+  'lavage',
+  'carwash',
+  'taxi',
+  'vtc',
+  'ambulance',
+  'transport',
+  'travel',
+  'tourisme',
+  'agence',
+  'agences',
+  'immobilier',
+  'immobiliere',
+  'promoteur',
+  'lotisseur',
+  'constructeur',
+  'maison',
+  'batiment',
+  'btp',
+  'travaux',
+  'renovation',
+  'amenagement',
+  'extension',
+  'surelevation',
+  'architecte',
+  'ingenieur',
+  'geometre',
+  'topographe',
+  'urbanisme',
+  'designer',
+  'decorateur',
+  'deco',
+  'agencement',
+  'cuisiniste',
+  'soldes',
+  'equipement',
+  'magasin',
+  'boutique',
+  'shop',
+  'store',
+  'commerce',
+  'commercant',
+  'retail',
+  'showroom',
+  'concept store',
+  'cash',
+  'discount',
+  'destockage',
+  'soldeur',
+  'point de vente',
+  'pdv',
+  'boutiqu',
+  'cooperative',
+  'artisan',
+  'artisans',
+  'atelier',
+  'serigraphie',
+  'trophee',
+  'gravure',
+  'serrurerie',
+  'metallerie',
+  'chaudronnerie',
+  'soudure',
+  'location',
+  'locatif',
+  'loueur',
+  'prestataire',
+  'prestation',
+  'sous traitant',
+  'facilities',
+  'facility management',
+  'nettoyeur',
+  'second oeuvre',
+  'notaire',
+  'avocat',
+  'huissier',
+  'bailiff',
+  'conseil juridique',
+  'conseil fiscal',
+  'conseil rh',
+  'conseil',
+  'consulting',
+  'consultant',
+  'coach',
+  'coaching',
+  'formation',
+  'cours',
+  'enseignement',
+  'tutorat',
+  'soutien scolaire',
+  'ecole',
+  'lycee',
+  'college',
+  'universite',
+  'cfa',
+  'organisme',
+  'centre',
+  'etude',
+  'etudes',
+  'bureau',
+  'comptable',
+  'audit',
+  'expertise',
+  'juridique',
+  'fiscal',
+  'social',
+  'interim',
+  'interimaire',
+  'emploi',
+  'cabinet recrutement',
+  'rh',
+  'ressources humaines',
+  'headhunting',
+  'courtier',
+  'assurance',
+  'assureur',
+  'mutuelle',
+  'pret',
+  'credit',
+  'financement',
+  'syndic',
+  'gestionnaire',
+  'administrateur',
+  'fiduciaire',
+  'fiduciary',
+  'domiciliation',
+  'courtage',
+  'transaction',
+  'negociation',
+  'vente',
+  'achat',
+  'commerce de gros',
+  'b2b',
+  'b to b',
+  'pro',
+  'professionnel',
+  'professionnels',
+  'entreprise',
+  'entrepreneur',
+  'societe',
+  'company',
+  'sarl',
+  'sas',
+  'eurl',
+  'sci',
+  'scop',
+  'scic',
+  'holding',
+  'groupe',
+  'franchise',
+  'franchisee',
+  'reseau',
+  'boutique franchise',
+  'services',
+  'service',
+  'urgence',
+  'urgences',
+  'depannage',
+  'sos',
+  '24h',
+  'astreinte',
+  'plomb',
+  'reparation',
+  'reparer',
+  'maintenance',
+  'entretien',
+  'remplacement',
+  'installation',
+  'fourniture',
+  'electric',
+  'sanitaire',
+  'chauffage',
+  'ventilation',
+  'vmc',
+  'pompe',
+  'chaleur',
+  'panneaux',
+  'solaire',
+  'photovoltaique',
+  'alarme',
+  'incendie',
+  'sante',
+  'medical',
+  'biomedical',
+  'optique',
+  'denta',
+  'laboratoire',
+  'labo',
+  'hygiene',
+  'proprete',
+  'aide',
+  'domicile',
+  'menage',
+  'femme',
+  'garde',
+  'baby',
+  'nounou',
+  'creche',
+  'micro creche',
+  'halte garderie',
+  'animatrice',
+  'animateur',
+  'animation',
+  'evenementiel',
+  'wedding',
+  'mariage',
+  'traiteur mariage',
+  'reception',
+  'restauration',
+  'catering',
+  'cantine',
+  'collectivite',
+  'collectivites',
+  'mairie',
+  'association',
+  'ong',
+  'culturel',
+  'assoc',
+  'local',
+  'proximite',
+  'quartier',
+  'ville',
+  'village',
+  'atelier boutique',
+  'show room',
+  'point chaud',
+  'corner',
+  'corner shop',
+  'market',
+  'place',
+  'passage',
+  'galerie',
+  'bricolage',
+  'droguerie',
+  'quincaillerie',
+  'peinture',
+  'peintre',
+  'revetement de sol',
+  'revetement',
+  'moquette',
+  'parquet',
+  'carrelage',
+  'carrel',
+  'materiaux',
+  'materiel',
+  'negos',
+  'trade',
+  'depositaire',
+  'concession',
+  'concessionnaire',
+  'dealership',
+  'motor',
+  'motos',
+  'scooter',
+  'bike',
+  'cycle',
+  'velo',
+  'nautic',
+  'marine',
+  'bateau',
+  'garage mecanique',
+  'garde meuble',
+  'self stockage',
+  'stockage',
+  'archivage',
+  'numerisation',
+  'city',
+  'handicap',
+  'pmr',
+  'accessibilite',
+  'translation',
+  'traduction',
+  'interprete',
+  'langue',
+  'co working',
+  'coworking',
+  'espace coworking',
+  'incubateur',
+  'accelerateur',
+  'startup',
+  'tech',
+  'cowor',
+  'ateliers',
+  'fablab',
+];
+
+function escapeRegExpChunk(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+const SERVICE_HINTS = new RegExp(
+  SERVICE_HINT_TERMS.map(escapeRegExpChunk).sort((a, b) => b.length - a.length).join('|'),
+  'i',
+);
+
+export function isLikelyServiceBusiness(serp: SerpLocalResult): boolean {
+  const t = normalizeText(`${serp.type ?? ''} ${serp.title}`);
+  return SERVICE_HINTS.test(t);
+}
+
 /** +10 si incohérence NAP / identité locale vs HTML. */
 export function scoreNapMismatch(html: string | null, serp: SerpLocalResult): StratePilierBreakdown {
   const max = 10;
-  if (!html || html.length < 50) {
+  if (!html || html.trim().length < 50) {
     return { earned: 0, max, items: [] };
   }
 
@@ -268,16 +805,16 @@ export function scoreNapMismatch(html: string | null, serp: SerpLocalResult): St
   };
 }
 
-/** +10 friction mobile : métier de service mais pas de tel:/mailto: dans le HTML. */
+/** +15 friction mobile : métier de service mais pas de tel:/mailto: dans le HTML. */
 export function scoreContactFriction(
   html: string | null,
   serp: SerpLocalResult,
 ): StratePilierBreakdown {
-  const max = 10;
+  const max = 15;
   if (!isLikelyServiceBusiness(serp)) {
     return { earned: 0, max, items: [] };
   }
-  if (!html || html.length < 30) {
+  if (!html || html.trim().length < 30) {
     return { earned: 0, max, items: [] };
   }
 
@@ -290,7 +827,7 @@ export function scoreContactFriction(
   return {
     earned: max,
     max,
-    items: ['Friction mobile : métier de service sans liens cliquables tel: / mailto: (+10)'],
+    items: ['Friction mobile : métier de service sans liens cliquables tel: / mailto: (+15)'],
   };
 }
 
@@ -317,7 +854,7 @@ function excerptForAi(html: string, maxLen = 14_000): string {
 }
 
 /**
- * Matrice Strate complète (prospect avec site). Pilier 4 seulement si p2+p3 > 40.
+ * Matrice Strate complète (prospect avec site). Pilier 4 seulement si p2+p3 > 30.
  */
 export type StrateMatrixRunOutput = {
   readonly strate: StrateScoreResult;
@@ -329,7 +866,9 @@ export async function runStrateMatrixScore(
   ctx: StrateMatrixContext,
 ): Promise<StrateMatrixRunOutput> {
   const { serp, resolved, fetchResult } = ctx;
-  const html = fetchResult.ok && fetchResult.html.length > 0 ? fetchResult.html : null;
+  const htmlBody = fetchResult.html ?? '';
+  const htmlUsable = fetchResult.ok && htmlBody.trim().length > 0;
+  const html = htmlUsable ? htmlBody : null;
   const finalUrl = fetchResult.finalUrl || null;
 
   const p1 = scorePilier1Potential(serp);
@@ -343,7 +882,7 @@ export async function runStrateMatrixScore(
 
   let groqBrochure = false;
   let groqReason = '';
-  if (html && html.length > 80) {
+  if (html && html.trim().length > 80) {
     try {
       const ai = await ctx.analyzeDeadBrochure(excerptForAi(html), serp.title);
       groqBrochure = ai.deadBrochureSite;
@@ -354,17 +893,17 @@ export async function runStrateMatrixScore(
   }
 
   if (groqBrochure) {
-    p3EarnedSub += 10;
+    p3EarnedSub += 15;
     p3Items.push(
       groqReason
-        ? `Plaquette / zéro CTA (Groq) : ${groqReason} (+10)`
-        : 'Plaquette morte / intention de conversion floue (Groq) (+10)',
+        ? `Plaquette / zéro CTA (Groq) : ${groqReason} (+15)`
+        : 'Plaquette morte / intention de conversion floue (Groq) (+15)',
     );
   }
 
   const p3: StratePilierBreakdown = {
-    earned: Math.min(p3EarnedSub, 30),
-    max: 30,
+    earned: Math.min(p3EarnedSub, 40),
+    max: 40,
     items: p3Items,
   };
 

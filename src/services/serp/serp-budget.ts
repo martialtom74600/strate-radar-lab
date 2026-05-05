@@ -1,6 +1,6 @@
 import { StrateRadarError } from '../../lib/errors.js';
 
-import type { SerpClient } from './serp.client.js';
+import type { SerpClient } from './search-client.types.js';
 
 /** Encadre le client recherche locale : chaque appel Places Text Search (local + organique) compte pour le plafond du run. */
 export function wrapSerpClientWithBudget(

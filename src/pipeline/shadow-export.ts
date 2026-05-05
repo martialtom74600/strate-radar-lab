@@ -2,6 +2,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import type { DiamondPainType } from '../lib/diamond.js';
+import type { GoogleMapsRaw } from '../lib/strate-studio/audit-payload.js';
+import { buildGoogleMapsRaw } from '../lib/strate-studio/audit-ingest.js';
 import type { RadarPipelineLine } from './radar-pipeline.js';
 
 export type ShadowSiteExportRecord = {
@@ -10,15 +12,21 @@ export type ShadowSiteExportRecord = {
   readonly address: string | null;
   readonly rating: number | null;
   readonly reviews: number | null;
-  readonly lost_revenue_pitch: string;
+  /** Toujours vide : plus d’estimation « manque à gagner » générée par le radar. */
+  readonly lost_revenue_pitch: string | null;
+  /** Même bloc que `payload.googleMapsRaw` côté ingest vitrine. */
+  readonly google_maps_raw: GoogleMapsRaw;
   readonly maps_cover_image_url: string | null;
   readonly diamond_pain: DiamondPainType;
+  /** Aligné sur le badge pipeline / `payload.leadKind`. */
+  readonly conversion_badge: 'DIAMANT_CREATION' | 'DIAMANT_REFONTE';
   readonly seed_category: string | null;
   readonly place_id: string | null;
   /** Requête d’intention locale ayant mené à ce prospect (Google Suggest / Serp « q »). */
   readonly trending_query: string;
   readonly strate_score_total: number;
-  readonly strate_is_diamant_brut: boolean;
+  /** True = chemin création (pas de matrice). */
+  readonly strate_is_diamant_creation: boolean;
   readonly strate_failures_vulgarized: readonly string[];
 };
 
@@ -29,7 +37,7 @@ function buildStrateVulgarizedFailures(line: RadarPipelineLine): string[] {
   if (!sc) {
     return ['Analyse Strate non disponible pour cette exportation.'];
   }
-  if (sc.isDiamantBrut || sc.matrix === null) {
+  if (sc.isDiamantCreation || sc.matrix === null) {
     return [
       'Pas de site web : le trafic Maps ne trouve aucune passerelle de conversion en ligne.',
     ];
@@ -51,7 +59,11 @@ function buildStrateVulgarizedFailures(line: RadarPipelineLine): string[] {
 }
 
 function lineToShadowRecord(line: RadarPipelineLine): ShadowSiteExportRecord | null {
-  if (line.conversionBadge !== 'DIAMANT' || !line.diamondPain || !line.diamondHunterPitch) {
+  const badge = line.conversionBadge;
+  if (
+    (badge !== 'DIAMANT_CREATION' && badge !== 'DIAMANT_REFONTE') ||
+    !line.diamondPain
+  ) {
     return null;
   }
   const sc = line.strateScore;
@@ -61,14 +73,16 @@ function lineToShadowRecord(line: RadarPipelineLine): ShadowSiteExportRecord | n
     address: line.serp.address ?? null,
     rating: line.serp.rating ?? null,
     reviews: line.serp.reviews ?? null,
-    lost_revenue_pitch: line.diamondHunterPitch.lost_revenue_pitch,
+    lost_revenue_pitch: null,
+    google_maps_raw: buildGoogleMapsRaw(line),
     maps_cover_image_url: line.serp.thumbnail?.trim() || null,
     diamond_pain: line.diamondPain,
+    conversion_badge: badge,
     seed_category: line.seedCategory ?? null,
     place_id: line.serp.place_id ?? null,
     trending_query: line.trendingQuery ?? line.seedCategory ?? '—',
     strate_score_total: sc?.total ?? 0,
-    strate_is_diamant_brut: sc?.isDiamantBrut ?? false,
+    strate_is_diamant_creation: sc?.isDiamantCreation ?? false,
     strate_failures_vulgarized: buildStrateVulgarizedFailures(line),
   };
 }

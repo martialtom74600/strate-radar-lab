@@ -32,3 +32,59 @@ export function toAbsoluteHttpUrl(raw: string): string | null {
     return null;
   }
 }
+
+/**
+ * Réseaux sociaux / annuaires / fiches Maps : pas de site « propriétaire » exploitable pour la matrice —
+ * le prospect reste sur le chemin « sans site » (Diamant création).
+ */
+const THIRD_PARTY_HOST_ROOTS: readonly string[] = [
+  'facebook.com',
+  'fb.com',
+  'instagram.com',
+  'linkedin.com',
+  'twitter.com',
+  'x.com',
+  'tiktok.com',
+  'pinterest.com',
+  'youtube.com',
+  'youtu.be',
+  'snapchat.com',
+  'threads.net',
+  'linktr.ee',
+  'pagesjaunes.fr',
+  'pagesjaunes.com',
+  'yelp.com',
+  'yelp.fr',
+  'yelp.ca',
+  'foursquare.com',
+  'mappy.com',
+  'waze.com',
+  'wa.me',
+  'business.google.com',
+  'g.page',
+];
+
+function hostMatchesThirdPartyRoot(host: string, root: string): boolean {
+  return host === root || host.endsWith(`.${root}`);
+}
+
+export function urlIsThirdPartyPresenceOnly(raw: string): boolean {
+  try {
+    const trimmed = raw.trim();
+    if (!trimmed) return false;
+    const withProto = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+    const u = new URL(withProto);
+    const host = u.hostname.replace(/^www\./i, '').toLowerCase();
+
+    if (/tripadvisor\./i.test(host)) return true;
+    if (host === 'maps.google.com') return true;
+    if (host === 'google.com' && u.pathname.toLowerCase().startsWith('/maps')) return true;
+
+    for (const root of THIRD_PARTY_HOST_ROOTS) {
+      if (hostMatchesThirdPartyRoot(host, root)) return true;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}

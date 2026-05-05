@@ -1,5 +1,8 @@
 # Prospection nocturne : rapport Markdown + JSON export / ingest vitrine · pas de HTML local (pages côté site mère via API).
 # Horaire : ~04h à Paris en hiver (UTC+1) — ajuster le cron si besoin (GitHub = UTC).
+#
+# Artefacts commités ici uniquement (réf. README_DEPLOY.md) : ne pas les recenser
+# ailleurs sans mettre à jour scripts/git-radar-artifacts.mjs.
 
 name: Nightly Strate Radar
 
@@ -84,14 +87,18 @@ jobs:
           CITY=$(node -p "try { require('./data/shadow-sites-export.json').cityLabel || '—' } catch (e) { '—' }" 2>/dev/null || echo '—')
           MSG=$'✅ Strate Radar — run OK\nZone : '"${CITY}"
           if [ -f data/heartbeat.json ]; then
-            CAMP_LINE=$(node -p "try { const h=require('./data/heartbeat.json'); (h.campaign && h.campaign.city && h.campaign.category) ? ('Campagne : '+h.campaign.city+' × '+h.campaign.category) : '' } catch (e) { '' }" 2>/dev/null || echo "")
-            RUN_DIA=$(node -p "try { const h=require('./data/heartbeat.json'); (typeof h.diamondsFound==='number') ? ('Diamants (run) : '+h.diamondsFound) : '' } catch (e) { '' }" 2>/dev/null || echo "")
+            CAMP_LINE=$(node -p "try { const h=require('./data/heartbeat.json'); (h.campaign && h.campaign.city && h.campaign.category) ? ('Campagne (ville × métier) : '+h.campaign.city+' × '+h.campaign.category) : '' } catch (e) { '' }" 2>/dev/null || echo "")
+            RUN_DIA=$(node -p "try { const h=require('./data/heartbeat.json'); const parts=[]; if (typeof h.creationsFound==='number' && typeof h.targetCreationCount==='number') parts.push('Création '+h.creationsFound+'/'+h.targetCreationCount); if (typeof h.refontesFound==='number' && typeof h.targetRefonteCount==='number') parts.push('Refonte '+h.refontesFound+'/'+h.targetRefonteCount); if (typeof h.diamondsFound==='number' && parts.length) parts.push('Total leads '+h.diamondsFound); parts.length?parts.join(' · '):'' } catch (e) { '' }" 2>/dev/null || echo "")
+            SCAN_LINE=$(node -p "try { const h=require('./data/heartbeat.json'); const parts=[]; if (typeof h.totalBusinessesScanned==='number') parts.push('Fiches parcourues : '+h.totalBusinessesScanned); if (typeof h.placesRequestsUsed==='number' && typeof h.placesRequestsMax==='number') parts.push('Requêtes Places : '+h.placesRequestsUsed+'/'+h.placesRequestsMax); parts.length?parts.join(' · '):'' } catch (e) { '' }" 2>/dev/null || echo "")
+            STOP_LINE=$(node -p "try { const h=require('./data/heartbeat.json'); (h.placesStoppedEarly===true) ? '⚠️ Places : run interrompu (quota / 429 — résultats partiels)' : '' } catch (e) { '' }" 2>/dev/null || echo "")
             HB_AT=$(node -p "try { const h=require('./data/heartbeat.json'); h.lastRunIso ? ('Run (UTC) : '+h.lastRunIso) : '' } catch (e) { '' }" 2>/dev/null || echo "")
             [ -n "${CAMP_LINE}" ] && MSG="${MSG}"$'\n'"${CAMP_LINE}"
             [ -n "${RUN_DIA}" ] && MSG="${MSG}"$'\n'"${RUN_DIA}"
+            [ -n "${SCAN_LINE}" ] && MSG="${MSG}"$'\n'"${SCAN_LINE}"
+            [ -n "${STOP_LINE}" ] && MSG="${MSG}"$'\n'"${STOP_LINE}"
             [ -n "${HB_AT}" ] && MSG="${MSG}"$'\n'"${HB_AT}"
           fi
-          MSG="${MSG}"$'\n'"Pépites (export) : ${COUNT}"$'\n'"Rapport : ${REPORT_URL}"
+          MSG="${MSG}"$'\n'"Leads (export JSON) : ${COUNT}"$'\n'"Rapport : ${REPORT_URL}"
           curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
             --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
             --data-urlencode "text=${MSG}" \
