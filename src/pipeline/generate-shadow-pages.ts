@@ -8,7 +8,8 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import type { ShadowSiteExportRecord } from './shadow-export.js';
-import { googleMapsRawSchema, type GoogleMapsRaw } from '../lib/strate-studio/audit-payload.js';
+import type { GoogleMapsRaw } from '../lib/strate-studio/audit-payload.js';
+import type { CompanyRegistryLegalData } from '../services/company-registry.js';
 
 export type GenerateShadowPagesOptions = {
   readonly exportPath: string;
@@ -59,10 +60,12 @@ function coerceGoogleMapsRaw(
 ): GoogleMapsRaw {
   const raw = o.google_maps_raw;
   if (raw && typeof raw === 'object') {
-    const parsed = googleMapsRawSchema.safeParse(raw);
-    if (parsed.success) return parsed.data;
+    const g = raw as Partial<GoogleMapsRaw>;
+    if (typeof g.title === 'string' && typeof g.trendingQuery === 'string') {
+      return raw as GoogleMapsRaw;
+    }
   }
-  return googleMapsRawSchema.parse({
+  return {
     title: name,
     address,
     rating,
@@ -75,7 +78,20 @@ function coerceGoogleMapsRaw(
     place_id: placeId,
     trendingQuery,
     seedCategory,
-  });
+  };
+}
+
+function isCompanyRegistryLegalData(x: unknown): x is CompanyRegistryLegalData {
+  if (typeof x !== 'object' || x === null) return false;
+  const o = x as Record<string, unknown>;
+  return (
+    o.source === 'recherche_entreprises_api_gouv' &&
+    typeof o.siren === 'string' &&
+    typeof o.siretSiege === 'string' &&
+    typeof o.nomRaisonSociale === 'string' &&
+    typeof o.activiteOfficielleResume === 'string' &&
+    typeof o.matchScore === 'number'
+  );
 }
 
 function coerceDiamonds(raw: unknown): ShadowSiteExportRecord[] {
@@ -162,6 +178,7 @@ function coerceDiamonds(raw: unknown): ShadowSiteExportRecord[] {
       strate_failures_vulgarized: Array.isArray(o.strate_failures_vulgarized)
         ? (o.strate_failures_vulgarized as unknown[]).filter((x): x is string => typeof x === 'string')
         : [],
+      legal_data: isCompanyRegistryLegalData(o.legal_data) ? o.legal_data : null,
     });
   }
   return out;

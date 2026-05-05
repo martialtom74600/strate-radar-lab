@@ -4,6 +4,7 @@ import path from 'node:path';
 import type { DiamondPainType } from '../lib/diamond.js';
 import type { GoogleMapsRaw } from '../lib/strate-studio/audit-payload.js';
 import { buildGoogleMapsRaw } from '../lib/strate-studio/audit-ingest.js';
+import type { CompanyRegistryLegalData } from '../services/company-registry.js';
 import type { RadarPipelineLine } from './radar-pipeline.js';
 
 export type ShadowSiteExportRecord = {
@@ -16,6 +17,8 @@ export type ShadowSiteExportRecord = {
   readonly lost_revenue_pitch: string | null;
   /** Même bloc que `payload.googleMapsRaw` côté ingest vitrine. */
   readonly google_maps_raw: GoogleMapsRaw;
+  /** Aligné sur `RadarPipelineLine.legalData` — registre INSEE / API État. */
+  readonly legal_data: CompanyRegistryLegalData | null;
   readonly maps_cover_image_url: string | null;
   readonly diamond_pain: DiamondPainType;
   /** Aligné sur le badge pipeline / `payload.leadKind`. */
@@ -75,6 +78,7 @@ function lineToShadowRecord(line: RadarPipelineLine): ShadowSiteExportRecord | n
     reviews: line.serp.reviews ?? null,
     lost_revenue_pitch: null,
     google_maps_raw: buildGoogleMapsRaw(line),
+    legal_data: line.legalData ?? null,
     maps_cover_image_url: line.serp.thumbnail?.trim() || null,
     diamond_pain: line.diamondPain,
     conversion_badge: badge,

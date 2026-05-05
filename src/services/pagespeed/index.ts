@@ -1,12 +1,9 @@
-export {
-  lighthouseCategorySchema,
-  lighthouseResultSchema,
-  lighthouseAuditRefSchema,
-  pageSpeedInsightsV5Schema,
-  type LighthouseCategory,
-  type LighthouseResult,
-  type PageSpeedInsightsV5,
+export type {
+  LighthouseCategory,
+  LighthouseResult,
+  PageSpeedInsightsV5,
 } from './schemas.js';
+export type { LighthouseAuditRef } from './schemas.js';
 export { MOCK_PAGESPEED_RESPONSE } from './mock-data.js';
 export {
   createPageSpeedClient,

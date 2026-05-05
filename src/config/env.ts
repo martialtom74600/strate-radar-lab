@@ -1,5 +1,3 @@
-import { z } from 'zod';
-
 function boolFromEnv(value: unknown): boolean {
   if (typeof value === 'boolean') return value;
   if (value === undefined || value === null || value === '') return false;
@@ -39,88 +37,95 @@ function envOptionalIntInRange(min: number, max: number) {
   };
 }
 
-const baseEnvSchema = z.object({
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  STRATE_RADAR_SIMULATION: z.preprocess(boolFromEnv, z.boolean()).default(false),
-  /** Clé API Google Cloud — Places API (Text Search). */
-  GOOGLE_PLACES_API_KEY: z.string().optional(),
-  GOOGLE_PAGESPEED_API_KEY: z.string().optional(),
-  GROQ_API_KEY: z.string().optional(),
-  GROQ_MODEL: z.preprocess(groqModelFromEnv, z.string().min(1)),
-  STRATE_RADAR_DB_PATH: z.string().min(1).default('data/strate-radar.sqlite'),
-  RADAR_SEARCH_Q: z.string().min(1).default('boulangerie artisanale'),
-  RADAR_SEARCH_LOCATION: z.preprocess(radarSearchLocationFromEnv, z.string().min(1)),
-  RADAR_REPORT_PATH: z.string().min(1).default('rapport_matinal.md'),
-  /** Export JSON pour génération « shadow site » (pépites du jour). */
-  RADAR_SHADOW_EXPORT_PATH: z.string().min(1).default('data/shadow-sites-export.json'),
-  /** Dossier cible pour `npm run generate:shadows` (pas généré par le run radar). */
-  RADAR_SHADOW_PAGES_DIR: z.string().min(1).default('data/shadow-pages'),
-  /** @deprecated Utiliser RADAR_TARGET_CREATION_COUNT + RADAR_TARGET_REFONTE_COUNT. Si seul ce champ est défini, quotas = 70 % création / 30 % refonte. */
-  RADAR_TARGET_DIAMOND_COUNT: z.preprocess(
-    envOptionalIntInRange(1, 100),
-    z.number().int().min(1).max(100).optional(),
-  ),
-  /** Objectif de leads « Diamant création » par run. Défaut 15 si non renseigné et pas de legacy. */
-  RADAR_TARGET_CREATION_COUNT: z.preprocess(
-    envOptionalIntInRange(0, 100),
-    z.number().int().min(0).max(100).optional(),
-  ),
-  /** Objectif de leads « Diamant refonte » (matrice) par run. Défaut 5 si non renseigné et pas de legacy. */
-  RADAR_TARGET_REFONTE_COUNT: z.preprocess(
-    envOptionalIntInRange(0, 100),
-    z.number().int().min(0).max(100).optional(),
-  ),
-  /** Pages Text Search max par intention (≈ 20 résultats/page — garde-fou coûts). */
-  RADAR_SERP_MAX_PAGES: z.coerce.number().int().min(1).max(10).default(3),
-  /** @deprecated Non utilisé par le pipeline (zones implicites via la requête Places). Conservé pour compat .env. */
-  RADAR_DIAMOND_LOCATION_HINTS: z.preprocess(
-    optionalTrimmedNonEmpty,
-    z.string().optional(),
-  ),
-  /** Enchaîne les catégories `DIAMOND_SEED_CATEGORIES` + ville (si trend-driven désactivé). */
-  RADAR_USE_SEED_LIST: z.preprocess(boolFromEnv, z.boolean()).default(true),
-  /** Prospection pilotée par Google Suggest (intentions locales du moment) — remplace le grainage statique quand actif. */
-  RADAR_TREND_DRIVEN: z.preprocess(boolFromEnv, z.boolean()).default(true),
-  /**
-   * Plafond d’appels Google Places Text Search par run (pack local + résolution « organique » URL).
-   * Garde-fou interne, pas la facturation Google.
-   */
-  RADAR_MAX_PLACES_REQUESTS_PER_RUN: z.coerce.number().int().min(10).max(500).default(150),
-  /** Fenêtre SQLite : ignorer un lieu déjà traité sur les N derniers jours. */
-  RADAR_SQLITE_RECENT_DAYS: z.coerce.number().int().min(1).max(30).default(7),
-  /** Affiche la progression en direct dans le terminal (familles, pages Places, chaque fiche). */
-  RADAR_VERBOSE: z.preprocess(boolFromEnv, z.boolean()).default(true),
-  /** Timeout fetch HTML pour la matrice Strate (ms). */
-  RADAR_FETCH_TIMEOUT_MS: z.coerce.number().int().min(3000).max(120_000).default(15_000),
-  /**
-   * Pilotage autonome matrice Ville × métier (Groq + SQLite) — désactive Trend Catcher et enchaîne une seule paire par run.
-   */
-  RADAR_CAMPAIGN_MODE: z.preprocess(boolFromEnv, z.boolean()).default(false),
-  /**
-   * Villes cibles, séparées par | (ex. `Annecy, France|Lyon, France`). Jamais figé dans le code : uniquement ici ou villes suggérées persistées en base.
-   */
-  TARGET_CITIES: z.preprocess(optionalTrimmedNonEmpty, z.string().optional()),
-  /** Durée de validité du cache Groq des ~50 métiers (jours). */
-  RADAR_CAMPAIGN_CATEGORY_CACHE_TTL_DAYS: z.coerce.number().int().min(1).max(90).default(7),
-  /** Origine du site vitrine Strate Studio (sans slash final). POST = {origin}/api/audits/ingest */
-  RADAR_STUDIO_ORIGIN: z.preprocess((v) => {
-    const t = optionalTrimmedNonEmpty(v);
-    return typeof t === 'string' && t.length > 0 ? t : 'https://www.strate-studio.fr';
-  }, z.string().url()),
-  /** Secret Bearer partagé avec la route /api/audits/ingest (Authorization: Bearer …). */
-  RADAR_INGEST_SECRET: z.preprocess(optionalTrimmedNonEmpty, z.string().optional()),
-  /** Optionnel — expiration du lien audit (ISO 8601). */
-  RADAR_AUDIT_EXPIRES_AT: z.preprocess(optionalTrimmedNonEmpty, z.string().optional()),
-  /** Version du schéma payload envoyé (max 64 caractères). */
-  RADAR_AUDIT_PAYLOAD_VERSION: z.preprocess(optionalTrimmedNonEmpty, z.string().max(64).optional()),
-  /**
-   * Si true : en échec ingest, loggue le corps HTTP brut (tronqué) dans la console — utile quand l’API ne renvoie pas `detail`.
-   * À activer ponctuellement (ex. variable dépôt GitHub), ne pas laisser en prod SI le corps pourrait contenir des données sensibles.
-   */
-  RADAR_INGEST_DEBUG: z.preprocess(boolFromEnv, z.boolean()).default(false),
-});
+function nodeEnvParser(value: unknown): 'development' | 'production' | 'test' {
+  const t = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  if (t === 'development' || t === 'production' || t === 'test') return t;
+  return 'development';
+}
 
-export type RawEnv = z.infer<typeof baseEnvSchema>;
+function nonEmptyString(value: unknown, fallback: string): string {
+  const t =
+    typeof value === 'string' ? value.trim() : String(value ?? '').trim();
+  return t.length > 0 ? t : fallback;
+}
+
+function coerceIntInRange(value: unknown, def: number, min: number, max: number): number {
+  if (value === undefined || value === null || value === '') return def;
+  const n = Number(value);
+  if (!Number.isFinite(n)) return def;
+  const i = Math.trunc(n);
+  if (i < min || i > max) return def;
+  return i;
+}
+
+function optString(value: unknown): string | undefined {
+  if (value === undefined || value === null) return undefined;
+  const s = String(value).trim();
+  return s === '' ? undefined : s;
+}
+
+/** Comportement aligné sur l’ancien schéma Zod : absent / vide → `true`. */
+function boolFromEnvDefaultTrue(value: unknown): boolean {
+  if (value === undefined || value === null || String(value).trim() === '') return true;
+  return boolFromEnv(value);
+}
+
+function radarStudioOriginFromEnv(value: unknown): string {
+  const t =
+    typeof value === 'string' ? value.trim() : String(value ?? '').trim();
+  const fallback = 'https://www.strate-studio.fr';
+  const candidate = t.length > 0 ? t : fallback;
+  try {
+    void new URL(candidate);
+    return candidate;
+  } catch {
+    return fallback;
+  }
+}
+
+function radarAuditPayloadVersionFromEnv(value: unknown): string | undefined {
+  const t = optionalTrimmedNonEmpty(value);
+  if (t === undefined) return undefined;
+  const s = String(t);
+  if (s.length > 64) {
+    throw new Error('RADAR_AUDIT_PAYLOAD_VERSION : max 64 caractères.');
+  }
+  return s;
+}
+
+export type RawEnv = {
+  readonly NODE_ENV: 'development' | 'production' | 'test';
+  readonly STRATE_RADAR_SIMULATION: boolean;
+  readonly GOOGLE_PLACES_API_KEY: string | undefined;
+  readonly GOOGLE_PAGESPEED_API_KEY: string | undefined;
+  readonly GROQ_API_KEY: string | undefined;
+  readonly GROQ_MODEL: string;
+  readonly STRATE_RADAR_DB_PATH: string;
+  readonly RADAR_SEARCH_Q: string;
+  readonly RADAR_SEARCH_LOCATION: string;
+  readonly RADAR_REPORT_PATH: string;
+  readonly RADAR_SHADOW_EXPORT_PATH: string;
+  readonly RADAR_SHADOW_PAGES_DIR: string;
+  readonly RADAR_TARGET_DIAMOND_COUNT: number | undefined;
+  readonly RADAR_TARGET_CREATION_COUNT: number | undefined;
+  readonly RADAR_TARGET_REFONTE_COUNT: number | undefined;
+  readonly RADAR_SERP_MAX_PAGES: number;
+  readonly RADAR_DIAMOND_LOCATION_HINTS: string | undefined;
+  readonly RADAR_USE_SEED_LIST: boolean;
+  readonly RADAR_TREND_DRIVEN: boolean;
+  readonly RADAR_MAX_PLACES_REQUESTS_PER_RUN: number;
+  readonly RADAR_SQLITE_RECENT_DAYS: number;
+  readonly RADAR_VERBOSE: boolean;
+  readonly RADAR_FETCH_TIMEOUT_MS: number;
+  readonly RADAR_CAMPAIGN_MODE: boolean;
+  readonly TARGET_CITIES: string | undefined;
+  readonly RADAR_CAMPAIGN_CATEGORY_CACHE_TTL_DAYS: number;
+  readonly RADAR_STUDIO_ORIGIN: string;
+  readonly RADAR_INGEST_SECRET: string | undefined;
+  readonly RADAR_AUDIT_EXPIRES_AT: string | undefined;
+  readonly RADAR_AUDIT_PAYLOAD_VERSION: string | undefined;
+  readonly RADAR_INGEST_DEBUG: boolean;
+};
 
 /** Quotas finaux après résolution legacy (70/30) ou défauts 15 / 5. */
 export type LeadQuotaTargets = {
@@ -132,6 +137,58 @@ export type AppConfig = Omit<RawEnv, 'RADAR_TARGET_CREATION_COUNT' | 'RADAR_TARG
   LeadQuotaTargets & {
     readonly simulation: boolean;
   };
+
+function parseRawEnv(env: NodeJS.ProcessEnv): RawEnv {
+  const optInt1_100 = envOptionalIntInRange(1, 100);
+  const optInt0_100 = envOptionalIntInRange(0, 100);
+
+  return {
+    NODE_ENV: nodeEnvParser(env.NODE_ENV),
+    STRATE_RADAR_SIMULATION: boolFromEnv(env.STRATE_RADAR_SIMULATION),
+    GOOGLE_PLACES_API_KEY: optString(env.GOOGLE_PLACES_API_KEY),
+    GOOGLE_PAGESPEED_API_KEY: optString(env.GOOGLE_PAGESPEED_API_KEY),
+    GROQ_API_KEY: optString(env.GROQ_API_KEY),
+    GROQ_MODEL: groqModelFromEnv(env.GROQ_MODEL),
+    STRATE_RADAR_DB_PATH: nonEmptyString(env.STRATE_RADAR_DB_PATH, 'data/strate-radar.sqlite'),
+    RADAR_SEARCH_Q: nonEmptyString(env.RADAR_SEARCH_Q, 'boulangerie artisanale'),
+    RADAR_SEARCH_LOCATION: radarSearchLocationFromEnv(env.RADAR_SEARCH_LOCATION),
+    RADAR_REPORT_PATH: nonEmptyString(env.RADAR_REPORT_PATH, 'rapport_matinal.md'),
+    RADAR_SHADOW_EXPORT_PATH: nonEmptyString(
+      env.RADAR_SHADOW_EXPORT_PATH,
+      'data/shadow-sites-export.json',
+    ),
+    RADAR_SHADOW_PAGES_DIR: nonEmptyString(env.RADAR_SHADOW_PAGES_DIR, 'data/shadow-pages'),
+    RADAR_TARGET_DIAMOND_COUNT: optInt1_100(env.RADAR_TARGET_DIAMOND_COUNT),
+    RADAR_TARGET_CREATION_COUNT: optInt0_100(env.RADAR_TARGET_CREATION_COUNT),
+    RADAR_TARGET_REFONTE_COUNT: optInt0_100(env.RADAR_TARGET_REFONTE_COUNT),
+    RADAR_SERP_MAX_PAGES: coerceIntInRange(env.RADAR_SERP_MAX_PAGES, 3, 1, 10),
+    RADAR_DIAMOND_LOCATION_HINTS: optString(env.RADAR_DIAMOND_LOCATION_HINTS),
+    RADAR_USE_SEED_LIST: boolFromEnvDefaultTrue(env.RADAR_USE_SEED_LIST),
+    RADAR_TREND_DRIVEN: boolFromEnvDefaultTrue(env.RADAR_TREND_DRIVEN),
+    RADAR_MAX_PLACES_REQUESTS_PER_RUN: coerceIntInRange(
+      env.RADAR_MAX_PLACES_REQUESTS_PER_RUN,
+      150,
+      10,
+      500,
+    ),
+    RADAR_SQLITE_RECENT_DAYS: coerceIntInRange(env.RADAR_SQLITE_RECENT_DAYS, 7, 1, 30),
+    RADAR_VERBOSE: boolFromEnvDefaultTrue(env.RADAR_VERBOSE),
+    RADAR_FETCH_TIMEOUT_MS: coerceIntInRange(env.RADAR_FETCH_TIMEOUT_MS, 15_000, 3000, 120_000),
+    RADAR_CAMPAIGN_MODE: boolFromEnv(env.RADAR_CAMPAIGN_MODE),
+    TARGET_CITIES: optString(env.TARGET_CITIES),
+    RADAR_CAMPAIGN_CATEGORY_CACHE_TTL_DAYS: coerceIntInRange(
+      env.RADAR_CAMPAIGN_CATEGORY_CACHE_TTL_DAYS,
+      7,
+      1,
+      90,
+    ),
+    RADAR_STUDIO_ORIGIN: radarStudioOriginFromEnv(env.RADAR_STUDIO_ORIGIN),
+    RADAR_INGEST_SECRET: optString(env.RADAR_INGEST_SECRET),
+    RADAR_AUDIT_EXPIRES_AT: optString(env.RADAR_AUDIT_EXPIRES_AT),
+    RADAR_AUDIT_PAYLOAD_VERSION: radarAuditPayloadVersionFromEnv(env.RADAR_AUDIT_PAYLOAD_VERSION),
+    RADAR_INGEST_DEBUG: boolFromEnv(env.RADAR_INGEST_DEBUG),
+  };
+}
 
 function envKeyProvided(key: string, env: NodeJS.ProcessEnv): boolean {
   const v = env[key];
@@ -185,7 +242,8 @@ function normalizePlacesBudgetEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   const e = { ...env };
   const legacy = e.RADAR_MAX_SERPAPI_REQUESTS;
   if (
-    (e.RADAR_MAX_PLACES_REQUESTS_PER_RUN === undefined || String(e.RADAR_MAX_PLACES_REQUESTS_PER_RUN).trim() === '') &&
+    (e.RADAR_MAX_PLACES_REQUESTS_PER_RUN === undefined ||
+      String(e.RADAR_MAX_PLACES_REQUESTS_PER_RUN).trim() === '') &&
     legacy !== undefined &&
     String(legacy).trim() !== ''
   ) {
@@ -195,12 +253,7 @@ function normalizePlacesBudgetEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
-  const parsed = baseEnvSchema.safeParse(normalizePlacesBudgetEnv(env));
-  if (!parsed.success) {
-    const msg = parsed.error.flatten().fieldErrors;
-    throw new Error(`Configuration invalide : ${JSON.stringify(msg)}`);
-  }
-  const raw = parsed.data;
+  const raw = parseRawEnv(normalizePlacesBudgetEnv(env));
   validateKeysForLiveMode(raw);
   const quotas = resolveLeadQuotaTargets(raw, env);
   if (quotas.RADAR_TARGET_CREATION_COUNT === 0 && quotas.RADAR_TARGET_REFONTE_COUNT === 0) {

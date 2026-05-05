@@ -1,68 +1,104 @@
-import { z } from 'zod';
-
-/** Kebab-case strict (aligné radarIngestBodySchema côté vitrine). */
+/** Kebab-case strict (aligné radar ingest côté vitrine). */
 export const studioAuditSlugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
-/** Données Maps / SERP pures + contexte de recherche (sans texte généré par le radar). */
-export const googleMapsRawSchema = z.object({
-  title: z.string(),
-  address: z.string().nullable(),
-  rating: z.number().nullable(),
-  reviews: z.number().nullable(),
-  type: z.string().nullable(),
-  types: z.array(z.string()),
-  price: z.string().nullable(),
-  gps_coordinates: z
-    .object({
-      latitude: z.number(),
-      longitude: z.number(),
-    })
-    .nullable(),
-  thumbnail: z.string().nullable(),
-  place_id: z.string().nullable(),
-  trendingQuery: z.string(),
-  seedCategory: z.string().nullable(),
-});
+export type GoogleMapsRaw = {
+  readonly title: string;
+  readonly address: string | null;
+  readonly rating: number | null;
+  readonly reviews: number | null;
+  readonly type: string | null;
+  readonly types: readonly string[];
+  readonly price: string | null;
+  readonly gps_coordinates: { readonly latitude: number; readonly longitude: number } | null;
+  readonly thumbnail: string | null;
+  readonly place_id: string | null;
+  readonly trendingQuery: string;
+  readonly seedCategory: string | null;
+};
 
-export type GoogleMapsRaw = z.infer<typeof googleMapsRawSchema>;
+export type RadarAuditLeadKind = 'DIAMANT_CREATION' | 'DIAMANT_REFONTE';
 
-export const strateRadarAuditStrateScoreSchema = z
-  .object({
-    overall: z.number().optional(),
-    byStrate: z.record(z.string(), z.number()).optional(),
-  })
-  .passthrough();
+export type CompanyRegistryLegalDataPayload = {
+  readonly source: 'recherche_entreprises_api_gouv';
+  readonly siren: string;
+  readonly siretSiege: string;
+  readonly nomRaisonSociale: string;
+  readonly codeNaf: string | null;
+  readonly codeNafRevision25: string | null;
+  readonly codeRegistreMetiers: string | null;
+  readonly sectionNafCode: string | null;
+  readonly sectionNafLibelleInsee: string | null;
+  readonly activiteOfficielleResume: string;
+  readonly anneeCreation: number | null;
+  readonly matchScore: number;
+  readonly siegeCodePostal: string | null;
+  readonly siegeLibelleCommune: string | null;
+};
 
-/** Payload d’ingest vitrine : Strate + métriques + contenu + `googleMapsRaw`. */
-export const strateRadarAuditPayloadSchema = z
-  .object({
-    strateScore: strateRadarAuditStrateScoreSchema,
-    metrics: z.union([z.record(z.unknown()), z.array(z.unknown())]),
-    content: z.union([z.record(z.unknown()), z.array(z.unknown()), z.string()]),
-    googleMapsRaw: googleMapsRawSchema,
-  })
-  .passthrough();
+export type StrateRadarAuditMetrics = {
+  readonly lighthousePerformancePercent: number | null;
+  readonly lighthouseSeoPercent: number | null;
+  readonly lighthouseAccessibilityPercent: number | null;
+  readonly lighthouseBestPracticesPercent: number | null;
+  readonly lcpMs: number | null;
+  readonly cls: number | null;
+  readonly websiteSource: 'maps_link' | 'organic_deep_search' | null;
+};
 
-export const auditIngestBodySchema = z.object({
-  slug: z
-    .string()
-    .min(1, 'slug : min 1 caractère')
-    .max(200, 'slug : max 200 caractères')
-    .regex(studioAuditSlugRegex, {
-      message: 'slug : uniquement a-z, 0-9 et tirets (kebab-case), segments non vides',
-    }),
-  accessToken: z
-    .string()
-    .min(32, 'accessToken : min 32 caractères')
-    .max(512, 'accessToken : max 512 caractères'),
-  payload: strateRadarAuditPayloadSchema,
-  payloadVersion: z.string().max(64).optional(),
-  expiresAt: z
-    .string()
-    .refine((s) => !Number.isNaN(Date.parse(s)), { message: 'expiresAt : datetime ISO 8601' })
-    .optional(),
-  radarJobId: z.string().max(128).optional(),
-});
+export type StrateRadarAuditFinding = {
+  readonly id: string;
+  readonly severity: 'low' | 'medium' | 'high';
+  readonly message: string;
+};
 
-export type AuditIngestPayload = z.infer<typeof auditIngestBodySchema>;
-export type StrateRadarAuditPayload = z.infer<typeof strateRadarAuditPayloadSchema>;
+export type StrateRadarAuditContent = {
+  readonly findings: readonly StrateRadarAuditFinding[];
+};
+
+export type StrateRadarAuditStrateScore = {
+  readonly overall: number;
+  readonly byStrate: Record<string, number> | null;
+  readonly pilierMax?: Record<string, number>;
+};
+
+export type StrateRadarAuditPayload = {
+  readonly leadKind: RadarAuditLeadKind;
+  readonly googleMapsRaw: GoogleMapsRaw;
+  readonly legalData: CompanyRegistryLegalDataPayload | null;
+  readonly strateScore: StrateRadarAuditStrateScore;
+  readonly metrics: StrateRadarAuditMetrics;
+  readonly content: StrateRadarAuditContent;
+};
+
+export type AuditIngestPayload = {
+  readonly slug: string;
+  readonly accessToken: string;
+  readonly payload: StrateRadarAuditPayload;
+  readonly payloadVersion?: string;
+  readonly expiresAt?: string;
+  readonly radarJobId?: string;
+};
+
+export function assertAuditIngestPayload(body: AuditIngestPayload): void {
+  const { slug, accessToken } = body;
+  if (slug.length < 1 || slug.length > 200) {
+    throw new Error(`Ingest slug : longueur invalide (${slug.length}, attendu 1–200).`);
+  }
+  if (!studioAuditSlugRegex.test(slug)) {
+    throw new Error(
+      'Ingest slug : uniquement a-z, 0-9 et tirets (kebab-case), segments non vides.',
+    );
+  }
+  if (accessToken.length < 32 || accessToken.length > 512) {
+    throw new Error(`Ingest accessToken : longueur invalide (min 32, max 512).`);
+  }
+  if (body.payloadVersion !== undefined && body.payloadVersion.length > 64) {
+    throw new Error('Ingest payloadVersion : max 64 caractères.');
+  }
+  if (body.expiresAt !== undefined && Number.isNaN(Date.parse(body.expiresAt))) {
+    throw new Error('Ingest expiresAt : datetime ISO 8601 invalide.');
+  }
+  if (body.radarJobId !== undefined && body.radarJobId.length > 128) {
+    throw new Error('Ingest radarJobId : max 128 caractères.');
+  }
+}

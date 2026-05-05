@@ -37,6 +37,10 @@ import {
   createRadarSearchClient,
 } from '../lib/google-places.client.js';
 import {
+  fetchCompanyLegalDataForProspect,
+  type CompanyRegistryLegalData,
+} from '../services/company-registry.js';
+import {
   wrapSerpClientWithBudget,
   type GoogleLocalSearchParams,
   type SerpClient,
@@ -107,6 +111,12 @@ export type RadarPipelineLine = {
   readonly fromCache: boolean;
   readonly psiStrategy: 'mobile';
   readonly pageSpeed: PageSpeedInsightsV5 | null;
+  /**
+   * Données registre officielles (État via `annuaire-entreprises` / recherche ouverte).
+   * Renseignée pour les passes `DIAMANT_*` après Gatekeeper lorsque la requête retourne un match fiable ;
+   * `null` sinon (aucune invention).
+   */
+  readonly legalData?: CompanyRegistryLegalData | null;
 };
 
 export type LeadQuotaState = {
@@ -318,6 +328,11 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
       config,
       `${progressTag} ${truncateTitle(serp.title)} · 💎 DIAMANT CRÉATION · ${STRATE_DIAMANT_CREATION_SCORE}/${STRATE_DIAMANT_CREATION_SCORE}${seedCategory !== undefined ? ` · grain « ${seedCategory} »` : ''}`,
     );
+    const legalData = await fetchCompanyLegalDataForProspect({
+      establishmentTitle: serp.title,
+      searchLocationHint: searchLocation,
+      mapsAddress: serp.address,
+    });
     return {
       serp,
       normalizedUrl: null,
@@ -335,6 +350,7 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
       fromCache: false,
       psiStrategy: 'mobile',
       pageSpeed: null,
+      legalData,
     };
   }
 
@@ -424,6 +440,12 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     `${progressTag} ${truncateTitle(serp.title)} · 💎 DIAMANT REFONTE · strate ${matrixOut.strate.total}/100${seedCategory !== undefined ? ` · grain « ${seedCategory} »` : ''}`,
   );
 
+  const legalData = await fetchCompanyLegalDataForProspect({
+    establishmentTitle: serp.title,
+    searchLocationHint: searchLocation,
+    mapsAddress: serp.address,
+  });
+
   return {
     serp,
     normalizedUrl: resolved.normalizedUrl,
@@ -442,6 +464,7 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     fromCache: false,
     psiStrategy: 'mobile',
     pageSpeed: matrixOut.pageSpeed,
+    legalData,
   };
 }
 

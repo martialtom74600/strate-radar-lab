@@ -6,11 +6,12 @@ import { stablePlaceKey } from '../place-key.js';
 import type { StrateScoreResult } from '../strate-scorer.js';
 import type { RadarPipelineLine, RadarPipelineResult } from '../../pipeline/radar-pipeline.js';
 import {
-  auditIngestBodySchema,
-  googleMapsRawSchema,
+  assertAuditIngestPayload,
   studioAuditSlugRegex,
   type AuditIngestPayload,
   type GoogleMapsRaw,
+  type RadarAuditLeadKind,
+  type StrateRadarAuditMetrics,
   type StrateRadarAuditPayload,
 } from './audit-payload.js';
 import { extendAuditPayloadWithHighValue } from './audit-hv-enrichment.js';
@@ -125,7 +126,7 @@ function buildFindings(matrix: StrateScoreResult): Array<{
   return out;
 }
 
-function metricsFromLine(line: RadarPipelineLine): Record<string, unknown> {
+function metricsFromLine(line: RadarPipelineLine): StrateRadarAuditMetrics {
   const psi = line.pageSpeed;
   const lh = psi !== null ? extractLighthouseScoresPercent(psi) : null;
   const audits = psi?.lighthouseResult?.audits;
@@ -133,7 +134,8 @@ function metricsFromLine(line: RadarPipelineLine): Record<string, unknown> {
     audits?.['largest-contentful-paint']?.numericValue !== undefined
       ? Math.round(audits['largest-contentful-paint']!.numericValue!)
       : null;
-  const cls = audits?.['cumulative-layout-shift']?.numericValue ?? null;
+  const clsRaw = audits?.['cumulative-layout-shift']?.numericValue;
+  const cls = clsRaw !== undefined && clsRaw !== null ? clsRaw : null;
 
   return {
     lighthousePerformancePercent: lh?.performance ?? null,
@@ -143,13 +145,13 @@ function metricsFromLine(line: RadarPipelineLine): Record<string, unknown> {
     lcpMs,
     cls,
     websiteSource: line.websiteSource ?? null,
-    mapsRating: line.serp.rating ?? null,
-    mapsReviews: line.serp.reviews ?? null,
-    mapsType: line.serp.type ?? null,
-    trendingQuery: line.trendingQuery ?? null,
-    seedCategory: line.seedCategory ?? null,
-    leadKind: line.conversionBadge ?? null,
   };
+}
+
+function resolveAuditLeadKind(line: RadarPipelineLine): RadarAuditLeadKind {
+  return line.conversionBadge === 'DIAMANT_CREATION'
+    ? 'DIAMANT_CREATION'
+    : 'DIAMANT_REFONTE';
 }
 
 export function buildGoogleMapsRaw(line: RadarPipelineLine): GoogleMapsRaw {
@@ -164,7 +166,7 @@ export function buildGoogleMapsRaw(line: RadarPipelineLine): GoogleMapsRaw {
       ? { latitude: g.latitude, longitude: g.longitude }
       : null;
 
-  return googleMapsRawSchema.parse({
+  const raw: GoogleMapsRaw = {
     title: serp.title,
     address: serp.address !== undefined && serp.address.trim() !== '' ? serp.address : null,
     rating:
@@ -183,49 +185,46 @@ export function buildGoogleMapsRaw(line: RadarPipelineLine): GoogleMapsRaw {
       line.seedCategory !== undefined && line.seedCategory.trim() !== ''
         ? line.seedCategory
         : null,
-  });
+  };
+  return raw;
 }
 
 export function radarLineToStrateAuditPayload(line: RadarPipelineLine): StrateRadarAuditPayload {
   const sc = line.strateScore;
   const googleMapsRaw = buildGoogleMapsRaw(line);
-  const leadKind = line.conversionBadge;
+  const legalData = line.legalData ?? null;
 
-  if (leadKind === 'DIAMANT_CREATION') {
-    return {
+  const leadKind = resolveAuditLeadKind(line);
+  const metrics = metricsFromLine(line);
+
+  if (line.conversionBadge === 'DIAMANT_CREATION') {
+    const payload: StrateRadarAuditPayload = {
       leadKind,
       googleMapsRaw,
+      legalData,
       strateScore: {
         overall: sc?.total ?? 100,
-        byStrate: { diamant_creation: 100 },
-        mode: 'diamant_creation',
+        byStrate: null,
       },
-      metrics: metricsFromLine(line),
-      content: {
-        title: line.serp.title,
-        summary: null,
-        lost_revenue_pitch: null,
-        pitch: null,
-        findings: [],
-        recommendedNextStep: null,
-        maps: {
-          address: line.serp.address ?? null,
-          rating: line.serp.rating ?? null,
-          reviews: line.serp.reviews ?? null,
-        },
-      },
+      metrics,
+      content: { findings: [] },
     };
+    return payload;
   }
 
-  if (leadKind === 'DIAMANT_REFONTE' && sc?.matrix !== undefined && sc.matrix !== null) {
+  if (
+    line.conversionBadge === 'DIAMANT_REFONTE' &&
+    sc?.matrix !== undefined &&
+    sc.matrix !== null
+  ) {
     const m = sc.matrix;
     const findings = buildFindings(m);
-    return {
+    const payload: StrateRadarAuditPayload = {
       leadKind,
       googleMapsRaw,
+      legalData,
       strateScore: {
         overall: m.total,
-        mode: 'diamant_refonte',
         byStrate: {
           pilier1_potentiel_financier: m.pilier1.earned,
           pilier2_dette_technique: m.pilier2.earned,
@@ -241,47 +240,24 @@ export function radarLineToStrateAuditPayload(line: RadarPipelineLine): StrateRa
           ...(m.pilier4 !== undefined ? { pilier4: m.pilier4.max } : {}),
         },
       },
-      metrics: metricsFromLine(line),
-      content: {
-        title: line.serp.title,
-        summary: null,
-        lost_revenue_pitch: null,
-        pitch: null,
-        findings,
-        recommendedNextStep: null,
-        maps: {
-          address: line.serp.address ?? null,
-          rating: line.serp.rating ?? null,
-          reviews: line.serp.reviews ?? null,
-          category: line.serp.type ?? null,
-        },
-      },
+      metrics,
+      content: { findings },
     };
+    return payload;
   }
 
-  return {
-    leadKind: leadKind ?? 'DIAMANT_REFONTE',
+  const payload: StrateRadarAuditPayload = {
+    leadKind,
     googleMapsRaw,
+    legalData,
     strateScore: {
       overall: sc?.total ?? 0,
-      byStrate: {},
-      mode: 'incomplet',
+      byStrate: null,
     },
-    metrics: metricsFromLine(line),
-    content: {
-      title: line.serp.title,
-      summary: null,
-      lost_revenue_pitch: null,
-      pitch: null,
-      findings: [],
-      recommendedNextStep: null,
-      maps: {
-        address: line.serp.address ?? null,
-        rating: line.serp.rating ?? null,
-        reviews: line.serp.reviews ?? null,
-      },
-    },
+    metrics,
+    content: { findings: [] },
   };
+  return payload;
 }
 
 function ingestUrlFromOrigin(origin: string): string {
@@ -442,11 +418,12 @@ export async function publishStudioAuditsIfConfigured(
     let done = false;
     while (!done && attempt < 6) {
       attempt += 1;
-      const body = auditIngestBodySchema.parse({
+      const body: AuditIngestPayload = {
         ...baseBody,
         slug,
         accessToken,
-      });
+      };
+      assertAuditIngestPayload(body);
 
       const out = await postAuditIngest({
         ingestUrl,

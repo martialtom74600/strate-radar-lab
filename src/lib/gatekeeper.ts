@@ -3,17 +3,11 @@
  */
 
 import Groq from 'groq-sdk';
-import { z } from 'zod';
 
 import type { AppConfig } from '../config/index.js';
 import type { SerpLocalResult } from '../services/serp/schemas.js';
 import { StrateRadarError } from './errors.js';
 import { withRetry } from './retry.js';
-
-const gatekeeperJsonSchema = z.object({
-  is_commercial: z.boolean(),
-  reason: z.string(),
-});
 
 export type CommercialGateAssessment = {
   readonly isCommercial: boolean;
@@ -29,20 +23,27 @@ function extractJsonText(raw: string): string {
   return trimmed;
 }
 
-function parseGatekeeperJson(raw: string): z.infer<typeof gatekeeperJsonSchema> {
+function parseGatekeeperJson(raw: string): { readonly is_commercial: boolean; readonly reason: string } {
   let parsed: unknown;
   try {
     parsed = JSON.parse(extractJsonText(raw));
   } catch (e) {
     throw new StrateRadarError('GROQ_JSON', 'Réponse Gatekeeper non JSON', { cause: e });
   }
-  const safe = gatekeeperJsonSchema.safeParse(parsed);
-  if (!safe.success) {
-    throw new StrateRadarError('GROQ_GATEKEEPER_PARSE', `JSON Gatekeeper invalide : ${safe.error.message}`, {
-      cause: safe.error,
-    });
+  if (!parsed || typeof parsed !== 'object') {
+    throw new StrateRadarError('GROQ_GATEKEEPER_PARSE', 'JSON Gatekeeper invalide : objet attendu.');
   }
-  return safe.data;
+  const o = parsed as Record<string, unknown>;
+  if (typeof o.is_commercial !== 'boolean') {
+    throw new StrateRadarError(
+      'GROQ_GATEKEEPER_PARSE',
+      'JSON Gatekeeper invalide : is_commercial boolean attendu.',
+    );
+  }
+  if (typeof o.reason !== 'string') {
+    throw new StrateRadarError('GROQ_GATEKEEPER_PARSE', 'JSON Gatekeeper invalide : reason string attendu.');
+  }
+  return { is_commercial: o.is_commercial, reason: o.reason };
 }
 
 function normalizeGatekeeperText(s: string): string {
@@ -87,7 +88,11 @@ function buildGatekeeperUserContent(name: string, typesLabel: string): string {
   ].join(' ');
 }
 
-async function assessWithGroq(config: AppConfig, name: string, typesList: string[]): Promise<Omit<CommercialGateAssessment, 'priceBypass'>> {
+async function assessWithGroq(
+  config: AppConfig,
+  name: string,
+  typesList: string[],
+): Promise<Omit<CommercialGateAssessment, 'priceBypass'>> {
   const apiKey = config.GROQ_API_KEY?.trim();
   if (!apiKey) {
     throw new StrateRadarError('CONFIG', 'GROQ_API_KEY manquant en mode réel');

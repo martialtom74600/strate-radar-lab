@@ -19,7 +19,7 @@ export function normalizeProspectUrl(raw: string): string | null {
   }
 }
 
-/** URL absolue http(s) valide pour PageSpeed et les schémas `z.string().url()`. */
+/** URL absolue http(s) valide pour PageSpeed et la config de scan. */
 export function toAbsoluteHttpUrl(raw: string): string | null {
   try {
     const trimmed = raw.trim();

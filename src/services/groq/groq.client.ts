@@ -4,7 +4,6 @@ import type { AppConfig } from '../../config/index.js';
 import { StrateRadarError } from '../../lib/errors.js';
 import { withRetry } from '../../lib/retry.js';
 import {
-  conversionBrochureSchema,
   type ConversionBrochureAnalysis,
   type ConversionBrochureInput,
 } from './diamond-schemas.js';
@@ -27,22 +26,28 @@ function extractJsonText(raw: string): string {
   return trimmed;
 }
 
-function parseConversionBrochure(raw: string): ConversionBrochureAnalysis {
+function parseConversionBrochure(parsed: unknown): ConversionBrochureAnalysis {
+  if (!parsed || typeof parsed !== 'object') {
+    throw new StrateRadarError('GROQ_CONVERSION_PARSE', 'JSON conversion : objet attendu.');
+  }
+  const o = parsed as Record<string, unknown>;
+  if (typeof o.deadBrochureSite !== 'boolean') {
+    throw new StrateRadarError('GROQ_CONVERSION_PARSE', 'deadBrochureSite boolean attendu.');
+  }
+  if (typeof o.briefReason !== 'string' || o.briefReason.trim().length < 1) {
+    throw new StrateRadarError('GROQ_CONVERSION_PARSE', 'briefReason non vide attendu.');
+  }
+  return { deadBrochureSite: o.deadBrochureSite, briefReason: o.briefReason.trim() };
+}
+
+function parseConversionBrochureFromContent(raw: string): ConversionBrochureAnalysis {
   let parsed: unknown;
   try {
     parsed = JSON.parse(extractJsonText(raw));
   } catch (e) {
     throw new StrateRadarError('GROQ_JSON', 'Réponse Groq conversion non JSON', { cause: e });
   }
-  const safe = conversionBrochureSchema.safeParse(parsed);
-  if (!safe.success) {
-    throw new StrateRadarError(
-      'GROQ_CONVERSION_PARSE',
-      `JSON conversion invalide : ${safe.error.message}`,
-      { cause: safe.error },
-    );
-  }
-  return safe.data;
+  return parseConversionBrochure(parsed);
 }
 
 function buildConversionBrochureSystemPrompt(): string {
@@ -97,7 +102,7 @@ async function analyzeConversionBrochureLive(
     if (!content) {
       throw new StrateRadarError('GROQ_EMPTY', 'Réponse Groq conversion vide');
     }
-    return parseConversionBrochure(content);
+    return parseConversionBrochureFromContent(content);
   });
 }
 
@@ -218,7 +223,7 @@ export function createGroqClient(config: AppConfig): GroqClient {
   if (config.simulation) {
     return {
       async analyzeConversionBrochure(_input: ConversionBrochureInput) {
-        return conversionBrochureSchema.parse(structuredClone(MOCK_CONVERSION_BROCHURE));
+        return structuredClone(MOCK_CONVERSION_BROCHURE);
       },
       async generateCampaignTradeCategories() {
         return Array.from({ length: 50 }, (_, i) => `sim_segment_prospect_${String(i + 1).padStart(2, '0')}`);

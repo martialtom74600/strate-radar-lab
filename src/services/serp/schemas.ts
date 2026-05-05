@@ -1,67 +1,55 @@
-import { z } from 'zod';
+/** Une ligne « local » (pack Maps / ancien google_local SerpApi / Places Text Search mappée). */
+export type SerpLocalResult = {
+  readonly position?: number;
+  readonly title: string;
+  readonly place_id?: string;
+  readonly data_id?: string;
+  readonly data_cid?: string;
+  readonly reviews_link?: string;
+  readonly photos_link?: string;
+  readonly gps_coordinates?: {
+    readonly latitude: number;
+    readonly longitude: number;
+  };
+  readonly place_id_search?: string;
+  readonly type?: string;
+  readonly types?: readonly string[];
+  readonly address?: string;
+  readonly phone?: string;
+  readonly website?: string;
+  readonly description?: string;
+  readonly rating?: number;
+  readonly reviews?: number;
+  readonly hours?: string;
+  readonly open_state?: string;
+  readonly thumbnail?: string;
+  readonly price?: string;
+};
 
-/** Une ligne « local » renvoyée par SerpApi (google_local). */
-export const serpLocalResultSchema = z.object({
-  position: z.number().optional(),
-  title: z.string(),
-  place_id: z.string().optional(),
-  data_id: z.string().optional(),
-  data_cid: z.string().optional(),
-  reviews_link: z.string().optional(),
-  photos_link: z.string().optional(),
-  gps_coordinates: z
-    .object({
-      latitude: z.number(),
-      longitude: z.number(),
-    })
-    .optional(),
-  place_id_search: z.string().optional(),
-  type: z.string().optional(),
-  types: z.array(z.string()).optional(),
-  address: z.string().optional(),
-  phone: z.string().optional(),
-  website: z.string().optional(),
-  description: z.string().optional(),
-  rating: z.number().optional(),
-  reviews: z.number().optional(),
-  hours: z.string().optional(),
-  open_state: z.string().optional(),
-  thumbnail: z.string().optional(),
-  price: z.string().optional(),
-});
+export type SerpSearchMetadata = {
+  readonly id: string;
+  readonly status: string;
+  readonly json_endpoint?: string;
+  readonly created_at?: string;
+  readonly processed_at?: string;
+  readonly google_local_url?: string;
+  readonly raw_html_file?: string;
+  readonly total_time_taken?: number;
+};
 
-export const serpSearchMetadataSchema = z.object({
-  id: z.string(),
-  status: z.string(),
-  json_endpoint: z.string().optional(),
-  created_at: z.string().optional(),
-  processed_at: z.string().optional(),
-  google_local_url: z.string().optional(),
-  raw_html_file: z.string().optional(),
-  total_time_taken: z.number().optional(),
-});
-
-export const serpGoogleLocalResponseSchema = z.object({
-  search_metadata: serpSearchMetadataSchema,
-  search_parameters: z
-    .object({
-      engine: z.string(),
-      q: z.string(),
-      location: z.string().optional(),
-      google_domain: z.string().optional(),
-      hl: z.string().optional(),
-      gl: z.string().optional(),
-    })
-    .passthrough(),
-  local_results: z.array(serpLocalResultSchema).optional(),
-  /** Pagination Google Places Text Search (nouveau). */
-  next_page_token: z.string().optional(),
-  /** Présent en cas d’erreur SerpApi */
-  error: z.string().optional(),
-})
-  .passthrough();
-
-export type SerpLocalResult = z.infer<typeof serpLocalResultSchema>;
-export type SerpGoogleLocalResponse = z.infer<typeof serpGoogleLocalResponseSchema>;
-
-export type SerpSearchMetadata = z.infer<typeof serpSearchMetadataSchema>;
+/** Réponse locale (forme historique compat SerpApi). */
+export type SerpGoogleLocalResponse = {
+  readonly search_metadata: SerpSearchMetadata;
+  readonly search_parameters: {
+    readonly engine: string;
+    readonly q: string;
+    readonly location?: string;
+    readonly google_domain?: string;
+    readonly hl?: string;
+    readonly gl?: string;
+    readonly [key: string]: unknown;
+  };
+  readonly local_results?: readonly SerpLocalResult[];
+  readonly next_page_token?: string;
+  readonly error?: string;
+};

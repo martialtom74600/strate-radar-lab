@@ -2,10 +2,7 @@ import type { AppConfig } from '../../config/index.js';
 import { StrateRadarError } from '../../lib/errors.js';
 import { withRetry } from '../../lib/retry.js';
 import { MOCK_PAGESPEED_RESPONSE } from './mock-data.js';
-import {
-  pageSpeedInsightsV5Schema,
-  type PageSpeedInsightsV5,
-} from './schemas.js';
+import type { PageSpeedInsightsV5 } from './schemas.js';
 
 export type PageSpeedStrategy = 'mobile' | 'desktop';
 
@@ -21,15 +18,13 @@ export type PageSpeedClient = {
 const PSI_BASE = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed';
 
 function parsePsiJson(raw: unknown): PageSpeedInsightsV5 {
-  const parsed = pageSpeedInsightsV5Schema.safeParse(raw);
-  if (!parsed.success) {
+  if (!raw || typeof raw !== 'object') {
     throw new StrateRadarError(
       'PSI_PARSE',
-      `Réponse PageSpeed invalide : ${parsed.error.message}`,
-      { cause: parsed.error },
+      'Réponse PageSpeed invalide : objet JSON attendu.',
     );
   }
-  return parsed.data;
+  return raw as PageSpeedInsightsV5;
 }
 
 async function runPagespeedLive(

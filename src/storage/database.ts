@@ -3,11 +3,9 @@ import path from 'node:path';
 import sqlite3 from 'sqlite3';
 
 import type { PageSpeedInsightsV5 } from '../services/pagespeed/schemas.js';
-import { pageSpeedInsightsV5Schema } from '../services/pagespeed/schemas.js';
 import type { SerpLocalResult } from '../services/serp/schemas.js';
-import { serpLocalResultSchema } from '../services/serp/schemas.js';
 import type { SalesAnalysis } from '../services/groq/schemas.js';
-import { salesAnalysisSchema } from '../services/groq/schemas.js';
+import { parseSalesAnalysisJson } from '../services/groq/schemas.js';
 
 export type ProspectScanMode = 'live' | 'simulation';
 
@@ -112,10 +110,20 @@ function parseCached(row: ProspectRow): CachedProspectScan | null {
   let serp: SerpLocalResult;
   let analysis: SalesAnalysis;
   try {
-    psi = pageSpeedInsightsV5Schema.parse(JSON.parse(row.psi_raw_json));
-    serp = serpLocalResultSchema.parse(JSON.parse(row.serp_row_json));
-    analysis = salesAnalysisSchema.parse(JSON.parse(row.analysis_json));
+    psi = JSON.parse(row.psi_raw_json) as PageSpeedInsightsV5;
+    serp = JSON.parse(row.serp_row_json) as SerpLocalResult;
+    const parsedAnalysis = parseSalesAnalysisJson(JSON.parse(row.analysis_json));
+    if (!parsedAnalysis) return null;
+    analysis = parsedAnalysis;
   } catch {
+    return null;
+  }
+
+  if (
+    typeof serp !== 'object' ||
+    serp === null ||
+    typeof (serp as SerpLocalResult).title !== 'string'
+  ) {
     return null;
   }
 

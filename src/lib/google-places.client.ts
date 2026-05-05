@@ -7,16 +7,9 @@ import type { AppConfig } from '../config/index.js';
 import { StrateRadarError } from './errors.js';
 import { withRetry } from './retry.js';
 import { MOCK_SERP_GOOGLE_ORGANIC_RESPONSE } from '../services/serp/organic-mock.js';
-import {
-  serpGoogleOrganicResponseSchema,
-  type SerpGoogleOrganicResponse,
-} from '../services/serp/organic-schemas.js';
+import type { SerpGoogleOrganicResponse } from '../services/serp/organic-schemas.js';
 import { MOCK_SERP_GOOGLE_LOCAL_RESPONSE } from '../services/serp/mock-data.js';
-import {
-  serpGoogleLocalResponseSchema,
-  type SerpGoogleLocalResponse,
-  type SerpLocalResult,
-} from '../services/serp/schemas.js';
+import type { SerpGoogleLocalResponse, SerpLocalResult } from '../services/serp/schemas.js';
 import type {
   GoogleLocalSearchParams,
   GoogleOrganicSearchParams,
@@ -205,17 +198,18 @@ function createGooglePlacesSimulationClient(): SerpClient {
   return {
     async searchGoogleLocal(params: GoogleLocalSearchParams): Promise<SerpGoogleLocalResponse> {
       if (params.pageToken !== undefined && params.pageToken !== '') {
-        const base = structuredClone(MOCK_SERP_GOOGLE_LOCAL_RESPONSE);
+        const base = structuredClone(MOCK_SERP_GOOGLE_LOCAL_RESPONSE) as Record<string, unknown>;
         base.local_results = [];
-        base.search_metadata = { ...base.search_metadata, id: 'mock-places-empty-page' };
-        return serpGoogleLocalResponseSchema.parse(base);
+        const sm = base.search_metadata as Record<string, unknown>;
+        base.search_metadata = { ...sm, id: 'mock-places-empty-page' };
+        return base as SerpGoogleLocalResponse;
       }
-      return serpGoogleLocalResponseSchema.parse(structuredClone(MOCK_SERP_GOOGLE_LOCAL_RESPONSE));
+      return structuredClone(MOCK_SERP_GOOGLE_LOCAL_RESPONSE) as SerpGoogleLocalResponse;
     },
     async searchGoogleOrganic(
       _params: GoogleOrganicSearchParams,
     ): Promise<SerpGoogleOrganicResponse> {
-      return serpGoogleOrganicResponseSchema.parse(structuredClone(MOCK_SERP_GOOGLE_ORGANIC_RESPONSE));
+      return structuredClone(MOCK_SERP_GOOGLE_ORGANIC_RESPONSE) as SerpGoogleOrganicResponse;
     },
   };
 }
