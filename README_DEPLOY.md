@@ -1,24 +1,12 @@
 # Déploiement — Strate Radar (GitHub Actions nocturne)
 
-Le workflow `.github/workflows/nightly-radar.yml` exécute la pipeline **toutes les nuits** (cron UTC), écrit `rapport_matinal.md`, `data/shadow-sites-export.json`, **`data/heartbeat.json`**, envoie les audits vers la vitrine via **`POST …/api/audits/ingest`** (secret `RADAR_INGEST_SECRET`), puis met à jour **`data/strate-radar.sqlite`** et tente un **commit + push**. Les pages HTML ne sont **pas** générées dans ce dépôt — la vitrine / site mère les construit à partir de l’API. Pour générer des HTML en local : `npm run generate:shadows`.
+Le workflow `.github/workflows/nightly-radar.yml` exécute la pipeline **toutes les nuits** (cron UTC), écrit `rapport_matinal.md`, `data/shadow-sites-export.json`, **`data/heartbeat.json`**, met à jour **`data/strate-radar.sqlite`** (hors dépôt), envoie les audits vers la vitrine via **`POST …/api/audits/ingest`** (secret `RADAR_INGEST_SECRET`), puis **enregistre la SQLite dans le cache GitHub Actions** et publie le rapport / JSON / heartbeat en **artefacts du run** (onglet *Summary* du workflow → section *Artifacts*). Ces fichiers sont listés dans **`.gitignore`** : plus de commit automatique, donc **plus de conflits** entre le bot et vos tests locaux (`npm run dev` régénère les mêmes chemins sans salir les merges).
 
-### Qui commit les fichiers radar sur `main` ?
-
-**Seul ce workflow** est censé pousser ces artefacts (évite les conflits entre votre machine et le runner). En développement local :
-
-1. Une fois après clone ou quand vous avez tiré `main`, exécutez **`npm run git:skip-radar-artifacts`**. Git ignorera alors les modifications locales sur le rapport, l’export JSON, le heartbeat et le SQLite : vous pouvez lancer **`npm run dev`** sans salir `git status` ni risquer de committer les mêmes fichiers que le bot.
-2. Pour revoir l’état skip-worktree : **`npm run git:show-radar-artifacts`**.
-3. Si vous devez **vraiment** committer une évolution sur ces fichiers à la main, ou resynchroniser après un pull qui les a mis à jour côté dépôt : **`npm run git:track-radar-artifacts`**, puis `git pull` / `git checkout` comme d’habitude, et éventuellement **`git:skip-radar-artifacts`** à nouveau.
-
-Sans ça, le comportement par défaut reste « tout le monde peut modifier les mêmes chemins » → merges et rebases pénibles. Le workflow fait déjà **`git pull --rebase`** avant **`git push`** pour limiter les courses avec un push humain.
+Les pages HTML ne sont **pas** générées dans ce dépôt — la vitrine / site mère les construit à partir de l’API. Pour générer des HTML en local : `npm run generate:shadows`.
 
 ### Mémoire SQLite sur GitHub (important)
 
-Le fichier **`data/strate-radar.sqlite`** est **versionné** dans le dépôt pour que chaque run CI réutilise la même base que le run précédent (fenêtre `RADAR_SQLITE_RECENT_DAYS`, outcomes diamant / disqualifié, cache PageSpeed par URL). Sans ça, chaque nuit repartait **à zéro** et consommait de nouveau les mêmes appels API.
-
-- **Premier run** : la base est créée par la pipeline puis **ajoutée au commit** par le bot.
-- Si **vous poussez sur `main`** pendant qu’un run nocturne tourne (~6 min d’API), le bot peut avoir besoin d’un **`git pull --rebase` avant `git push`** : c’est maintenant fait automatiquement dans le workflow. En cas de **conflit** (ex. SQLite modifié des deux côtés), le job échoue : résoudre à la main ou garder une version de la base.
-- En local, `git pull` avant de travailler évite de diverger trop de la base « serveur ».
+La base **`data/strate-radar.sqlite`** n’est **plus versionnée**. Entre deux nuits, elle est **restaurée puis sauvegardée** via `actions/cache` (clé préfixée par la branche). Premier run sur une branche : base vide puis remplie comme en local. Fenêtre `RADAR_SQLITE_RECENT_DAYS`, outcomes diamant / disqualifié et cache PageSpeed restent valables **tant que le cache Actions n’est pas purgé** (éviction côté GitHub ou changement de branche isolée).
 
 ## Secrets GitHub (Settings → Secrets and variables → Actions)
 
@@ -34,12 +22,12 @@ Le fichier **`data/strate-radar.sqlite`** est **versionné** dans le dépôt pou
 
 ### Notification Telegram (téléphone)
 
-1. Sur Telegram, ouvre **@BotFather** → `/newbot` → choisir un nom et un username → copier le **token** → secret GitHub `TELEGRAM_BOT_TOKEN`.
+1. Sur Telegram, ouvre **@BotFather** → `/newbot` → choisir un nom et un username → copier le **token** → secret Git `TELEGRAM_BOT_TOKEN`.
 2. Démarre une conversation avec **ton bot** (touche Démarrer / envoie un message).
 3. Récupère ton **chat id** : dans un navigateur, ouvre  
    `https://api.telegram.org/bot<TOKEN>/getUpdates`  
    (remplace `<TOKEN>` par le token) et repère `"chat":{"id": 123456789` → secret GitHub `TELEGRAM_CHAT_ID` (le nombre, peut être négatif pour un groupe).
-4. Push le workflow : après chaque run **réussi**, tu reçois un message avec le nombre de pépites et le lien vers `rapport_matinal.md` sur GitHub. En cas d’échec, un message avec le lien vers les logs Actions.
+4. Push le workflow : après chaque run **réussi**, tu reçois un message avec le nombre de leads et le **lien vers le run Actions** (artefacts : rapport, export, heartbeat). En cas d’échec, un message avec le lien vers les logs.
 
 Sans ces deux secrets, le workflow **ignore** l’étape Telegram (aucune erreur).
 
@@ -54,8 +42,7 @@ Sans ces deux secrets, le workflow **ignore** l’étape Telegram (aucune erreur
 
 ## Permissions Git
 
-- Le job utilise `permissions: contents: write` et le `GITHUB_TOKEN` par défaut pour pousser sur le **même** dépôt.
-- Si la branche `main` est **protégée**, le push peut échouer : créez un **Personal Access Token** avec `contents: write`, stockez-le en secret (ex. `RADAR_PUSH_TOKEN`) et remplacez l’étape `checkout` par un token personnalisé, ou assouplissez la protection pour `[bot]`.
+- Le job utilise `permissions: contents: read` (plus de push des artefacts sur le dépôt).
 
 ## Horaire
 

@@ -1,8 +1,8 @@
 # Prospection nocturne : rapport Markdown + JSON export / ingest vitrine · pas de HTML local (pages côté site mère via API).
 # Horaire : ~04h à Paris en hiver (UTC+1) — ajuster le cron si besoin (GitHub = UTC).
 #
-# Artefacts commités ici uniquement (réf. README_DEPLOY.md) : ne pas les recenser
-# ailleurs sans mettre à jour scripts/git-radar-artifacts.mjs.
+# Sorties `rapport_matinal.md`, `data/shadow-sites-export.json`, `data/heartbeat.json`, `data/strate-radar.sqlite`
+# sont dans .gitignore : pas de commit depuis ce job (évite conflits avec les runs locaux). SQLite est mise en cache Actions.
 
 name: Nightly Strate Radar
 
@@ -19,11 +19,17 @@ jobs:
   radar:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
+
+      - name: Restaurer la SQLite (mémoire entre runs CI)
+        uses: actions/cache@v4
         with:
-          fetch-depth: 0
+          path: data/strate-radar.sqlite
+          key: strate-radar-sqlite-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            strate-radar-sqlite-${{ github.ref_name }}-
 
       - uses: actions/setup-node@v4
         with:
@@ -54,35 +60,35 @@ jobs:
           RADAR_INGEST_DEBUG: ${{ vars.RADAR_INGEST_DEBUG || 'false' }}
         run: npm run dev
 
-      - name: Pousser rapport, export et SQLite
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # Même chemin que STRATE_RADAR_DB_PATH par défaut (mémoire lieux / diamants entre les runs CI)
-          git add rapport_matinal.md data/shadow-sites-export.json data/heartbeat.json
-          if [ -f data/strate-radar.sqlite ]; then git add data/strate-radar.sqlite; fi
-          if git diff --staged --quiet; then
-            echo "Aucun changement à committer."
-          else
-            git commit -m "chore(radar): nightly rapport, export, heartbeat et SQLite"
-            # Remote peut avoir avancé (push local / autre job) pendant le run ~6 min
-            git pull --rebase origin "${{ github.ref_name }}"
-            git push
-          fi
+      - name: Enregistrer la SQLite dans le cache Actions
+        if: success() && hashFiles('data/strate-radar.sqlite') != ''
+        uses: actions/cache@v4
+        with:
+          path: data/strate-radar.sqlite
+          key: strate-radar-sqlite-${{ github.ref_name }}-${{ github.run_id }}
+
+      - name: Artefacts rapport + export + heartbeat
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: radar-output-${{ github.run_id }}
+          retention-days: 90
+          path: |
+            rapport_matinal.md
+            data/shadow-sites-export.json
+            data/heartbeat.json
 
       - name: Notifier Telegram (succès)
         if: success()
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           if [ -z "${TELEGRAM_BOT_TOKEN}" ] || [ -z "${TELEGRAM_CHAT_ID}" ]; then
             echo "Telegram ignoré : définir les secrets TELEGRAM_BOT_TOKEN et TELEGRAM_CHAT_ID."
             exit 0
           fi
-          REPO="${{ github.repository }}"
-          BRANCH="${{ github.ref_name }}"
-          REPORT_URL="https://github.com/${REPO}/blob/${BRANCH}/rapport_matinal.md"
           COUNT=$(node -p "try { require('./data/shadow-sites-export.json').diamonds.length } catch (e) { 0 }" 2>/dev/null || echo 0)
           CITY=$(node -p "try { require('./data/shadow-sites-export.json').cityLabel || '—' } catch (e) { '—' }" 2>/dev/null || echo '—')
           MSG=$'✅ Strate Radar — run OK\nZone : '"${CITY}"
@@ -98,7 +104,7 @@ jobs:
             [ -n "${STOP_LINE}" ] && MSG="${MSG}"$'\n'"${STOP_LINE}"
             [ -n "${HB_AT}" ] && MSG="${MSG}"$'\n'"${HB_AT}"
           fi
-          MSG="${MSG}"$'\n'"Leads (export JSON) : ${COUNT}"$'\n'"Rapport : ${REPORT_URL}"
+          MSG="${MSG}"$'\n'"Leads (export JSON) : ${COUNT}"$'\n'"Run / artefacts : ${RUN_URL}"
           curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
             --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
             --data-urlencode "text=${MSG}" \

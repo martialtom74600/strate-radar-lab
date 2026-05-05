@@ -9,9 +9,6 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
-    "git:skip-radar-artifacts": "node scripts/git-radar-artifacts.mjs --skip",
-    "git:track-radar-artifacts": "node scripts/git-radar-artifacts.mjs --track",
-    "git:show-radar-artifacts": "node scripts/git-radar-artifacts.mjs --show",
     "generate:shadows": "tsx src/pipeline/generate-shadow-pages.ts",
     "typecheck": "tsc --noEmit"
   },

@@ -4,5 +4,9 @@ dist/
 *.log
 .DS_Store
 *.sqlite
-!data/strate-radar.sqlite
 *.db
+
+# Sorties régénérées à chaque run (local + Actions) — pas versionnées pour éviter conflits de merge
+rapport_matinal.md
+data/shadow-sites-export.json
+data/heartbeat.json
