@@ -2,7 +2,7 @@ import { StrateRadarError } from '../../lib/errors.js';
 
 import type { SerpClient } from './search-client.types.js';
 
-/** Encadre le client recherche locale : chaque appel Places Text Search (local + organique) compte pour le plafond du run. */
+/** Encadre le client Places : Text Search (local + organique) et Nearby Search — chaque appel compte pour le plafond du run. */
 export function wrapSerpClientWithBudget(
   client: SerpClient,
   budget: { readonly max: number; used: number },
@@ -25,6 +25,10 @@ export function wrapSerpClientWithBudget(
     searchGoogleOrganic(params) {
       consume();
       return client.searchGoogleOrganic(params);
+    },
+    searchGoogleNearby(params) {
+      consume();
+      return client.searchGoogleNearby(params);
     },
   };
 }

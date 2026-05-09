@@ -9,6 +9,7 @@ export {
   type ConversionBadge,
   type LeadQuotaState,
 } from './radar-pipeline.js';
+export type { RadarNearbyCompetitor } from '../lib/nearby-competitors.js';
 export type { DiamondPainType } from '../lib/diamond.js';
 export type { WebsiteSource } from '../storage/index.js';
 export {
@@ -18,6 +19,7 @@ export {
 export type {
   AuditIngestPayload,
   StrateRadarAuditPayload,
+  StrateRadarAuditNearbyCompetitor,
 } from '../lib/strate-studio/audit-payload.js';
 export type { StudioIngestSuccess } from '../lib/strate-studio/audit-ingest.js';
 export {

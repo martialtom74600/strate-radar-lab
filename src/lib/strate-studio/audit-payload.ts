@@ -1,6 +1,10 @@
 /** Kebab-case strict (aligné radar ingest côté vitrine). */
 export const studioAuditSlugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
+/** Même modèle que `RadarNearbyCompetitor` (import type pour éviter cycle). */
+export type StrateRadarAuditNearbyCompetitor =
+  import('../nearby-competitors.js').RadarNearbyCompetitor;
+
 export type GoogleMapsRaw = {
   readonly title: string;
   readonly address: string | null;
@@ -14,6 +18,8 @@ export type GoogleMapsRaw = {
   readonly place_id: string | null;
   readonly trendingQuery: string;
   readonly seedCategory: string | null;
+  /** Extraits d’avis Google Places (jusqu’à 10 textes) — absent sur exports historiques. */
+  readonly place_review_texts?: readonly string[] | null;
 };
 
 export type RadarAuditLeadKind = 'DIAMANT_CREATION' | 'DIAMANT_REFONTE';
@@ -68,6 +74,10 @@ export type StrateRadarAuditPayload = {
   readonly strateScore: StrateRadarAuditStrateScore;
   readonly metrics: StrateRadarAuditMetrics;
   readonly content: StrateRadarAuditContent;
+  /** Concurrents à proximité (FOMO) — absent sur les payloads historiques. */
+  readonly nearbyCompetitors?: readonly StrateRadarAuditNearbyCompetitor[];
+  /** 3 leviers digitaux (Groq) — absent sur payloads historiques. */
+  readonly digitalGrowthLevers?: readonly string[];
 };
 
 export type AuditIngestPayload = {

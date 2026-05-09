@@ -1,6 +1,7 @@
 /**
- * Client Google Places API (Text Search).
+ * Client Google Places API (Text Search + Nearby Search).
  * @see https://developers.google.com/maps/documentation/places/web-service/text-search
+ * @see https://developers.google.com/maps/documentation/places/web-service/nearby-search
  */
 
 import type { AppConfig } from '../config/index.js';
@@ -12,14 +13,19 @@ import { MOCK_SERP_GOOGLE_LOCAL_RESPONSE } from '../services/serp/mock-data.js';
 import type { SerpGoogleLocalResponse, SerpLocalResult } from '../services/serp/schemas.js';
 import type {
   GoogleLocalSearchParams,
+  GoogleNearbySearchParams,
   GoogleOrganicSearchParams,
   SerpClient,
 } from '../services/serp/search-client.types.js';
 
 const PLACES_TEXT_SEARCH_URL = 'https://places.googleapis.com/v1/places:searchText';
+const PLACES_NEARBY_SEARCH_URL = 'https://places.googleapis.com/v1/places:searchNearby';
 
 const FIELD_MASK =
-  'places.id,places.displayName,places.rating,places.userRatingCount,places.websiteUri,places.formattedAddress,places.priceLevel,places.primaryType,places.types,places.location,places.photos,nextPageToken';
+  'places.id,places.displayName,places.rating,places.userRatingCount,places.websiteUri,places.formattedAddress,places.priceLevel,places.primaryType,places.types,places.location,places.photos,places.reviews,nextPageToken';
+
+const NEARBY_FIELD_MASK =
+  'places.id,places.displayName,places.rating,places.userRatingCount,places.websiteUri,places.formattedAddress,places.primaryType,places.types,places.location,places.reviews';
 
 type PlacesDisplayName = {
   readonly text?: string;
@@ -28,6 +34,12 @@ type PlacesDisplayName = {
 
 type GooglePlacePhoto = {
   readonly name?: string;
+};
+
+type GoogleReviewRaw = {
+  readonly rating?: number;
+  readonly text?: { readonly text?: string };
+  readonly originalText?: { readonly text?: string };
 };
 
 type GooglePlaceRaw = {
@@ -46,11 +58,16 @@ type GooglePlaceRaw = {
     readonly longitude?: number;
   };
   readonly photos?: readonly GooglePlacePhoto[];
+  readonly reviews?: readonly GoogleReviewRaw[];
 };
 
 type PlacesTextSearchResponseBody = {
   readonly places?: GooglePlaceRaw[];
   readonly nextPageToken?: string;
+};
+
+type PlacesNearbySearchResponseBody = {
+  readonly places?: GooglePlaceRaw[];
 };
 
 function mapPriceLevelToLabel(level: string | undefined): string | undefined {
@@ -88,6 +105,21 @@ function extractPlaceId(place: GooglePlaceRaw): string | undefined {
   return m?.[1]?.trim() || undefined;
 }
 
+function extractReviewTextBodies(place: GooglePlaceRaw, maxReviews = 10): readonly string[] {
+  const raw = place.reviews;
+  if (!raw || raw.length === 0) return [];
+  const out: string[] = [];
+  for (const r of raw) {
+    const combined =
+      (typeof r.originalText?.text === 'string' ? r.originalText.text.trim() : '') ||
+      (typeof r.text?.text === 'string' ? r.text.text.trim() : '');
+    if (combined.length < 3) continue;
+    out.push(combined.slice(0, 4000));
+    if (out.length >= maxReviews) break;
+  }
+  return out;
+}
+
 function mapPlaceToLocalResult(
   place: GooglePlaceRaw,
   position: number,
@@ -105,6 +137,7 @@ function mapPlaceToLocalResult(
     photoName !== undefined && placesApiKey !== undefined && placesApiKey.trim() !== ''
       ? buildPlacesPhotoMediaUrl(photoName, placesApiKey)
       : undefined;
+  const reviewBodies = extractReviewTextBodies(place, 10);
 
   return {
     position,
@@ -130,6 +163,7 @@ function mapPlaceToLocalResult(
       ? { gps_coordinates: { latitude: lat, longitude: lng } }
       : {}),
     ...(thumb !== undefined && thumb !== '' ? { thumbnail: thumb } : {}),
+    ...(reviewBodies.length > 0 ? { place_review_texts: [...reviewBodies] } : {}),
   };
 }
 
@@ -182,6 +216,92 @@ async function postSearchText(
   });
 }
 
+async function postSearchNearby(
+  apiKey: string,
+  body: Record<string, unknown>,
+): Promise<PlacesNearbySearchResponseBody> {
+  return withRetry(async (_ctx) => {
+    const res = await fetch(PLACES_NEARBY_SEARCH_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': apiKey,
+        'X-Goog-FieldMask': NEARBY_FIELD_MASK,
+      },
+      body: JSON.stringify(body),
+    });
+
+    const text = await res.text();
+    let json: unknown;
+    try {
+      json = JSON.parse(text) as unknown;
+    } catch {
+      throw new StrateRadarError(
+        'PLACES_JSON',
+        `Places Nearby API : réponse non JSON (HTTP ${res.status})`,
+        { status: res.status },
+      );
+    }
+
+    if (!res.ok) {
+      const errObj = json as { error?: { message?: string; status?: string } };
+      const msg =
+        typeof errObj.error?.message === 'string'
+          ? errObj.error.message
+          : text.slice(0, 400);
+      throw new StrateRadarError(
+        'HTTP_STATUS',
+        `Places Nearby API HTTP ${res.status} — ${msg}`,
+        { status: res.status },
+      );
+    }
+
+    return json as PlacesNearbySearchResponseBody;
+  });
+}
+
+/** Concurrents synthétiques (simulation) — sites web présents pour le rendu rapport / FOMO. */
+function buildMockNearbyPlaces(params: GoogleNearbySearchParams): SerpLocalResult[] {
+  const lat = params.latitude;
+  const lng = params.longitude;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return [];
+  const dLat = (meters: number) => meters / 111320;
+  const dLng = (meters: number, atLat: number) =>
+    meters / (111320 * Math.cos((atLat * Math.PI) / 180));
+
+  const primary = params.includedPrimaryTypes[0]?.trim() ?? 'bakery';
+
+  const mk = (
+    i: number,
+    title: string,
+    site: string,
+    r: number,
+    rev: number,
+    northM: number,
+    eastM: number,
+    pid: string,
+  ): SerpLocalResult => ({
+    position: i + 1,
+    title,
+    place_id: pid,
+    website: site,
+    rating: r,
+    reviews: rev,
+    gps_coordinates: {
+      latitude: lat + dLat(northM),
+      longitude: lng + dLng(eastM, lat),
+    },
+    type: primary,
+    address: 'Adresse fictive (mock concurrent local)',
+  });
+
+  return [
+    mk(0, 'Concurrence mock — Le Fournil du Lac', 'https://mock-concurrent-1.example', 4.72, 190, 95, -60, 'ChIJmockcomp000000001'),
+    mk(1, 'Pain & Chocolat Cran (mock)', 'https://mock-concurrent-2.example', 4.61, 88, -120, 180, 'ChIJmockcomp000000002'),
+    mk(2, 'Boulangerie des Alpes mock', 'https://mock-concurrent-3.example', 4.55, 156, 200, -40, 'ChIJmockcomp000000003'),
+  ];
+}
+
 function emptyLocalPack(q: string, location: string | undefined): SerpGoogleLocalResponse {
   return {
     search_metadata: { id: 'google-places-empty', status: 'Success' },
@@ -210,6 +330,9 @@ function createGooglePlacesSimulationClient(): SerpClient {
       _params: GoogleOrganicSearchParams,
     ): Promise<SerpGoogleOrganicResponse> {
       return structuredClone(MOCK_SERP_GOOGLE_ORGANIC_RESPONSE) as SerpGoogleOrganicResponse;
+    },
+    async searchGoogleNearby(params: GoogleNearbySearchParams): Promise<readonly SerpLocalResult[]> {
+      return buildMockNearbyPlaces(params);
     },
   };
 }
@@ -301,6 +424,40 @@ function createGooglePlacesLiveClient(config: AppConfig): SerpClient {
         search_parameters: { engine: 'google_places_text', q: params.q },
         organic_results,
       };
+    },
+
+    async searchGoogleNearby(params: GoogleNearbySearchParams): Promise<readonly SerpLocalResult[]> {
+      const lat = params.latitude;
+      const lng = params.longitude;
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return [];
+
+      const types = [...params.includedPrimaryTypes].map((t) => t.trim()).filter((t) => t.length > 0);
+      if (types.length === 0) return [];
+
+      const r = Number(params.radiusMeters);
+      if (!Number.isFinite(r) || r <= 0) return [];
+
+      const maxRc = Math.min(Math.max(Number(params.maxResultCount ?? 20), 1), 20);
+
+      const body: Record<string, unknown> = {
+        locationRestriction: {
+          circle: {
+            center: { latitude: lat, longitude: lng },
+            radius: r,
+          },
+        },
+        includedPrimaryTypes: types,
+        rankPreference: 'DISTANCE',
+        maxResultCount: maxRc,
+      };
+      const hlTr = params.hl?.trim();
+      if (hlTr) body.languageCode = hlTr;
+      const glTr = params.gl?.trim();
+      if (glTr) body.regionCode = glTr.toUpperCase().slice(0, 2);
+
+      const data = await postSearchNearby(apiKey, body);
+      const rawPlaces = data.places ?? [];
+      return rawPlaces.map((p, i) => mapPlaceToLocalResult(p, i + 1, apiKey));
     },
   };
 }

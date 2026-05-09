@@ -24,6 +24,8 @@ export type SerpLocalResult = {
   readonly open_state?: string;
   readonly thumbnail?: string;
   readonly price?: string;
+  /** Textes d’avis Google Places (Places API · jusqu’à 10 extraits lors du dernier fetch lieu). */
+  readonly place_review_texts?: readonly string[];
 };
 
 export type SerpSearchMetadata = {

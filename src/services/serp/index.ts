@@ -8,6 +8,7 @@ export {
   type SerpClient,
   type GoogleLocalSearchParams,
   type GoogleOrganicSearchParams,
+  type GoogleNearbySearchParams,
 } from './search-client.types.js';
 export { wrapSerpClientWithBudget } from './serp-budget.js';
 export {

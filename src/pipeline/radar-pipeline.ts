@@ -62,8 +62,86 @@ import {
   ProspectRepository,
   type WebsiteSource,
 } from '../storage/database.js';
+import {
+  fetchNearbyWebsiteCompetitorsForDiamond,
+  type RadarNearbyCompetitor,
+} from '../lib/nearby-competitors.js';
+import type { DiamondGrowthLeversInput } from '../services/groq/growth-lever-schemas.js';
 
 /** Pas d’offset numérique : Places Text Search pagine via nextPageToken (pageSize 20). */
+
+function frictionLinesFromStrateMatrix(matrix: StrateScoreResult | null): string[] {
+  if (!matrix) return [];
+  const cols = [matrix.pilier1, matrix.pilier2, matrix.pilier3];
+  if (matrix.pilier4 !== undefined) cols.push(matrix.pilier4);
+  return cols
+    .flatMap((p) => p.items)
+    .map((s) => s.replace(/\s+/g, ' ').trim())
+    .filter((s) => s.length > 0);
+}
+
+function describeSiteSituationForGrowthLever(args: {
+  readonly badge: ConversionBadge;
+  readonly displayUrl: string | null;
+  readonly websiteSource?: WebsiteSource;
+}): string {
+  if (args.badge === 'DIAMANT_CREATION') {
+    return 'Pas de site web propriétaire résolu (conversion en ligne absente hors fiche Maps / annuaires).';
+  }
+  const u = args.displayUrl?.trim();
+  const src =
+    args.websiteSource === 'organic_deep_search'
+      ? ' — URL découverte hors lien direct fichier Maps.'
+      : '';
+  return `Site identifié : ${u ?? '—'}${src}`;
+}
+
+function buildDiamondGrowthLeversGroqInput(args: {
+  readonly serp: SerpLocalResult;
+  readonly conversionBadge: ConversionBadge;
+  readonly displayUrl: string | null;
+  readonly websiteSource?: WebsiteSource;
+  readonly matrix: StrateScoreResult | null;
+  readonly legalData: CompanyRegistryLegalData | null;
+}): DiamondGrowthLeversInput {
+  const { serp, conversionBadge } = args;
+  const ld = args.legalData;
+  const reviewTexts = [...(serp.place_review_texts ?? [])].slice(0, 10);
+
+  return {
+    businessName: serp.title,
+    activityLabel: serp.type !== undefined && serp.type.trim() !== '' ? serp.type.trim() : null,
+    nafCode: ld?.codeNafRevision25 ?? ld?.codeNaf ?? null,
+    nafResume:
+      ld?.activiteOfficielleResume !== undefined && ld.activiteOfficielleResume.trim() !== ''
+        ? ld.activiteOfficielleResume.trim()
+        : null,
+    address: serp.address !== undefined && serp.address.trim() !== '' ? serp.address.trim() : null,
+    googleRating:
+      typeof serp.rating === 'number' && !Number.isNaN(serp.rating) ? serp.rating : null,
+    googleReviewCount:
+      typeof serp.reviews === 'number' && !Number.isNaN(serp.reviews) ? serp.reviews : null,
+    siteSituation: describeSiteSituationForGrowthLever({
+      badge: conversionBadge,
+      displayUrl: args.displayUrl,
+      ...(args.websiteSource !== undefined ? { websiteSource: args.websiteSource } : {}),
+    }),
+    technicalFrictionLines: frictionLinesFromStrateMatrix(args.matrix),
+    reviewTexts,
+  };
+}
+
+async function fetchDiamondGrowthLeversSafe(
+  groqClient: GroqClient,
+  input: DiamondGrowthLeversInput,
+): Promise<readonly string[]> {
+  try {
+    const out = await groqClient.generateDiamondGrowthLevers(input);
+    return out.ideas;
+  } catch {
+    return [];
+  }
+}
 
 function truncateTitle(title: string, max = 56): string {
   const t = title.trim();
@@ -111,6 +189,10 @@ export type RadarPipelineLine = {
   readonly fromCache: boolean;
   readonly psiStrategy: 'mobile';
   readonly pageSpeed: PageSpeedInsightsV5 | null;
+  /** Concurrents à proximité (Nearby Places, site web Maps) pour effet FOMO ; absent si non applicable. */
+  readonly nearbyCompetitors?: readonly RadarNearbyCompetitor[];
+  /** 3 leviers digitaux (Groq) — absent si non généré / erreur / quota (rétrocompat). */
+  readonly digitalGrowthLevers?: readonly string[];
   /**
    * Données registre officielles (État via `annuaire-entreprises` / recherche ouverte).
    * Renseignée pour les passes `DIAMANT_*` après Gatekeeper lorsque la requête retourne un match fiable ;
@@ -237,6 +319,8 @@ type ProcessLocalContext = {
   readonly trendingQuery: string;
   readonly progressTag: string;
   readonly gatekeeperExclusions: GatekeeperExclusion[];
+  /** Référence au budget Places du run (`used` augmenté aussi par Nearby Search concurrents). */
+  readonly placesBudget: { used: number; max: number };
   /** Compteurs mutables (quotas création / refonte). */
   readonly quotaState: LeadQuotaState;
 };
@@ -259,6 +343,7 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     trendingQuery,
     progressTag,
     gatekeeperExclusions,
+    placesBudget,
     quotaState,
   } = ctx;
 
@@ -333,6 +418,22 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
       searchLocationHint: searchLocation,
       mapsAddress: serp.address,
     });
+    const nearbyCompetitors = await fetchNearbyWebsiteCompetitorsForDiamond({
+      prospect: serp,
+      serpClient,
+      placesBudget,
+      radiusMeters: config.RADAR_COMPETITOR_RADIUS_METERS,
+      ...(searchHl !== undefined ? { searchHl } : {}),
+      ...(searchGl !== undefined ? { searchGl } : {}),
+    });
+    const growthInput = buildDiamondGrowthLeversGroqInput({
+      serp,
+      conversionBadge: 'DIAMANT_CREATION',
+      displayUrl: null,
+      matrix: null,
+      legalData,
+    });
+    const leverIdeas = await fetchDiamondGrowthLeversSafe(groqClient, growthInput);
     return {
       serp,
       normalizedUrl: null,
@@ -351,6 +452,8 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
       psiStrategy: 'mobile',
       pageSpeed: null,
       legalData,
+      ...(nearbyCompetitors !== undefined ? { nearbyCompetitors } : {}),
+      ...(leverIdeas.length > 0 ? { digitalGrowthLevers: leverIdeas } : {}),
     };
   }
 
@@ -446,6 +549,25 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     mapsAddress: serp.address,
   });
 
+  const nearbyCompetitors = await fetchNearbyWebsiteCompetitorsForDiamond({
+    prospect: serp,
+    serpClient,
+    placesBudget,
+    radiusMeters: config.RADAR_COMPETITOR_RADIUS_METERS,
+    ...(searchHl !== undefined ? { searchHl } : {}),
+    ...(searchGl !== undefined ? { searchGl } : {}),
+  });
+
+  const growthInput = buildDiamondGrowthLeversGroqInput({
+    serp,
+    conversionBadge: 'DIAMANT_REFONTE',
+    displayUrl: resolved.displayUrl,
+    websiteSource,
+    matrix: matrixOut.strate,
+    legalData,
+  });
+  const leverIdeas = await fetchDiamondGrowthLeversSafe(groqClient, growthInput);
+
   return {
     serp,
     normalizedUrl: resolved.normalizedUrl,
@@ -465,6 +587,8 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     psiStrategy: 'mobile',
     pageSpeed: matrixOut.pageSpeed,
     legalData,
+    ...(nearbyCompetitors !== undefined ? { nearbyCompetitors } : {}),
+    ...(leverIdeas.length > 0 ? { digitalGrowthLevers: leverIdeas } : {}),
   };
 }
 
@@ -549,7 +673,8 @@ export async function runRadarPipeline(
   const serpClient = wrapSerpClientWithBudget(baseSerp, serpBudget);
 
   const psiClient = createPageSpeedClient(config);
-  const groqClient = createGroqClient(config);
+  const groqPipelineBudget = { used: 0, max: config.RADAR_MAX_GROQ_PIPELINE_CALLS_PER_RUN };
+  const groqClient = createGroqClient(config, { groqPipelineCallBudget: groqPipelineBudget });
 
   const lines: RadarPipelineLine[] = [];
   const gatekeeperExclusions: GatekeeperExclusion[] = [];
@@ -670,6 +795,7 @@ export async function runRadarPipeline(
           trendingQuery: q,
           progressTag,
           gatekeeperExclusions,
+          placesBudget: serpBudget,
           quotaState,
         });
 

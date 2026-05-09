@@ -8,6 +8,7 @@ import { STRATE_DIAMOND_THRESHOLD, type StrateScoreResult } from '../lib/strate-
 import { stablePlaceKey } from '../lib/place-key.js';
 import type { StudioIngestSuccess } from '../lib/strate-studio/audit-ingest.js';
 import type { DiamondPainType } from '../lib/diamond.js';
+import type { RadarNearbyCompetitor } from '../lib/nearby-competitors.js';
 import type { PipelineStrateScore, RadarPipelineResult } from './radar-pipeline.js';
 
 function painLabelFr(p: DiamondPainType): string {
@@ -23,6 +24,36 @@ function painLabelFr(p: DiamondPainType): string {
     case 'strate_matrix':
       return `Diamant Strate — matrice ≥ ${STRATE_DIAMOND_THRESHOLD} pts`;
   }
+}
+
+function formatNearbyCompetitorsMarkdown(
+  competitors: readonly RadarNearbyCompetitor[] | undefined,
+): string[] {
+  if (competitors === undefined || competitors.length === 0) return [];
+  return [
+    `#### Concurrents à proximité (FOMO)`,
+    ``,
+    `_Même type d’activité primaire (Google Places), tri par distance — uniquement des fiches avec site web sur Maps._`,
+    ``,
+    ...competitors.map((c, i) => {
+      const note =
+        typeof c.rating === 'number' && !Number.isNaN(c.rating)
+          ? String(Math.round(c.rating * 100) / 100)
+          : '—';
+      return `- **${i + 1}.** ${c.name} — ${c.websiteUrl} — note **${note}** — **≈ ${c.distanceMeters} m**`;
+    }),
+    ``,
+  ];
+}
+
+function formatDigitalGrowthMarkdown(levers: readonly string[] | undefined): string[] {
+  if (levers === undefined || levers.length === 0) return [];
+  return [
+    `#### Leviers digitaux personnalisés (Groq / avis Places)`,
+    ``,
+    ...levers.map((x, i) => `- **${i + 1}.** ${x.replace(/\s+/g, ' ').trim()}`),
+    ``,
+  ];
 }
 
 function formatStrateScoreSection(s: PipelineStrateScore | undefined): string[] {
@@ -149,6 +180,8 @@ export function renderRapportMatinal(
               `- **Adresse :** ${l.serp.address ?? '—'}`,
               siteLine,
               ``,
+              ...formatNearbyCompetitorsMarkdown(l.nearbyCompetitors),
+              ...formatDigitalGrowthMarkdown(l.digitalGrowthLevers),
               ...vitrineLine,
               ...formatStrateScoreSection(l.strateScore),
               ...perfBlock,

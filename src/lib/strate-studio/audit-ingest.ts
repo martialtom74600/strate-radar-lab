@@ -185,6 +185,9 @@ export function buildGoogleMapsRaw(line: RadarPipelineLine): GoogleMapsRaw {
       line.seedCategory !== undefined && line.seedCategory.trim() !== ''
         ? line.seedCategory
         : null,
+    ...(serp.place_review_texts !== undefined && serp.place_review_texts.length > 0
+      ? { place_review_texts: [...serp.place_review_texts] }
+      : {}),
   };
   return raw;
 }
@@ -197,6 +200,16 @@ export function radarLineToStrateAuditPayload(line: RadarPipelineLine): StrateRa
   const leadKind = resolveAuditLeadKind(line);
   const metrics = metricsFromLine(line);
 
+  const competitorOpt =
+    line.nearbyCompetitors !== undefined
+      ? { nearbyCompetitors: line.nearbyCompetitors }
+      : {};
+
+  const growthOpt =
+    line.digitalGrowthLevers !== undefined && line.digitalGrowthLevers.length > 0
+      ? { digitalGrowthLevers: line.digitalGrowthLevers }
+      : {};
+
   if (line.conversionBadge === 'DIAMANT_CREATION') {
     const payload: StrateRadarAuditPayload = {
       leadKind,
@@ -208,6 +221,8 @@ export function radarLineToStrateAuditPayload(line: RadarPipelineLine): StrateRa
       },
       metrics,
       content: { findings: [] },
+      ...competitorOpt,
+      ...growthOpt,
     };
     return payload;
   }
@@ -242,6 +257,8 @@ export function radarLineToStrateAuditPayload(line: RadarPipelineLine): StrateRa
       },
       metrics,
       content: { findings },
+      ...competitorOpt,
+      ...growthOpt,
     };
     return payload;
   }
@@ -256,6 +273,8 @@ export function radarLineToStrateAuditPayload(line: RadarPipelineLine): StrateRa
     },
     metrics,
     content: { findings: [] },
+    ...competitorOpt,
+    ...growthOpt,
   };
   return payload;
 }
