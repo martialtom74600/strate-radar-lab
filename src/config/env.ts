@@ -119,8 +119,6 @@ export type RawEnv = {
   readonly RADAR_FETCH_TIMEOUT_MS: number;
   /** Rayon Nearby Search concurrents FOMO (mètres, min 150, max 50 000). */
   readonly RADAR_COMPETITOR_RADIUS_METERS: number;
-  /** Appels Groq « pipeline » (Diamond leviers) max par run — 0 = désactivés. */
-  readonly RADAR_MAX_GROQ_PIPELINE_CALLS_PER_RUN: number;
   readonly RADAR_CAMPAIGN_MODE: boolean;
   readonly TARGET_CITIES: string | undefined;
   readonly RADAR_CAMPAIGN_CATEGORY_CACHE_TTL_DAYS: number;
@@ -183,12 +181,6 @@ function parseRawEnv(env: NodeJS.ProcessEnv): RawEnv {
       3500,
       150,
       50_000,
-    ),
-    RADAR_MAX_GROQ_PIPELINE_CALLS_PER_RUN: coerceIntInRange(
-      env.RADAR_MAX_GROQ_PIPELINE_CALLS_PER_RUN,
-      250,
-      0,
-      3000,
     ),
     RADAR_CAMPAIGN_MODE: boolFromEnv(env.RADAR_CAMPAIGN_MODE),
     TARGET_CITIES: optString(env.TARGET_CITIES),

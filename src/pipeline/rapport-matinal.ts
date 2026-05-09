@@ -46,16 +46,6 @@ function formatNearbyCompetitorsMarkdown(
   ];
 }
 
-function formatDigitalGrowthMarkdown(levers: readonly string[] | undefined): string[] {
-  if (levers === undefined || levers.length === 0) return [];
-  return [
-    `#### Leviers digitaux personnalisés (Groq / avis Places)`,
-    ``,
-    ...levers.map((x, i) => `- **${i + 1}.** ${x.replace(/\s+/g, ' ').trim()}`),
-    ``,
-  ];
-}
-
 function formatStrateScoreSection(s: PipelineStrateScore | undefined): string[] {
   if (s === undefined) return [];
   if (s.isDiamantCreation || s.matrix === null) {
@@ -181,7 +171,6 @@ export function renderRapportMatinal(
               siteLine,
               ``,
               ...formatNearbyCompetitorsMarkdown(l.nearbyCompetitors),
-              ...formatDigitalGrowthMarkdown(l.digitalGrowthLevers),
               ...vitrineLine,
               ...formatStrateScoreSection(l.strateScore),
               ...perfBlock,

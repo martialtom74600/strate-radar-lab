@@ -205,11 +205,6 @@ export function radarLineToStrateAuditPayload(line: RadarPipelineLine): StrateRa
       ? { nearbyCompetitors: line.nearbyCompetitors }
       : {};
 
-  const growthOpt =
-    line.digitalGrowthLevers !== undefined && line.digitalGrowthLevers.length > 0
-      ? { digitalGrowthLevers: line.digitalGrowthLevers }
-      : {};
-
   if (line.conversionBadge === 'DIAMANT_CREATION') {
     const payload: StrateRadarAuditPayload = {
       leadKind,
@@ -222,7 +217,6 @@ export function radarLineToStrateAuditPayload(line: RadarPipelineLine): StrateRa
       metrics,
       content: { findings: [] },
       ...competitorOpt,
-      ...growthOpt,
     };
     return payload;
   }
@@ -258,7 +252,6 @@ export function radarLineToStrateAuditPayload(line: RadarPipelineLine): StrateRa
       metrics,
       content: { findings },
       ...competitorOpt,
-      ...growthOpt,
     };
     return payload;
   }
@@ -274,7 +267,6 @@ export function radarLineToStrateAuditPayload(line: RadarPipelineLine): StrateRa
     metrics,
     content: { findings: [] },
     ...competitorOpt,
-    ...growthOpt,
   };
   return payload;
 }

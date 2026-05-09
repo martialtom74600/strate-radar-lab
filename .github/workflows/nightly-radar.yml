@@ -47,6 +47,8 @@ jobs:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           # Var vide / absente → défaut (évite `""` qui cassait Zod sur le runner)
           GROQ_MODEL: ${{ vars.GROQ_MODEL || 'llama-3.3-70b-versatile' }}
+          # Groq sert encore : analyse conversion brochure (matrice Strate) + métier/villes en mode campagne.
+          # (Les leviers de croissance sont générés côté serveur vitrine après ingest.)
           # Secret ou variable dépôt (beaucoup stockent la ville en secret — les deux passent).
           RADAR_SEARCH_LOCATION: ${{ secrets.RADAR_SEARCH_LOCATION || vars.RADAR_SEARCH_LOCATION }}
           # Campagne autonome (matrice villes | métiers Groq) — variables dépôt optionnelles

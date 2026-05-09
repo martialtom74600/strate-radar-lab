@@ -76,8 +76,6 @@ export type StrateRadarAuditPayload = {
   readonly content: StrateRadarAuditContent;
   /** Concurrents à proximité (FOMO) — absent sur les payloads historiques. */
   readonly nearbyCompetitors?: readonly StrateRadarAuditNearbyCompetitor[];
-  /** 3 leviers digitaux (Groq) — absent sur payloads historiques. */
-  readonly digitalGrowthLevers?: readonly string[];
 };
 
 export type AuditIngestPayload = {
