@@ -127,6 +127,13 @@ export type RawEnv = {
   readonly RADAR_AUDIT_EXPIRES_AT: string | undefined;
   readonly RADAR_AUDIT_PAYLOAD_VERSION: string | undefined;
   readonly RADAR_INGEST_DEBUG: boolean;
+  /**
+   * Pause après chaque POST ingest (sauf le dernier du run) pour rester sous le TPM Groq côté vitrine.
+   * 0 = désactivé (ex. compte Groq payant).
+   */
+  readonly RADAR_INGEST_INTERVAL_MS: number;
+  /** Timeout client du `fetch` vers l’API d’ingest (ms). */
+  readonly RADAR_INGEST_TIMEOUT_MS: number;
 };
 
 /** Quotas finaux après résolution legacy (70/30) ou défauts 15 / 5. */
@@ -195,6 +202,8 @@ function parseRawEnv(env: NodeJS.ProcessEnv): RawEnv {
     RADAR_AUDIT_EXPIRES_AT: optString(env.RADAR_AUDIT_EXPIRES_AT),
     RADAR_AUDIT_PAYLOAD_VERSION: radarAuditPayloadVersionFromEnv(env.RADAR_AUDIT_PAYLOAD_VERSION),
     RADAR_INGEST_DEBUG: boolFromEnv(env.RADAR_INGEST_DEBUG),
+    RADAR_INGEST_INTERVAL_MS: coerceIntInRange(env.RADAR_INGEST_INTERVAL_MS, 65_000, 0, 600_000),
+    RADAR_INGEST_TIMEOUT_MS: coerceIntInRange(env.RADAR_INGEST_TIMEOUT_MS, 180_000, 10_000, 600_000),
   };
 }
 

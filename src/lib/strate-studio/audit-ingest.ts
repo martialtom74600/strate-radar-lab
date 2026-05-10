@@ -281,10 +281,18 @@ function publicAuditUrl(origin: string, slug: string, accessToken: string): stri
   return `${o}/audit/${encodeURIComponent(slug)}?${q.toString()}`;
 }
 
+function sleepMs(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
 export async function postAuditIngest(args: {
   readonly ingestUrl: string;
   readonly secret: string;
   readonly body: AuditIngestPayload;
+  /** Timeout client du `fetch` (ms). */
+  readonly timeoutMs: number;
   /** Log le corps de réponse brut sur erreur (ex. `RADAR_INGEST_DEBUG`). */
   readonly logRawResponseOnError?: boolean;
 }): Promise<{ ok: true; id: string; slug: string } | { ok: false; status: number; message: string }> {
@@ -297,8 +305,16 @@ export async function postAuditIngest(args: {
         Authorization: `Bearer ${args.secret}`,
       },
       body: JSON.stringify(args.body),
+      signal: AbortSignal.timeout(args.timeoutMs),
     });
   } catch (e) {
+    if (e instanceof Error && e.name === 'AbortError') {
+      return {
+        ok: false,
+        status: 0,
+        message: `fetch ingest : délai dépassé (${args.timeoutMs} ms)`,
+      };
+    }
     const msg = e instanceof Error ? e.message : String(e);
     let extra = '';
     if (e instanceof Error && e.cause instanceof Error) {
@@ -411,8 +427,11 @@ export async function publishStudioAuditsIfConfigured(
   const jobId = `radar_${result.weekBucket}_${result.generatedAtIso}`.slice(0, 128);
   const payloadVersion = config.RADAR_AUDIT_PAYLOAD_VERSION?.trim() || DEFAULT_PAYLOAD_VERSION;
   const expiresAt = config.RADAR_AUDIT_EXPIRES_AT?.trim();
+  const ingestIntervalMs = config.RADAR_INGEST_INTERVAL_MS;
+  const ingestTimeoutMs = config.RADAR_INGEST_TIMEOUT_MS;
 
-  for (const line of lines) {
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+    const line = lines[lineIndex]!;
     const placeKey = stablePlaceKey(line.serp);
     let slug = buildAuditSlug(line, result.reportCityDisplayName);
     const accessToken = generateAuditAccessToken();
@@ -444,8 +463,24 @@ export async function publishStudioAuditsIfConfigured(
         ingestUrl,
         secret,
         body,
+        timeoutMs: ingestTimeoutMs,
         logRawResponseOnError: config.RADAR_INGEST_DEBUG,
       });
+
+      const slugConflictRetry =
+        !out.ok && out.status === 409 && out.message.includes('slug_already');
+      const exitsIngestLoop = out.ok || !slugConflictRetry;
+      const isLastLine = lineIndex === lines.length - 1;
+      const skipThrottle = exitsIngestLoop && isLastLine;
+
+      if (ingestIntervalMs > 0 && !skipThrottle) {
+        if (config.RADAR_VERBOSE) {
+          console.log(
+            `\n[Strate Studio] Pause ${ingestIntervalMs} ms (quota Groq TPM / ${slugConflictRetry ? 'nouvel essai slug' : 'prospect suivant'}).\n`,
+          );
+        }
+        await sleepMs(ingestIntervalMs);
+      }
 
       if (out.ok) {
         const publicUrl = publicAuditUrl(origin, out.slug || slug, accessToken);
