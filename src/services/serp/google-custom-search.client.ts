@@ -156,7 +156,6 @@ export function createGoogleCustomSearchWebClient(
           cx,
           q: query,
           num: '8',
-          searchType: 'web',
           filter: '0',
         });
         const hl = opts?.hl?.trim();
