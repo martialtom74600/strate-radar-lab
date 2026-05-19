@@ -20,6 +20,7 @@ import type {
 
 const PLACES_TEXT_SEARCH_URL = 'https://places.googleapis.com/v1/places:searchText';
 const PLACES_NEARBY_SEARCH_URL = 'https://places.googleapis.com/v1/places:searchNearby';
+const PLACES_DETAILS_BASE = 'https://places.googleapis.com/v1/places/';
 
 const FIELD_MASK =
   'places.id,places.displayName,places.rating,places.userRatingCount,places.websiteUri,places.formattedAddress,places.priceLevel,places.primaryType,places.types,places.location,places.photos,places.reviews,nextPageToken';
@@ -165,6 +166,54 @@ function mapPlaceToLocalResult(
     ...(thumb !== undefined && thumb !== '' ? { thumbnail: thumb } : {}),
     ...(reviewBodies.length > 0 ? { place_review_texts: [...reviewBodies] } : {}),
   };
+}
+
+function normalizePlaceResourceId(placeId: string): string {
+  const t = placeId.trim();
+  if (!t) return '';
+  const m = /^places\/(.+)$/.exec(t);
+  return (m?.[1] ?? t).trim();
+}
+
+async function fetchPlaceWebsiteUriLive(apiKey: string, placeId: string): Promise<string | null> {
+  const id = normalizePlaceResourceId(placeId);
+  if (!id) return null;
+
+  return withRetry(async () => {
+    const res = await fetch(`${PLACES_DETAILS_BASE}${encodeURIComponent(id)}`, {
+      method: 'GET',
+      headers: {
+        'X-Goog-Api-Key': apiKey,
+        'X-Goog-FieldMask': 'websiteUri',
+      },
+    });
+
+    if (res.status === 404) return null;
+
+    const text = await res.text();
+    let json: unknown;
+    try {
+      json = JSON.parse(text) as unknown;
+    } catch {
+      throw new StrateRadarError(
+        'PLACES_JSON',
+        `Place Details : réponse non JSON (HTTP ${res.status})`,
+        { status: res.status },
+      );
+    }
+
+    if (!res.ok) {
+      throw new StrateRadarError(
+        'HTTP_STATUS',
+        `Place Details : HTTP ${res.status}`,
+        { status: res.status },
+      );
+    }
+
+    const body = json as { readonly websiteUri?: string };
+    const uri = body.websiteUri?.trim();
+    return uri && uri.length > 0 ? uri : null;
+  });
 }
 
 function buildTextQuery(q: string, location: string | undefined): string {
@@ -334,6 +383,9 @@ function createGooglePlacesSimulationClient(): SerpClient {
     async searchGoogleNearby(params: GoogleNearbySearchParams): Promise<readonly SerpLocalResult[]> {
       return buildMockNearbyPlaces(params);
     },
+    async fetchPlaceWebsiteUri(_placeId: string): Promise<string | null> {
+      return null;
+    },
   };
 }
 
@@ -400,6 +452,26 @@ function createGooglePlacesLiveClient(config: AppConfig): SerpClient {
         textQuery,
         pageSize: 10,
       };
+      if (params.hl?.trim()) body.languageCode = params.hl.trim();
+      if (params.gl?.trim()) {
+        body.regionCode = params.gl.trim().toUpperCase().slice(0, 2);
+      }
+      const lat = params.latitude;
+      const lng = params.longitude;
+      const radius = params.radiusMeters ?? 2500;
+      if (
+        typeof lat === 'number' &&
+        typeof lng === 'number' &&
+        Number.isFinite(lat) &&
+        Number.isFinite(lng)
+      ) {
+        body.locationBias = {
+          circle: {
+            center: { latitude: lat, longitude: lng },
+            radius: Math.min(Math.max(radius, 200), 5000),
+          },
+        };
+      }
 
       const data = await postSearchText(apiKey, body);
       const rawPlaces = data.places ?? [];
@@ -408,10 +480,12 @@ function createGooglePlacesLiveClient(config: AppConfig): SerpClient {
           const uri = p.websiteUri?.trim();
           if (!uri) return null;
           const title = p.displayName?.text?.trim() ?? '';
+          const placeId = extractPlaceId(p);
           return {
             position: idx + 1,
             title: title.length > 0 ? title : uri,
             link: uri,
+            ...(placeId !== undefined ? { place_id: placeId } : {}),
             ...(p.formattedAddress !== undefined && p.formattedAddress !== ''
               ? { snippet: p.formattedAddress }
               : {}),
@@ -458,6 +532,10 @@ function createGooglePlacesLiveClient(config: AppConfig): SerpClient {
       const data = await postSearchNearby(apiKey, body);
       const rawPlaces = data.places ?? [];
       return rawPlaces.map((p, i) => mapPlaceToLocalResult(p, i + 1, apiKey));
+    },
+
+    async fetchPlaceWebsiteUri(placeId: string): Promise<string | null> {
+      return fetchPlaceWebsiteUriLive(apiKey, placeId);
     },
   };
 }

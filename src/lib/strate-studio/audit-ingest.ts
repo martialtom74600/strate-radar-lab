@@ -145,13 +145,29 @@ function metricsFromLine(line: RadarPipelineLine): StrateRadarAuditMetrics {
     lcpMs,
     cls,
     websiteSource: line.websiteSource ?? null,
+    websitePresenceStatus: line.websiteResolution?.status ?? null,
   };
 }
 
 function resolveAuditLeadKind(line: RadarPipelineLine): RadarAuditLeadKind {
-  return line.conversionBadge === 'DIAMANT_CREATION'
-    ? 'DIAMANT_CREATION'
-    : 'DIAMANT_REFONTE';
+  if (line.conversionBadge === 'DIAMANT_PRESENCE') return 'DIAMANT_PRESENCE';
+  if (line.conversionBadge === 'DIAMANT_CREATION') return 'DIAMANT_CREATION';
+  return 'DIAMANT_REFONTE';
+}
+
+function websiteResolutionPayload(line: RadarPipelineLine) {
+  const wr = line.websiteResolution;
+  if (!wr) return undefined;
+  return {
+    status: wr.status,
+    confidence: wr.confidence,
+    url: wr.url,
+    displayUrl: wr.displayUrl,
+    normalizedUrl: wr.normalizedUrl,
+    source: wr.source,
+    mapsListingWebsite: wr.mapsListingWebsite,
+    presencePlatform: wr.presencePlatform,
+  };
 }
 
 export function buildGoogleMapsRaw(line: RadarPipelineLine): GoogleMapsRaw {
@@ -188,6 +204,11 @@ export function buildGoogleMapsRaw(line: RadarPipelineLine): GoogleMapsRaw {
     ...(serp.place_review_texts !== undefined && serp.place_review_texts.length > 0
       ? { place_review_texts: [...serp.place_review_texts] }
       : {}),
+    ...(line.websiteResolution?.mapsListingWebsite
+      ? { mapsListingWebsite: line.websiteResolution.mapsListingWebsite }
+      : serp.website?.trim()
+        ? { mapsListingWebsite: serp.website.trim() }
+        : {}),
   };
   return raw;
 }
@@ -205,7 +226,11 @@ export function radarLineToStrateAuditPayload(line: RadarPipelineLine): StrateRa
       ? { nearbyCompetitors: line.nearbyCompetitors }
       : {};
 
-  if (line.conversionBadge === 'DIAMANT_CREATION') {
+  if (
+    line.conversionBadge === 'DIAMANT_CREATION' ||
+    line.conversionBadge === 'DIAMANT_PRESENCE'
+  ) {
+    const wr = websiteResolutionPayload(line);
     const payload: StrateRadarAuditPayload = {
       leadKind,
       googleMapsRaw,
@@ -216,6 +241,7 @@ export function radarLineToStrateAuditPayload(line: RadarPipelineLine): StrateRa
       },
       metrics,
       content: { findings: [] },
+      ...(wr !== undefined ? { websiteResolution: wr } : {}),
       ...competitorOpt,
     };
     return payload;
@@ -251,11 +277,15 @@ export function radarLineToStrateAuditPayload(line: RadarPipelineLine): StrateRa
       },
       metrics,
       content: { findings },
+      ...(websiteResolutionPayload(line) !== undefined
+        ? { websiteResolution: websiteResolutionPayload(line)! }
+        : {}),
       ...competitorOpt,
     };
     return payload;
   }
 
+  const wrFallback = websiteResolutionPayload(line);
   const payload: StrateRadarAuditPayload = {
     leadKind,
     googleMapsRaw,
@@ -266,6 +296,7 @@ export function radarLineToStrateAuditPayload(line: RadarPipelineLine): StrateRa
     },
     metrics,
     content: { findings: [] },
+    ...(wrFallback !== undefined ? { websiteResolution: wrFallback } : {}),
     ...competitorOpt,
   };
   return payload;
@@ -420,9 +451,20 @@ export async function publishStudioAuditsIfConfigured(
 
   const origin = config.RADAR_STUDIO_ORIGIN.trim().replace(/\/$/, '');
   const ingestUrl = ingestUrlFromOrigin(origin);
+  /** Ingest vitrine : création + présence tierce — pas les refontes. */
   const lines = result.lines.filter(
-    (l) => l.conversionBadge === 'DIAMANT_CREATION' || l.conversionBadge === 'DIAMANT_REFONTE',
+    (l) =>
+      l.conversionBadge === 'DIAMANT_CREATION' ||
+      l.conversionBadge === 'DIAMANT_PRESENCE',
   );
+  const skippedRefonteCount = result.lines.filter(
+    (l) => l.conversionBadge === 'DIAMANT_REFONTE',
+  ).length;
+  if (skippedRefonteCount > 0) {
+    console.log(
+      `\n[Strate Studio] ${skippedRefonteCount} diamant(s) refonte ignoré(s) — ingest réservé aux créations (sans site).\n`,
+    );
+  }
 
   const jobId = `radar_${result.weekBucket}_${result.generatedAtIso}`.slice(0, 128);
   const payloadVersion = config.RADAR_AUDIT_PAYLOAD_VERSION?.trim() || DEFAULT_PAYLOAD_VERSION;

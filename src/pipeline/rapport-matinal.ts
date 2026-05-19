@@ -21,6 +21,8 @@ function painLabelFr(p: DiamondPainType): string {
       return 'Perf mobile critique (ancienne règle)';
     case 'diamant_creation':
       return 'Diamant création — pas de site propriétaire (réputation Maps), score symbolique / matrice non appliquée';
+    case 'presence_intermediary':
+      return 'Diamant présence — intermédiaire tiers (Doctolib, annuaire…), pas de site propriétaire';
     case 'strate_matrix':
       return `Diamant Strate — matrice ≥ ${STRATE_DIAMOND_THRESHOLD} pts`;
   }
@@ -90,7 +92,10 @@ export function renderRapportMatinal(
   });
 
   const diamants = result.lines.filter(
-    (l) => l.conversionBadge === 'DIAMANT_CREATION' || l.conversionBadge === 'DIAMANT_REFONTE',
+    (l) =>
+      l.conversionBadge === 'DIAMANT_CREATION' ||
+      l.conversionBadge === 'DIAMANT_PRESENCE' ||
+      l.conversionBadge === 'DIAMANT_REFONTE',
   );
   const pepites = diamants.slice(0, 5);
 
@@ -188,6 +193,7 @@ export function renderRapportMatinal(
     `- **Création :** ${result.creationsFound} / ${result.targetCreationCount} · **Refonte :** ${result.refontesFound} / ${result.targetRefonteCount}`,
     `- **Fiches Maps parcourues :** ${result.totalBusinessesScanned}`,
     `- **Requêtes Places (plafond run) :** ${result.placesRequestsUsed} / ${result.placesRequestsMax}`,
+    `- **Requêtes Custom Search (plafond run) :** ${result.webSearchRequestsUsed} / ${result.webSearchRequestsMax}`,
     ...(result.placesStoppedEarly
       ? [
           `- **⚠ Arrêt Google Places :** quota / limite (HTTP 429) — run terminé avec résultats partiels.`,

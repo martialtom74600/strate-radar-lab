@@ -14,7 +14,10 @@ La base **`data/strate-radar.sqlite`** n’est **plus versionnée**. Entre deux 
 |--------|-------------|------|
 | `GOOGLE_PLACES_API_KEY` | Oui (mode live) | Clé [Places API](https://developers.google.com/maps/documentation/places/web-service/op-overview) — Text Search (pack local + résolution site). |
 | `GOOGLE_PAGESPEED_API_KEY` | Oui (mode live) | Clé [PageSpeed Insights API](https://developers.google.com/speed/docs/insights/v5/get-started). |
+| `GOOGLE_SEARCH_API_KEY` | Recommandé | Clé [Custom Search JSON API](https://developers.google.com/custom-search/v1/overview) — couche 4 recherche web (website-resolver). Sans elle, la couche 4 est ignorée. |
 | `GROQ_API_KEY` | Oui (mode live) | Clé [Groq Console](https://console.groq.com/keys). |
+| `RADAR_INGEST_SECRET` | Oui (ingest vitrine) | Même secret que `RADAR_INGEST_SECRET` côté Next.js — POST `/api/audits/ingest`. |
+| `RADAR_SEARCH_LOCATION` | Recommandé | Zone de prospection (ex. `Annecy, France`) — secret ou variable dépôt. |
 | `TELEGRAM_BOT_TOKEN` | Non | [Bot Telegram](https://core.telegram.org/bots/tutorial) : token fourni par [@BotFather](https://t.me/BotFather) après `/newbot`. |
 | `TELEGRAM_CHAT_ID` | Non | Identifiant du chat qui recevra le message (voir ci-dessous). |
 
@@ -27,7 +30,7 @@ La base **`data/strate-radar.sqlite`** n’est **plus versionnée**. Entre deux 
 3. Récupère ton **chat id** : dans un navigateur, ouvre  
    `https://api.telegram.org/bot<TOKEN>/getUpdates`  
    (remplace `<TOKEN>` par le token) et repère `"chat":{"id": 123456789` → secret GitHub `TELEGRAM_CHAT_ID` (le nombre, peut être négatif pour un groupe).
-4. Push le workflow : après chaque run **réussi**, tu reçois un message avec le nombre de leads et le **lien vers le run Actions** (artefacts : rapport, export, heartbeat). En cas d’échec, un message avec le lien vers les logs.
+4. Push le workflow : après chaque run (**succès ou échec**), tu reçois un **rapport Telegram détaillé** (quotas, leads, ingest, erreurs API, gatekeeper, rapport matinal complet découpé en plusieurs messages si besoin) + lien vers le run Actions.
 
 Sans ces deux secrets, le workflow **ignore** l’étape Telegram (aucune erreur).
 
@@ -39,6 +42,8 @@ Sans ces deux secrets, le workflow **ignore** l’étape Telegram (aucune erreur
 | `RADAR_SEARCH_LOCATION` | `Annecy, France` | Zone passée dans `textQuery` Places (ville + pays). |
 | `RADAR_DIAMOND_LOCATION_HINTS` | `annecy,chambéry` | Filtre zone « Diamant » (adresse / titre). |
 | `RADAR_MAX_PLACES_REQUESTS_PER_RUN` | `150` | Plafond d’appels Places Text Search par run (garde-fou). L’ancien nom `RADAR_MAX_SERPAPI_REQUESTS` est encore lu si la nouvelle variable est absente. |
+| `RADAR_MAX_WEB_SEARCH_REQUESTS_PER_RUN` | `80` | Plafond Custom Search par run (quota Google ~100/jour). `0` = couche 4 désactivée. |
+| `RADAR_STUDIO_ORIGIN` | `https://www.strate-studio.fr` | URL de la vitrine pour l’ingest. |
 
 ## Permissions Git
 
@@ -48,6 +53,27 @@ Sans ces deux secrets, le workflow **ignore** l’étape Telegram (aucune erreur
 
 Le cron est en **UTC** (`0 3 * * *` ≈ 04h Paris en hiver). Ajustez selon l’heure d’été ou vos préférences.
 
-## Test manuel
+## Test manuel (prospection classique)
 
-Dans l’onglet **Actions** du dépôt : **Nightly Strate Radar** → **Run workflow**.
+Dans l’onglet **Actions** : **Nightly Strate Radar** → **Run workflow** (même comportement que la nuit).
+
+## Audit one-shot (une entreprise)
+
+Quand tu as repéré un nom sur le web et tu veux lancer **un seul** audit sans toucher à la prospection nocturne.
+
+### GitHub
+
+**Actions → Audit one-shot → Run workflow**
+
+| Champ | Obligatoire | Exemple |
+|-------|-------------|---------|
+| `business_name` | Oui | `Maison Médicale du Garde Annecy-Seynod` |
+| `location` | Non | `Annecy, France` (sinon secret `RADAR_SEARCH_LOCATION`) |
+
+→ Même pipeline que la nuit (gatekeeper, site, Strate, ingest vitrine) + Telegram.
+
+### Local
+
+```bash
+npm run audit:one -- "Nom entreprise" "Annecy, France"
+```

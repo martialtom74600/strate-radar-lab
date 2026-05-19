@@ -5,12 +5,12 @@ import {
 } from '../config/categories.js';
 import {
   type DiamondPainType,
-  type ResolvedWebsite,
 } from '../lib/diamond.js';
 import { StrateRadarError } from '../lib/errors.js';
 import {
   fetchHtmlWithTimeout,
   qualifiesDiamantCreation,
+  qualifiesDiamantPresence,
   runStrateMatrixScore,
   STRATE_DIAMOND_THRESHOLD,
   STRATE_DIAMANT_CREATION_SCORE,
@@ -20,12 +20,16 @@ import {
   assessCommercialProspect,
   collectGatekeeperTypes,
 } from '../lib/gatekeeper.js';
-import { pickBestOrganicUrlForBusiness, type OrganicSerpHit } from '../lib/organic-match.js';
 import { extractLighthouseScoresPercent } from '../lib/lighthouse.js';
 import { stablePlaceKey } from '../lib/place-key.js';
 import { extractCityLabelForReport } from '../lib/report-city.js';
-import { normalizeProspectUrl, toAbsoluteHttpUrl, urlIsThirdPartyPresenceOnly } from '../lib/url.js';
 import { formatIsoWeekBucket } from '../lib/week.js';
+import {
+  resolveProspectWebsitePresence,
+  type WebsiteResolution,
+} from '../lib/website-resolver.js';
+import { createGoogleCustomSearchWebClient } from '../services/serp/google-custom-search.client.js';
+import { wrapGoogleCustomSearchWebClientWithBudget } from '../services/serp/web-search-budget.js';
 import {
   catchLocalSearchIntentions,
   padTrendQueries,
@@ -63,9 +67,15 @@ import {
   type WebsiteSource,
 } from '../storage/database.js';
 import {
+  pickBestPlacesMatch,
+  type TargetProspectSpec,
+} from '../lib/targeted-prospect.js';
+import {
   fetchNearbyWebsiteCompetitorsForDiamond,
   type RadarNearbyCompetitor,
 } from '../lib/nearby-competitors.js';
+
+export type { TargetProspectSpec } from '../lib/targeted-prospect.js';
 
 /** Pas d’offset numérique : Places Text Search pagine via nextPageToken (pageSize 20). */
 
@@ -85,8 +95,8 @@ export type RadarSearchParams = {
   readonly gl?: string;
 };
 
-/** Succès API : refonte (matrice) ou création (sans site propriétaire). */
-export type ConversionBadge = 'DIAMANT_REFONTE' | 'DIAMANT_CREATION';
+/** Succès pipeline : refonte, création (aucune présence), présence tierce (Doctolib…). */
+export type ConversionBadge = 'DIAMANT_REFONTE' | 'DIAMANT_CREATION' | 'DIAMANT_PRESENCE';
 
 export type PipelineStrateScore = {
   readonly total: number;
@@ -123,6 +133,7 @@ export type RadarPipelineLine = {
    * `null` sinon (aucune invention).
    */
   readonly legalData?: CompanyRegistryLegalData | null;
+  readonly websiteResolution?: WebsiteResolution;
 };
 
 export type LeadQuotaState = {
@@ -148,6 +159,8 @@ export type RadarPipelineResult = {
   readonly totalBusinessesScanned: number;
   readonly placesRequestsUsed: number;
   readonly placesRequestsMax: number;
+  readonly webSearchRequestsUsed: number;
+  readonly webSearchRequestsMax: number;
   readonly reportCityDisplayName: string;
   readonly seedCategoriesResolved: readonly string[];
   readonly multiCategoryMode: boolean;
@@ -158,6 +171,10 @@ export type RadarPipelineResult = {
   /** Arrêt anticipé Places API (ex. HTTP 429 quota) — le run se termine avec les résultats partiels. */
   readonly placesStoppedEarly: boolean;
   readonly placesStopMessage?: string;
+  readonly placesBudgetExhausted: boolean;
+  /** Mode audit ciblé (nom précis) — pas de prospection trend / grainage. */
+  readonly targetedMode: boolean;
+  readonly targetProspectMisses?: readonly string[];
   /** Fiches écartées par le Gatekeeper IA (non-commercial / institutionnel). */
   readonly gatekeeperExclusions: readonly GatekeeperExclusion[];
   /** Run en mode campagne autonome (matrice ville × métier). */
@@ -171,60 +188,11 @@ export type RunRadarPipelineOptions = {
   readonly targetCreationCount?: number;
   readonly targetRefonteCount?: number;
   readonly seedCategories?: readonly string[];
+  /** Audit d’un commerce précis (Google Places) — ignore trend / grainage / campagne. */
+  readonly targetProspect?: TargetProspectSpec;
+  /** Ignore le cache SQLite « déjà vu » (défaut true si targetProspect). */
+  readonly forceRescan?: boolean;
 };
-
-async function resolveProspectWebsite(
-  serp: SerpLocalResult,
-  serpClient: SerpClient,
-  searchLocation: string | null,
-  hl: string | undefined,
-  gl: string | undefined,
-  opts?: { readonly skipOrganic?: boolean },
-): Promise<ResolvedWebsite | null> {
-  const rawSite = serp.website?.trim();
-  if (rawSite) {
-    const displayUrl = toAbsoluteHttpUrl(rawSite);
-    if (!displayUrl) return null;
-    if (urlIsThirdPartyPresenceOnly(displayUrl)) return null;
-    const normalizedUrl = normalizeProspectUrl(displayUrl);
-    if (!normalizedUrl) return null;
-    return { displayUrl, normalizedUrl, source: 'maps_link' };
-  }
-
-  if (opts?.skipOrganic) {
-    return null;
-  }
-
-  const locationHint = searchLocation?.trim() ?? '';
-  const deepQuery = [serp.title, locationHint].filter(Boolean).join(' ').trim();
-  if (!deepQuery) return null;
-
-  try {
-    const organic = await serpClient.searchGoogleOrganic({
-      q: deepQuery,
-      ...(hl !== undefined ? { hl } : {}),
-      ...(gl !== undefined ? { gl } : {}),
-    });
-    const hits = organic.organic_results ?? [];
-    const pickedUrl = pickBestOrganicUrlForBusiness(
-      serp.title,
-      hits.map((h): OrganicSerpHit => ({
-        title: h.title,
-        link: h.link,
-        ...(h.snippet !== undefined ? { snippet: h.snippet } : {}),
-      })),
-    );
-    if (!pickedUrl) return null;
-    const displayUrl = toAbsoluteHttpUrl(pickedUrl);
-    if (!displayUrl) return null;
-    if (urlIsThirdPartyPresenceOnly(displayUrl)) return null;
-    const normalizedUrl = normalizeProspectUrl(displayUrl);
-    if (!normalizedUrl) return null;
-    return { displayUrl, normalizedUrl, source: 'organic_deep_search' };
-  } catch {
-    return null;
-  }
-}
 
 type ProcessLocalContext = {
   readonly config: AppConfig;
@@ -235,6 +203,7 @@ type ProcessLocalContext = {
   readonly psiClient: PageSpeedClient;
   readonly groqClient: GroqClient;
   readonly serpClient: SerpClient;
+  readonly webSearchClient: ReturnType<typeof createGoogleCustomSearchWebClient>;
   readonly searchLocation: string | null;
   readonly searchHl: string | undefined;
   readonly searchGl: string | undefined;
@@ -247,6 +216,7 @@ type ProcessLocalContext = {
   readonly placesBudget: { used: number; max: number };
   /** Compteurs mutables (quotas création / refonte). */
   readonly quotaState: LeadQuotaState;
+  readonly forceRescan: boolean;
 };
 
 
@@ -260,6 +230,7 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     psiClient,
     groqClient,
     serpClient,
+    webSearchClient,
     searchLocation,
     searchHl,
     searchGl,
@@ -269,6 +240,7 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     gatekeeperExclusions,
     placesBudget,
     quotaState,
+    forceRescan,
   } = ctx;
 
   if (leadQuotasSatisfied(quotaState)) {
@@ -279,13 +251,15 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
   const needRefonte = quotaState.refontesFound < quotaState.targetRefonte;
   const placeKey = stablePlaceKey(serp);
 
-  const recent = await repo.getOutcomeWithinLastDays(placeKey, recentDays);
-  if (recent === 'disqualified' || recent === 'diamond') {
-    radarVerbose(
-      config,
-      `${progressTag} ${truncateTitle(serp.title)} · ⊗ SQLite · ${recent === 'diamond' ? 'déjà diamant' : 'déjà disqualifié'} (< ${recentDays} j)`,
-    );
-    return null;
+  if (!forceRescan) {
+    const recent = await repo.getOutcomeWithinLastDays(placeKey, recentDays);
+    if (recent === 'disqualified' || recent === 'diamond') {
+      radarVerbose(
+        config,
+        `${progressTag} ${truncateTitle(serp.title)} · ⊗ SQLite · ${recent === 'diamond' ? 'déjà diamant' : 'déjà disqualifié'} (< ${recentDays} j)`,
+      );
+      return null;
+    }
   }
 
   const gkTypes = collectGatekeeperTypes(serp);
@@ -303,40 +277,58 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     return null;
   }
 
-  const skipOrganic = !needCreation && needRefonte && !serp.website?.trim();
-  if (skipOrganic && config.RADAR_VERBOSE) {
+  const skipExtendedSearch = !needCreation && needRefonte && !serp.website?.trim();
+  if (skipExtendedSearch && config.RADAR_VERBOSE) {
     radarVerbose(
       config,
-      `${progressTag} ${truncateTitle(serp.title)} · ◇ Quota création atteint · pas de recherche organique (besoin refonte)`,
+      `${progressTag} ${truncateTitle(serp.title)} · ◇ Quota création atteint · recherche web étendue désactivée (besoin refonte)`,
     );
   }
 
-  const resolved = await resolveProspectWebsite(
+  const websiteOut = await resolveProspectWebsitePresence({
     serp,
     serpClient,
+    webSearchClient,
     searchLocation,
-    searchHl,
-    searchGl,
-    { skipOrganic },
-  );
+    hl: searchHl,
+    gl: searchGl,
+    opts: {
+      skipExtendedSearch,
+      fetchTimeoutMs: config.RADAR_FETCH_TIMEOUT_MS,
+    },
+  });
+  const { resolution, ownerSite: resolved } = websiteOut;
+
+  if (config.RADAR_VERBOSE) {
+    const webAttempt = resolution.attempts.find((a) => a.layer === 'web_search');
+    const webNote = webAttempt?.note ?? '';
+    if (
+      webNote.startsWith('HTTP ') ||
+      webNote.includes('Plafond Custom Search') ||
+      webNote.includes('dailyLimitExceeded') ||
+      webNote.includes('quotaExceeded')
+    ) {
+      radarVerbose(
+        config,
+        `${progressTag} ${truncateTitle(serp.title)} · ⚠ Custom Search · ${truncateTitle(webNote, 100)}`,
+      );
+    }
+  }
+
+  if (config.RADAR_VERBOSE && resolution.status !== 'none') {
+    radarVerbose(
+      config,
+      `${progressTag} ${truncateTitle(serp.title)} · web ${resolution.status}${resolution.presencePlatform ? ` (${resolution.presencePlatform})` : ''}${resolution.url ? ` · ${truncateTitle(resolution.url, 72)}` : ''}`,
+    );
+  }
 
   const seed = seedCategory !== undefined ? { seedCategory } : {};
 
-  /** Diamant création : aucun site propriétaire + réputation Maps (seuils bas) — pas de matrice. */
-  if (qualifiesDiamantCreation(serp, resolved)) {
-    if (quotaState.creationsFound >= quotaState.targetCreation) {
-      radarVerbose(
-        config,
-        `${progressTag} ${truncateTitle(serp.title)} · ◇ Diamant création ignoré · quota création atteint`,
-      );
-      return null;
-    }
-    await repo.recordPlaceOutcome(placeKey, 'diamond');
-    await repo.recordDiamondEncounter(placeKey);
-    radarVerbose(
-      config,
-      `${progressTag} ${truncateTitle(serp.title)} · 💎 DIAMANT CRÉATION · ${STRATE_DIAMANT_CREATION_SCORE}/${STRATE_DIAMANT_CREATION_SCORE}${seedCategory !== undefined ? ` · grain « ${seedCategory} »` : ''}`,
-    );
+  async function enrichDiamondLine(
+    badge: ConversionBadge,
+    pain: DiamondPainType,
+    urls: { normalizedUrl: string | null; displayUrl: string | null; websiteSource?: WebsiteSource },
+  ): Promise<RadarPipelineLine> {
     const legalData = await fetchCompanyLegalDataForProspect({
       establishmentTitle: serp.title,
       searchLocationHint: searchLocation,
@@ -352,12 +344,13 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     });
     return {
       serp,
-      normalizedUrl: null,
-      displayUrl: null,
+      normalizedUrl: urls.normalizedUrl,
+      displayUrl: urls.displayUrl,
+      ...(urls.websiteSource !== undefined ? { websiteSource: urls.websiteSource } : {}),
       trendingQuery,
       ...seed,
-      conversionBadge: 'DIAMANT_CREATION',
-      diamondPain: 'diamant_creation',
+      conversionBadge: badge,
+      diamondPain: pain,
       strateScore: {
         total: STRATE_DIAMANT_CREATION_SCORE,
         isDiamantCreation: true,
@@ -368,8 +361,50 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
       psiStrategy: 'mobile',
       pageSpeed: null,
       legalData,
+      websiteResolution: resolution,
       ...(nearbyCompetitors !== undefined ? { nearbyCompetitors } : {}),
     };
+  }
+
+  if (qualifiesDiamantPresence(serp, resolution.status)) {
+    if (quotaState.creationsFound >= quotaState.targetCreation) {
+      radarVerbose(
+        config,
+        `${progressTag} ${truncateTitle(serp.title)} · ◇ Diamant présence ignoré · quota création atteint`,
+      );
+      return null;
+    }
+    await repo.recordPlaceOutcome(placeKey, 'diamond');
+    await repo.recordDiamondEncounter(placeKey);
+    radarVerbose(
+      config,
+      `${progressTag} ${truncateTitle(serp.title)} · 💎 DIAMANT PRÉSENCE · ${resolution.presencePlatform ?? 'intermédiaire'}${seedCategory !== undefined ? ` · grain « ${seedCategory} »` : ''}`,
+    );
+    return await enrichDiamondLine('DIAMANT_PRESENCE', 'presence_intermediary', {
+      normalizedUrl: resolution.normalizedUrl,
+      displayUrl: resolution.displayUrl,
+    });
+  }
+
+  /** Diamant création : aucune présence web + réputation Maps (seuils bas) — pas de matrice. */
+  if (qualifiesDiamantCreation(serp, resolution.status)) {
+    if (quotaState.creationsFound >= quotaState.targetCreation) {
+      radarVerbose(
+        config,
+        `${progressTag} ${truncateTitle(serp.title)} · ◇ Diamant création ignoré · quota création atteint`,
+      );
+      return null;
+    }
+    await repo.recordPlaceOutcome(placeKey, 'diamond');
+    await repo.recordDiamondEncounter(placeKey);
+    radarVerbose(
+      config,
+      `${progressTag} ${truncateTitle(serp.title)} · 💎 DIAMANT CRÉATION · ${STRATE_DIAMANT_CREATION_SCORE}/${STRATE_DIAMANT_CREATION_SCORE}${seedCategory !== undefined ? ` · grain « ${seedCategory} »` : ''}`,
+    );
+    return await enrichDiamondLine('DIAMANT_CREATION', 'diamant_creation', {
+      normalizedUrl: null,
+      displayUrl: null,
+    });
   }
 
   if (resolved !== null && !needRefonte) {
@@ -384,7 +419,7 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     await repo.recordPlaceOutcome(placeKey, 'disqualified');
     radarVerbose(
       config,
-      `${progressTag} ${truncateTitle(serp.title)} · ○ Sans site web résolu — réputation insuffisante pour Diamant création`,
+      `${progressTag} ${truncateTitle(serp.title)} · ○ Présence web insuffisante — réputation OK mais ni site ni intermédiaire détecté`,
     );
     return null;
   }
@@ -492,6 +527,7 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     psiStrategy: 'mobile',
     pageSpeed: matrixOut.pageSpeed,
     legalData,
+    websiteResolution: resolution,
     ...(nearbyCompetitors !== undefined ? { nearbyCompetitors } : {}),
   };
 }
@@ -516,7 +552,23 @@ export async function runRadarPipeline(
   let campaignPair: { city: string; category: string } | undefined;
   let campaignRepo: CampaignRepository | undefined;
 
-  if (config.RADAR_CAMPAIGN_MODE) {
+  const targetedMode = options.targetProspect !== undefined;
+  const forceRescan = options.forceRescan ?? targetedMode;
+  const targetProspectMisses: string[] = [];
+  let targetProspectHandled = false;
+
+  if (targetedMode) {
+    demandDrivenMode = false;
+    multiCategoryMode = false;
+    seeds = [options.targetProspect!.name.trim()];
+    if (options.targetProspect!.location?.trim()) {
+      cityLocation = options.targetProspect!.location.trim();
+    }
+    radarVerbose(
+      config,
+      `\n🎯 Audit ciblé · « ${truncateTitle(options.targetProspect!.name, 72)} » · ${cityLocation}`,
+    );
+  } else if (config.RADAR_CAMPAIGN_MODE) {
     demandDrivenMode = false;
     multiCategoryMode = true;
   } else if (demandDrivenMode) {
@@ -551,7 +603,7 @@ export async function runRadarPipeline(
   await migrateRadarPlaceLastOutcome(db);
   await migrateRadarWeekPlaceOutcome(db);
 
-  if (config.RADAR_CAMPAIGN_MODE) {
+  if (config.RADAR_CAMPAIGN_MODE && !targetedMode) {
     await migrateCampaignTables(db);
     campaignRepo = new CampaignRepository(db);
     const groqCampaign = createGroqClient(config);
@@ -573,11 +625,19 @@ export async function runRadarPipeline(
   const repo = new ProspectRepository(db);
 
   const serpBudget = { used: 0, max: placesRequestsMax };
+  const webSearchRequestsMax = config.RADAR_MAX_WEB_SEARCH_REQUESTS_PER_RUN;
+  const webSearchBudget = { used: 0, max: webSearchRequestsMax };
   const baseSerp = createRadarSearchClient(config);
   const serpClient = wrapSerpClientWithBudget(baseSerp, serpBudget);
 
   const psiClient = createPageSpeedClient(config);
   const groqClient = createGroqClient(config);
+  const baseWebSearchClient =
+    webSearchRequestsMax > 0 ? createGoogleCustomSearchWebClient(config) : null;
+  const webSearchClient =
+    baseWebSearchClient !== null
+      ? wrapGoogleCustomSearchWebClientWithBudget(baseWebSearchClient, webSearchBudget)
+      : null;
 
   const lines: RadarPipelineLine[] = [];
   const gatekeeperExclusions: GatekeeperExclusion[] = [];
@@ -593,15 +653,17 @@ export async function runRadarPipeline(
 
   radarVerbose(
     config,
-    `\n—— Strate Radar · ${reportCityDisplayName} · quotas création ${targetCreationCount} · refonte ${targetRefonteCount} · plafond requêtes run ${placesRequestsMax} ——`,
+    `\n—— Strate Radar · ${reportCityDisplayName} · quotas création ${targetCreationCount} · refonte ${targetRefonteCount} · plafond Places ${placesRequestsMax} · Custom Search ${webSearchRequestsMax}/run ——`,
   );
   radarVerbose(
     config,
-    demandDrivenMode
-      ? `Mode : demand-driven (${seeds.length} intentions · jusqu’à ${maxPages} pages Places par requête)`
-      : multiCategoryMode
-        ? `Mode : liste de grainage (${seeds.length} familles · jusqu’à ${maxPages} pages Places par famille)`
-        : `Mode : une seule requête`,
+    targetedMode
+      ? `Mode : audit ciblé · jusqu’à ${maxPages} pages Places`
+      : demandDrivenMode
+        ? `Mode : demand-driven (${seeds.length} intentions · jusqu’à ${maxPages} pages Places par requête)`
+        : multiCategoryMode
+          ? `Mode : liste de grainage (${seeds.length} familles · jusqu’à ${maxPages} pages Places par famille)`
+          : `Mode : une seule requête`,
   );
 
   let serpBudgetExhausted = false;
@@ -675,7 +737,29 @@ export async function runRadarPipeline(
         break;
       }
 
-      for (const row of locals) {
+      let rowsToScan: SerpLocalResult[] = [...locals];
+      if (targetedMode) {
+        const match = pickBestPlacesMatch(options.targetProspect!.name, locals);
+        if (!match) {
+          radarVerbose(
+            config,
+            `   ◇ Aucun match suffisant pour « ${truncateTitle(options.targetProspect!.name, 56)} » sur cette page`,
+          );
+          placesPageToken =
+            maps.next_page_token !== undefined && maps.next_page_token !== ''
+              ? maps.next_page_token
+              : undefined;
+          if (!placesPageToken) break;
+          continue;
+        }
+        rowsToScan = [match];
+        radarVerbose(
+          config,
+          `   ✓ Match Maps : « ${truncateTitle(match.title, 72)} »`,
+        );
+      }
+
+      for (const row of rowsToScan) {
         if (leadQuotasSatisfied(quotaState)) break runOuter;
         if (serpBudget.used >= placesRequestsMax) break runOuter;
 
@@ -691,6 +775,7 @@ export async function runRadarPipeline(
           psiClient,
           groqClient,
           serpClient,
+          webSearchClient,
           searchLocation: cityLocation,
           searchHl: options.search.hl,
           searchGl: options.search.gl,
@@ -700,11 +785,19 @@ export async function runRadarPipeline(
           gatekeeperExclusions,
           placesBudget: serpBudget,
           quotaState,
+          forceRescan,
         });
+
+        if (targetedMode) {
+          targetProspectHandled = true;
+        }
 
         if (line !== null) {
           lines.push(line);
-          if (line.conversionBadge === 'DIAMANT_CREATION') {
+          if (
+            line.conversionBadge === 'DIAMANT_CREATION' ||
+            line.conversionBadge === 'DIAMANT_PRESENCE'
+          ) {
             quotaState.creationsFound += 1;
           } else if (line.conversionBadge === 'DIAMANT_REFONTE') {
             quotaState.refontesFound += 1;
@@ -714,6 +807,14 @@ export async function runRadarPipeline(
             `   … Progression : création ${quotaState.creationsFound}/${quotaState.targetCreation} · refonte ${quotaState.refontesFound}/${quotaState.targetRefonte}`,
           );
         }
+
+        if (targetedMode) {
+          break runOuter;
+        }
+      }
+
+      if (targetedMode) {
+        break;
       }
 
       placesPageToken =
@@ -726,11 +827,19 @@ export async function runRadarPipeline(
     }
   }
 
+  if (targetedMode && !targetProspectHandled) {
+    targetProspectMisses.push(options.targetProspect!.name.trim());
+    radarVerbose(
+      config,
+      `\n⚠ Cible introuvable sur Google Places : « ${options.targetProspect!.name} »`,
+    );
+  }
+
   radarVerbose(
     config,
-    `\n—— Fin · création ${quotaState.creationsFound}/${quotaState.targetCreation} · refonte ${quotaState.refontesFound}/${quotaState.targetRefonte} · ${totalBusinessesScanned} fiches · requêtes ${serpBudget.used}/${placesRequestsMax}${
-      serpBudgetExhausted ? ' (plafond budget run)' : ''
-    }${placesStoppedEarly ? ' (arrêt HTTP 429)' : ''} ——\n`,
+    `\n—— Fin · création ${quotaState.creationsFound}/${quotaState.targetCreation} · refonte ${quotaState.refontesFound}/${quotaState.targetRefonte} · ${totalBusinessesScanned} fiches · Places ${serpBudget.used}/${placesRequestsMax} · Custom Search ${webSearchBudget.used}/${webSearchRequestsMax}${
+      serpBudgetExhausted ? ' (plafond budget Places)' : ''
+    }${placesStoppedEarly ? ' (arrêt HTTP 429 Places)' : ''} ——\n`,
   );
 
   if (campaignPair !== undefined && campaignRepo !== undefined) {
@@ -746,8 +855,9 @@ export async function runRadarPipeline(
   await closeDatabase(db);
 
   const searchSummary: RadarSearchParams = {
-    q:
-      campaignPair !== undefined
+    q: targetedMode
+      ? `Ciblé · ${options.targetProspect!.name.trim()}`
+      : campaignPair !== undefined
         ? `Campagne · ${campaignPair.category}`
         : demandDrivenMode
           ? `Demand-driven · ${seeds.length} intention(s) Suggest`
@@ -771,12 +881,17 @@ export async function runRadarPipeline(
     totalBusinessesScanned,
     placesRequestsUsed: serpBudget.used,
     placesRequestsMax,
+    webSearchRequestsUsed: webSearchBudget.used,
+    webSearchRequestsMax,
     reportCityDisplayName,
     seedCategoriesResolved,
     multiCategoryMode,
     demandDrivenMode,
     trendQueriesResolved,
     placesStoppedEarly,
+    placesBudgetExhausted: serpBudgetExhausted,
+    targetedMode,
+    ...(targetProspectMisses.length > 0 ? { targetProspectMisses } : {}),
     ...(placesStopMessage !== undefined ? { placesStopMessage } : {}),
     gatekeeperExclusions,
     ...(campaignPair !== undefined ? { campaign: campaignPair } : {}),

@@ -20,8 +20,10 @@ export type DiamondPainType =
   | 'no_website'
   | 'site_not_linked_to_maps'
   | 'mobile_performance_critical'
-  /** Pas de site propriétaire (ou seulement réseau / annuaire) + réputation minimale — score forcé, pas de matrice. */
+  /** Pas de site propriétaire + réputation minimale — score forcé, pas de matrice. */
   | 'diamant_creation'
+  /** Présence en ligne via intermédiaire (Doctolib, annuaire, réseau…) — pas de site propre. */
+  | 'presence_intermediary'
   /** Diamant qualifié par la matrice Strate (≥ seuil) — refonte / dette technique. */
   | 'strate_matrix';
 

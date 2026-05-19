@@ -1,15 +1,8 @@
 import { loadConfig } from './config/index.js';
-import { writeHeartbeatFile } from './lib/heartbeat.js';
-import {
-  publishStudioAuditsIfConfigured,
-  radarLineToStrateAuditPayload,
-} from './lib/strate-studio/audit-ingest.js';
+import { finalizeRadarRun } from './lib/run-finalize.js';
+import { radarLineToStrateAuditPayload } from './lib/strate-studio/audit-ingest.js';
 import { extendAuditPayloadWithHighValue } from './lib/strate-studio/audit-hv-enrichment.js';
-import {
-  buildShadowSitesPayload,
-  writeShadowSitesExportFile,
-} from './pipeline/shadow-export.js';
-import { runRadarPipeline, writeRapportMatinalFile } from './pipeline/index.js';
+import { runRadarPipeline } from './pipeline/index.js';
 
 async function main(): Promise<void> {
   const config = loadConfig();
@@ -32,7 +25,9 @@ async function main(): Promise<void> {
   });
 
   const debugIngestLine = result.lines.find(
-    (l) => l.conversionBadge === 'DIAMANT_CREATION' || l.conversionBadge === 'DIAMANT_REFONTE',
+    (l) =>
+      l.conversionBadge === 'DIAMANT_CREATION' ||
+      l.conversionBadge === 'DIAMANT_PRESENCE',
   );
   if (debugIngestLine) {
     const payload = extendAuditPayloadWithHighValue(
@@ -43,32 +38,16 @@ async function main(): Promise<void> {
     console.log('DEBUG_FULL_PAYLOAD:', JSON.stringify(payload, null, 2));
   }
 
-  const { successes: studioAuditLinks } = await publishStudioAuditsIfConfigured(config, result);
-
-  const outPath = await writeRapportMatinalFile(
-    config.RADAR_REPORT_PATH,
+  const finalized = await finalizeRadarRun({
+    config,
     result,
-    studioAuditLinks,
-  );
-  console.log(`Rapport écrit : ${outPath}`);
-
-  const hbPath = await writeHeartbeatFile('data/heartbeat.json', {
-    lastRunIso: result.generatedAtIso,
     workflow: process.env.GITHUB_ACTIONS === 'true' ? 'nightly-radar' : 'local',
-    campaign: result.campaign ?? null,
-    diamondsFound: result.creationsFound + result.refontesFound,
-    creationsFound: result.creationsFound,
-    refontesFound: result.refontesFound,
-    targetCreationCount: result.targetCreationCount,
-    targetRefonteCount: result.targetRefonteCount,
-    totalBusinessesScanned: result.totalBusinessesScanned,
-    placesRequestsUsed: result.placesRequestsUsed,
-    placesRequestsMax: result.placesRequestsMax,
-    placesStoppedEarly: result.placesStoppedEarly,
   });
+
   if (config.RADAR_VERBOSE) {
-    console.log(`Heartbeat : ${hbPath}`);
+    console.log(`Heartbeat : ${finalized.heartbeatPath}`);
   }
+  console.log(`Rapport écrit : ${finalized.reportPath}`);
 
   if (result.placesStoppedEarly) {
     console.warn(
@@ -79,18 +58,12 @@ async function main(): Promise<void> {
     }
   }
 
-  const diamonds = buildShadowSitesPayload(result.lines);
-  const shadowPath = await writeShadowSitesExportFile(config.RADAR_SHADOW_EXPORT_PATH, {
-    generatedAtIso: result.generatedAtIso,
-    cityLabel: result.reportCityDisplayName,
-    diamonds,
-    demand_driven_mode: result.demandDrivenMode,
-    trending_queries_used: result.trendQueriesResolved,
-  });
-  console.log(`Export Shadow Site : ${shadowPath} (${diamonds.length} lead(s))`);
+  console.log(
+    `Export Shadow Site : ${finalized.shadowExportPath} (${result.lines.filter((l) => l.conversionBadge).length} lead(s))`,
+  );
 
   console.log(
-    `Leads : création ${result.creationsFound}/${result.targetCreationCount} · refonte ${result.refontesFound}/${result.targetRefonteCount} · Fiches : ${result.totalBusinessesScanned} · Requêtes Places (run) : ${result.placesRequestsUsed}/${result.placesRequestsMax}`,
+    `Leads : création ${result.creationsFound}/${result.targetCreationCount} · refonte ${result.refontesFound}/${result.targetRefonteCount} · Fiches : ${result.totalBusinessesScanned} · Places : ${result.placesRequestsUsed}/${result.placesRequestsMax} · Custom Search : ${result.webSearchRequestsUsed}/${result.webSearchRequestsMax}`,
   );
 }
 

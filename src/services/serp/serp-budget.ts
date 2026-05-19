@@ -30,5 +30,9 @@ export function wrapSerpClientWithBudget(
       consume();
       return client.searchGoogleNearby(params);
     },
+    fetchPlaceWebsiteUri(placeId) {
+      consume();
+      return client.fetchPlaceWebsiteUri(placeId);
+    },
   };
 }

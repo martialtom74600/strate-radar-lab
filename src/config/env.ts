@@ -134,6 +134,14 @@ export type RawEnv = {
   readonly RADAR_INGEST_INTERVAL_MS: number;
   /** Timeout client du `fetch` vers l’API d’ingest (ms). */
   readonly RADAR_INGEST_TIMEOUT_MS: number;
+  /** Google Custom Search JSON API — recherche web (couche 4 website-resolver). */
+  readonly GOOGLE_SEARCH_API_KEY: string | undefined;
+  /** Override optionnel du moteur programmable (cx). Sinon cx web global par défaut côté client. */
+  readonly GOOGLE_SEARCH_CX: string | undefined;
+  /** Active la recherche web si clé API présente (défaut true). */
+  readonly RADAR_WEB_SEARCH_ENABLED: boolean;
+  /** Plafond de requêtes Custom Search par run (défaut 80 — quota Google ~100/jour). 0 = couche 4 désactivée. */
+  readonly RADAR_MAX_WEB_SEARCH_REQUESTS_PER_RUN: number;
 };
 
 /** Quotas finaux après résolution legacy (70/30) ou défauts 15 / 5. */
@@ -204,6 +212,21 @@ function parseRawEnv(env: NodeJS.ProcessEnv): RawEnv {
     RADAR_INGEST_DEBUG: boolFromEnv(env.RADAR_INGEST_DEBUG),
     RADAR_INGEST_INTERVAL_MS: coerceIntInRange(env.RADAR_INGEST_INTERVAL_MS, 65_000, 0, 600_000),
     RADAR_INGEST_TIMEOUT_MS: coerceIntInRange(env.RADAR_INGEST_TIMEOUT_MS, 180_000, 10_000, 600_000),
+    GOOGLE_SEARCH_API_KEY: optString(env.GOOGLE_SEARCH_API_KEY),
+    GOOGLE_SEARCH_CX: optString(env.GOOGLE_SEARCH_CX),
+    RADAR_WEB_SEARCH_ENABLED: (() => {
+      const key = optString(env.GOOGLE_SEARCH_API_KEY);
+      if (!key) return false;
+      const raw = env.RADAR_WEB_SEARCH_ENABLED;
+      if (raw === undefined || String(raw).trim() === '') return true;
+      return boolFromEnv(raw);
+    })(),
+    RADAR_MAX_WEB_SEARCH_REQUESTS_PER_RUN: coerceIntInRange(
+      env.RADAR_MAX_WEB_SEARCH_REQUESTS_PER_RUN,
+      80,
+      0,
+      200,
+    ),
   };
 }
 

@@ -14,6 +14,10 @@ export type GoogleOrganicSearchParams = {
   readonly q: string;
   readonly hl?: string;
   readonly gl?: string;
+  /** Biais géographique — priorise l’établissement local (ex. même place_id / websiteUri). */
+  readonly latitude?: number;
+  readonly longitude?: number;
+  readonly radiusMeters?: number;
 };
 
 /** Places API (New) — `places:searchNearby`. */
@@ -40,4 +44,6 @@ export type SerpClient = {
   readonly searchGoogleNearby: (
     params: GoogleNearbySearchParams,
   ) => Promise<readonly SerpLocalResult[]>;
+  /** Place Details (New) — `websiteUri` lorsque absent du Text Search. */
+  readonly fetchPlaceWebsiteUri: (placeId: string) => Promise<string | null>;
 };

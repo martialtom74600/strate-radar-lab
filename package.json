@@ -9,6 +9,8 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
+    "audit:one": "tsx src/scripts/audit-one.ts",
+    "telegram:report": "tsx src/scripts/send-telegram-report.ts",
     "generate:shadows": "tsx src/pipeline/generate-shadow-pages.ts",
     "typecheck": "tsc --noEmit"
   },

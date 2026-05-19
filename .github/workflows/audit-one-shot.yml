@@ -1,29 +1,33 @@
-# Prospection nocturne : rapport Markdown + JSON export / ingest vitrine · pas de HTML local (pages côté site mère via API).
-# Horaire : ~04h à Paris en hiver (UTC+1) — ajuster le cron si besoin (GitHub = UTC).
-#
-# Sorties `rapport_matinal.md`, `data/shadow-sites-export.json`, `data/heartbeat.json`, `data/strate-radar.sqlite`
-# sont dans .gitignore : pas de commit depuis ce job (évite conflits avec les runs locaux). SQLite est mise en cache Actions.
+# Audit one-shot — une entreprise à la demande (workflow_dispatch uniquement).
+# Le run nocturne (nightly-radar.yml) reste inchangé.
 
-name: Nightly Strate Radar
+name: Audit one-shot
 
 on:
-  schedule:
-    - cron: '0 3 * * *'
   workflow_dispatch:
+    inputs:
+      business_name:
+        description: 'Nom entreprise (tel que sur Google Maps)'
+        required: true
+        type: string
+      location:
+        description: 'Zone Places ex. Annecy, France'
+        required: false
+        type: string
 
 concurrency:
-  group: strate-radar-nightly
+  group: strate-radar-audit-one-shot
   cancel-in-progress: false
 
 jobs:
-  radar:
+  audit-one:
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@v4
 
-      - name: Restaurer la SQLite (mémoire entre runs CI)
+      - name: Restaurer la SQLite
         uses: actions/cache@v4
         with:
           path: data/strate-radar.sqlite
@@ -38,7 +42,7 @@ jobs:
 
       - run: npm ci
 
-      - name: Exécuter Strate Radar (live)
+      - name: Audit one-shot
         env:
           STRATE_RADAR_SIMULATION: 'false'
           NODE_ENV: production
@@ -46,35 +50,33 @@ jobs:
           GOOGLE_PAGESPEED_API_KEY: ${{ secrets.GOOGLE_PAGESPEED_API_KEY }}
           GOOGLE_SEARCH_API_KEY: ${{ secrets.GOOGLE_SEARCH_API_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-          # Var vide / absente → défaut (évite `""` qui cassait Zod sur le runner)
           GROQ_MODEL: ${{ vars.GROQ_MODEL || 'llama-3.3-70b-versatile' }}
-          # Groq sert encore : analyse conversion brochure (matrice Strate) + métier/villes en mode campagne.
-          # (Les leviers de croissance sont générés côté serveur vitrine après ingest.)
-          # Secret ou variable dépôt (beaucoup stockent la ville en secret — les deux passent).
           RADAR_SEARCH_LOCATION: ${{ secrets.RADAR_SEARCH_LOCATION || vars.RADAR_SEARCH_LOCATION }}
-          # Campagne autonome (matrice villes | métiers Groq) — variables dépôt optionnelles
-          RADAR_CAMPAIGN_MODE: ${{ vars.RADAR_CAMPAIGN_MODE || 'false' }}
-          TARGET_CITIES: ${{ vars.TARGET_CITIES }}
-          RADAR_VERBOSE: 'false'
-          # Vitrine Strate Studio — POST https://www.strate-studio.fr/api/audits/ingest (même secret que la route Next)
+          RADAR_CAMPAIGN_MODE: 'false'
+          RADAR_TREND_DRIVEN: 'false'
+          RADAR_USE_SEED_LIST: 'false'
+          RADAR_VERBOSE: 'true'
           RADAR_INGEST_SECRET: ${{ secrets.RADAR_INGEST_SECRET }}
           RADAR_STUDIO_ORIGIN: ${{ vars.RADAR_STUDIO_ORIGIN || 'https://www.strate-studio.fr' }}
-          # true ponctuellement : log du corps de réponse en cas d'échec ingest (diagnostic 500)
-          RADAR_INGEST_DEBUG: ${{ vars.RADAR_INGEST_DEBUG || 'false' }}
-        run: npm run dev
+          RADAR_SERP_MAX_PAGES: '3'
+          RADAR_MAX_PLACES_REQUESTS_PER_RUN: '30'
+          RADAR_MAX_WEB_SEARCH_REQUESTS_PER_RUN: '10'
+          AUDIT_TARGET_NAME: ${{ github.event.inputs.business_name }}
+          AUDIT_TARGET_LOCATION: ${{ github.event.inputs.location }}
+        run: npm run audit:one
 
-      - name: Enregistrer la SQLite dans le cache Actions
+      - name: Enregistrer la SQLite
         if: success() && hashFiles('data/strate-radar.sqlite') != ''
         uses: actions/cache@v4
         with:
           path: data/strate-radar.sqlite
           key: strate-radar-sqlite-${{ github.ref_name }}-${{ github.run_id }}
 
-      - name: Artefacts rapport + export + heartbeat
-        if: success()
+      - name: Artefacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: radar-output-${{ github.run_id }}
+          name: audit-one-shot-${{ github.run_id }}
           retention-days: 90
           path: |
             rapport_matinal.md
@@ -89,6 +91,4 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           JOB_STATUS: ${{ job.status }}
-          RADAR_HEARTBEAT_PATH: data/heartbeat.json
-          RADAR_REPORT_PATH: rapport_matinal.md
         run: npx tsx src/scripts/send-telegram-report.ts

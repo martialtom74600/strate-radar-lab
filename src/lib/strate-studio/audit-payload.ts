@@ -20,9 +20,31 @@ export type GoogleMapsRaw = {
   readonly seedCategory: string | null;
   /** Extraits d’avis Google Places (jusqu’à 10 textes) — absent sur exports historiques. */
   readonly place_review_texts?: readonly string[] | null;
+  /** URL brute renseignée sur la fiche Maps (même si tierce). */
+  readonly mapsListingWebsite?: string | null;
 };
 
-export type RadarAuditLeadKind = 'DIAMANT_CREATION' | 'DIAMANT_REFONTE';
+export type WebsiteResolutionPayload = {
+  readonly status: 'owner_site' | 'presence_only' | 'none';
+  readonly confidence: number;
+  readonly url: string | null;
+  readonly displayUrl: string | null;
+  readonly normalizedUrl: string | null;
+  readonly source:
+    | 'maps_link'
+    | 'place_details'
+    | 'places_requery'
+    | 'web_search'
+    | 'presence_taxonomy'
+    | null;
+  readonly mapsListingWebsite: string | null;
+  readonly presencePlatform: string | null;
+};
+
+export type RadarAuditLeadKind =
+  | 'DIAMANT_CREATION'
+  | 'DIAMANT_PRESENCE'
+  | 'DIAMANT_REFONTE';
 
 export type CompanyRegistryLegalDataPayload = {
   readonly source: 'recherche_entreprises_api_gouv';
@@ -49,6 +71,7 @@ export type StrateRadarAuditMetrics = {
   readonly lcpMs: number | null;
   readonly cls: number | null;
   readonly websiteSource: 'maps_link' | 'organic_deep_search' | null;
+  readonly websitePresenceStatus?: 'owner_site' | 'presence_only' | 'none' | null;
 };
 
 export type StrateRadarAuditFinding = {
@@ -74,6 +97,7 @@ export type StrateRadarAuditPayload = {
   readonly strateScore: StrateRadarAuditStrateScore;
   readonly metrics: StrateRadarAuditMetrics;
   readonly content: StrateRadarAuditContent;
+  readonly websiteResolution?: WebsiteResolutionPayload;
   /** Concurrents à proximité (FOMO) — absent sur les payloads historiques. */
   readonly nearbyCompetitors?: readonly StrateRadarAuditNearbyCompetitor[];
 };

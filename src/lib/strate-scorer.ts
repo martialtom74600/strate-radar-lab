@@ -80,12 +80,21 @@ export async function fetchHtmlWithTimeout(
   }
 }
 
-/** Chemin « Diamant création » : aucun site propriétaire résolu + réputation Maps (seuils création). */
+/** Chemin « Diamant création » : aucune présence web résolue + réputation Maps (seuils création). */
 export function qualifiesDiamantCreation(
   serp: SerpLocalResult,
-  resolved: ResolvedWebsite | null,
+  websiteStatus: 'owner_site' | 'presence_only' | 'none',
 ): boolean {
-  if (resolved !== null) return false;
+  if (websiteStatus !== 'none') return false;
+  return hasCreationReputation(serp);
+}
+
+/** Diamant présence tierce : Doctolib, annuaire, réseau social fort — pas un site propriétaire. */
+export function qualifiesDiamantPresence(
+  serp: SerpLocalResult,
+  websiteStatus: 'owner_site' | 'presence_only' | 'none',
+): boolean {
+  if (websiteStatus !== 'presence_only') return false;
   return hasCreationReputation(serp);
 }
 

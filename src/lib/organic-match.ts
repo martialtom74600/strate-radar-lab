@@ -39,6 +39,7 @@ export type OrganicSerpHit = {
   readonly title: string;
   readonly link: string;
   readonly snippet?: string;
+  readonly place_id?: string;
 };
 
 const SKIP_HOST_PARTS: readonly string[] = [
@@ -64,6 +65,24 @@ function shouldSkipHost(hostname: string): boolean {
 }
 
 /**
+ * Même établissement Places → URL site sans heuristique de tokens.
+ */
+export function pickOrganicUrlByPlaceId(
+  prospectPlaceId: string,
+  results: readonly OrganicSerpHit[],
+): string | null {
+  const want = prospectPlaceId.trim();
+  if (!want) return null;
+  for (const hit of results) {
+    const pid = hit.place_id?.trim();
+    if (!pid || pid !== want) continue;
+    const link = hit.link?.trim();
+    if (link) return link;
+  }
+  return null;
+}
+
+/**
  * Choisit une URL organique dont le domaine ou le titre est cohérent avec le nom Maps.
  * Retourne null si aucun résultat ne dépasse le seuil de confiance.
  */
@@ -78,10 +97,12 @@ export function pickBestOrganicUrlForBusiness(
 
   for (const hit of results) {
     let hostname = '';
+    let pathHay = '';
     try {
       const u = new URL(hit.link);
       if (u.protocol !== 'http:' && u.protocol !== 'https:') continue;
       hostname = u.hostname.toLowerCase();
+      pathHay = normalizeForMatch(`${u.pathname} ${u.search}`);
     } catch {
       continue;
     }
@@ -96,11 +117,12 @@ export function pickBestOrganicUrlForBusiness(
     let score = 0;
     for (const t of tokens) {
       if (hostFirstLabel.includes(t) || hostNoWww.includes(t)) score += 18;
+      if (pathHay.includes(t)) score += 14;
       if (normTitle.includes(t)) score += 10;
       if (normSnippet.includes(t)) score += 4;
     }
 
-    const minScore = Math.min(24, 12 + tokens.length * 6);
+    const minScore = Math.min(20, 10 + tokens.length * 5);
     if (score >= minScore && (!best || score > best.score)) {
       best = { url: hit.link, score };
     }

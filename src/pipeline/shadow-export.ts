@@ -22,7 +22,7 @@ export type ShadowSiteExportRecord = {
   readonly maps_cover_image_url: string | null;
   readonly diamond_pain: DiamondPainType;
   /** Aligné sur le badge pipeline / `payload.leadKind`. */
-  readonly conversion_badge: 'DIAMANT_CREATION' | 'DIAMANT_REFONTE';
+  readonly conversion_badge: 'DIAMANT_CREATION' | 'DIAMANT_PRESENCE' | 'DIAMANT_REFONTE';
   readonly seed_category: string | null;
   readonly place_id: string | null;
   /** Requête d’intention locale ayant mené à ce prospect (Google Suggest / Serp « q »). */
@@ -41,6 +41,12 @@ function buildStrateVulgarizedFailures(line: RadarPipelineLine): string[] {
     return ['Analyse Strate non disponible pour cette exportation.'];
   }
   if (sc.isDiamantCreation || sc.matrix === null) {
+    if (line.conversionBadge === 'DIAMANT_PRESENCE') {
+      const platform = line.websiteResolution?.presencePlatform ?? 'une plateforme tierce';
+      return [
+        `Présence en ligne captée par ${platform} : pas de site web propre — la demande transite par un intermédiaire.`,
+      ];
+    }
     return [
       'Pas de site web : le trafic Maps ne trouve aucune passerelle de conversion en ligne.',
     ];
@@ -64,7 +70,9 @@ function buildStrateVulgarizedFailures(line: RadarPipelineLine): string[] {
 function lineToShadowRecord(line: RadarPipelineLine): ShadowSiteExportRecord | null {
   const badge = line.conversionBadge;
   if (
-    (badge !== 'DIAMANT_CREATION' && badge !== 'DIAMANT_REFONTE') ||
+    (badge !== 'DIAMANT_CREATION' &&
+      badge !== 'DIAMANT_PRESENCE' &&
+      badge !== 'DIAMANT_REFONTE') ||
     !line.diamondPain
   ) {
     return null;

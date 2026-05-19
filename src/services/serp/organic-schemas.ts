@@ -3,6 +3,8 @@ export type SerpOrganicResult = {
   readonly title: string;
   readonly link: string;
   readonly snippet?: string;
+  /** Identifiant Places (New) — permet de rattacher le site au même établissement. */
+  readonly place_id?: string;
 };
 
 export type SerpGoogleOrganicResponse = {

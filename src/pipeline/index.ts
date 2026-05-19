@@ -8,6 +8,7 @@ export {
   type RunRadarPipelineOptions,
   type ConversionBadge,
   type LeadQuotaState,
+  type TargetProspectSpec,
 } from './radar-pipeline.js';
 export type { RadarNearbyCompetitor } from '../lib/nearby-competitors.js';
 export type { DiamondPainType } from '../lib/diamond.js';
