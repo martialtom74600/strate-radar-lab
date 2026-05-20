@@ -50,6 +50,8 @@ export type RunTelemetryPayload = {
   readonly placesRequestsMax: number;
   readonly webSearchRequestsUsed: number;
   readonly webSearchRequestsMax: number;
+  readonly webSearchConfigured: boolean;
+  readonly webSearchBootStatus: string;
   readonly placesStoppedEarly: boolean;
   readonly placesStopMessage: string | null;
   readonly placesBudgetExhausted: boolean;
@@ -245,6 +247,8 @@ export function buildRunTelemetry(args: {
     placesRequestsMax: result.placesRequestsMax,
     webSearchRequestsUsed: result.webSearchRequestsUsed,
     webSearchRequestsMax: result.webSearchRequestsMax,
+    webSearchConfigured: result.webSearchConfigured,
+    webSearchBootStatus: result.webSearchBootStatus,
     placesStoppedEarly: result.placesStoppedEarly,
     placesStopMessage: result.placesStopMessage ?? null,
     placesBudgetExhausted: result.placesBudgetExhausted,

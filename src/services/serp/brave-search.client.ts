@@ -138,6 +138,41 @@ async function fetchBraveWebSearch(
 }
 
 /**
+ * Diagnostic démarrage (sans exposer la clé) — visible dans les logs GitHub Actions.
+ */
+export function describeWebSearchBoot(
+  config: Pick<
+    AppConfig,
+    'BRAVE_SEARCH_API_KEY' | 'RADAR_WEB_SEARCH_ENABLED' | 'RADAR_MAX_WEB_SEARCH_REQUESTS_PER_RUN'
+  >,
+): { readonly configured: boolean; readonly statusLine: string } {
+  const max = config.RADAR_MAX_WEB_SEARCH_REQUESTS_PER_RUN;
+  if (max <= 0) {
+    return {
+      configured: false,
+      statusLine: 'inactif · RADAR_MAX_WEB_SEARCH_REQUESTS_PER_RUN=0',
+    };
+  }
+  const key = config.BRAVE_SEARCH_API_KEY?.trim();
+  if (!key) {
+    return {
+      configured: false,
+      statusLine: 'inactif · BRAVE_SEARCH_API_KEY absente ou vide sur le runner',
+    };
+  }
+  if (!config.RADAR_WEB_SEARCH_ENABLED) {
+    return {
+      configured: false,
+      statusLine: 'inactif · RADAR_WEB_SEARCH_ENABLED=false',
+    };
+  }
+  return {
+    configured: true,
+    statusLine: `actif · plafond ${max} req/run · clé présente (${key.length} car.)`,
+  };
+}
+
+/**
  * Recherche web via Brave Search API (couche 4 — website-resolver).
  * @see https://api-dashboard.search.brave.com/app/documentation/web-search/get-started
  */

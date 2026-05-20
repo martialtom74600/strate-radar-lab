@@ -90,7 +90,7 @@ export function buildTelegramReportSections(args: {
     '—— SCAN ——',
     `Fiches parcourues : ${telemetry.totalBusinessesScanned}`,
     `Places API : ${telemetry.placesRequestsUsed}/${telemetry.placesRequestsMax}`,
-    `Brave Search : ${telemetry.webSearchRequestsUsed}/${telemetry.webSearchRequestsMax}`,
+    `Brave Search : ${telemetry.webSearchRequestsUsed}/${telemetry.webSearchRequestsMax} · ${telemetry.webSearchConfigured ? 'clé OK' : 'inactif'}`,
     '',
     '—— INGEST VITRINE ——',
     `Configuré : ${telemetry.ingest.configured ? 'oui' : 'non'}`,

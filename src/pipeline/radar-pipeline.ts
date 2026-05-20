@@ -28,7 +28,7 @@ import {
   resolveProspectWebsitePresence,
   type WebsiteResolution,
 } from '../lib/website-resolver.js';
-import { createBraveSearchWebClient } from '../services/serp/brave-search.client.js';
+import { createBraveSearchWebClient, describeWebSearchBoot } from '../services/serp/brave-search.client.js';
 import { wrapWebSearchClientWithBudget, WEB_SEARCH_BUDGET_EXHAUSTED_REASON } from '../services/serp/web-search-budget.js';
 import {
   catchLocalSearchIntentions,
@@ -161,6 +161,9 @@ export type RadarPipelineResult = {
   readonly placesRequestsMax: number;
   readonly webSearchRequestsUsed: number;
   readonly webSearchRequestsMax: number;
+  /** Client Brave instancié (clé + plafond > 0 + RADAR_WEB_SEARCH_ENABLED). */
+  readonly webSearchConfigured: boolean;
+  readonly webSearchBootStatus: string;
   readonly reportCityDisplayName: string;
   readonly seedCategoriesResolved: readonly string[];
   readonly multiCategoryMode: boolean;
@@ -633,12 +636,15 @@ export async function runRadarPipeline(
 
   const psiClient = createPageSpeedClient(config);
   const groqClient = createGroqClient(config);
+  const webSearchBoot = describeWebSearchBoot(config);
   const baseWebSearchClient =
     webSearchRequestsMax > 0 ? createBraveSearchWebClient(config) : null;
   const webSearchClient =
     baseWebSearchClient !== null
       ? wrapWebSearchClientWithBudget(baseWebSearchClient, webSearchBudget)
       : null;
+
+  console.log(`[radar] Brave Search : ${webSearchBoot.statusLine}`);
 
   const lines: RadarPipelineLine[] = [];
   const gatekeeperExclusions: GatekeeperExclusion[] = [];
@@ -884,6 +890,8 @@ export async function runRadarPipeline(
     placesRequestsMax,
     webSearchRequestsUsed: webSearchBudget.used,
     webSearchRequestsMax,
+    webSearchConfigured: webSearchBoot.configured,
+    webSearchBootStatus: webSearchBoot.statusLine,
     reportCityDisplayName,
     seedCategoriesResolved,
     multiCategoryMode,
