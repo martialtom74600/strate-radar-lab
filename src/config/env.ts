@@ -13,11 +13,17 @@ function optionalTrimmedNonEmpty(value: unknown): unknown {
 }
 
 const DEFAULT_GROQ_MODEL = 'llama-3.3-70b-versatile';
+const DEFAULT_GROQ_PREFLIGHT_MODEL = 'llama-3.1-8b-instant';
 const DEFAULT_RADAR_SEARCH_LOCATION = 'Annecy, France';
 
 function groqModelFromEnv(value: unknown): string {
   const t = optionalTrimmedNonEmpty(value);
   return typeof t === 'string' && t.length > 0 ? t : DEFAULT_GROQ_MODEL;
+}
+
+function groqPreflightModelFromEnv(value: unknown): string {
+  const t = optionalTrimmedNonEmpty(value);
+  return typeof t === 'string' && t.length > 0 ? t : DEFAULT_GROQ_PREFLIGHT_MODEL;
 }
 
 function radarSearchLocationFromEnv(value: unknown): string {
@@ -100,6 +106,9 @@ export type RawEnv = {
   readonly GOOGLE_PAGESPEED_API_KEY: string | undefined;
   readonly GROQ_API_KEY: string | undefined;
   readonly GROQ_MODEL: string;
+  /** Modèle Groq ultra-léger pour le pre-flight Gatekeeper (défaut Llama 3.1 8B). */
+  readonly GROQ_PREFLIGHT_MODEL: string;
+  readonly GROQ_PREFLIGHT_TIMEOUT_MS: number;
   readonly STRATE_RADAR_DB_PATH: string;
   readonly RADAR_SEARCH_Q: string;
   readonly RADAR_SEARCH_LOCATION: string;
@@ -164,6 +173,8 @@ function parseRawEnv(env: NodeJS.ProcessEnv): RawEnv {
     GOOGLE_PAGESPEED_API_KEY: optString(env.GOOGLE_PAGESPEED_API_KEY),
     GROQ_API_KEY: optString(env.GROQ_API_KEY),
     GROQ_MODEL: groqModelFromEnv(env.GROQ_MODEL),
+    GROQ_PREFLIGHT_MODEL: groqPreflightModelFromEnv(env.GROQ_PREFLIGHT_MODEL),
+    GROQ_PREFLIGHT_TIMEOUT_MS: coerceIntInRange(env.GROQ_PREFLIGHT_TIMEOUT_MS, 8_000, 2_000, 30_000),
     STRATE_RADAR_DB_PATH: nonEmptyString(env.STRATE_RADAR_DB_PATH, 'data/strate-radar.sqlite'),
     RADAR_SEARCH_Q: nonEmptyString(env.RADAR_SEARCH_Q, 'boulangerie artisanale'),
     RADAR_SEARCH_LOCATION: radarSearchLocationFromEnv(env.RADAR_SEARCH_LOCATION),

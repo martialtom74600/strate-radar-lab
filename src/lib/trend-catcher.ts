@@ -130,6 +130,60 @@ function escapeRe(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+/** Intentions Suggest trop vagues ou institutionnelles — exclues du Top 10. */
+const TREND_INTENT_MIN_LENGTH = 5;
+
+const TREND_INTENT_SINGLE_WORD_BLOCKED = new Set([
+  'service',
+  'services',
+  'social',
+  'public',
+  'mairie',
+  'police',
+  'gare',
+  'association',
+]);
+
+const TREND_INTENT_PHRASE_BLOCKED = [
+  'commissariat',
+  'prefecture',
+  'hopital',
+  'hôpital',
+  'france services',
+  'office de tourisme',
+  'stationnement',
+  'parking',
+] as const;
+
+function trendIntentTokens(cleaned: string): string[] {
+  return cleaned.split(/\s+/).filter((t) => t.length > 0);
+}
+
+/** True si l'intention nettoyée vaut la peine d'être poussée dans Places. */
+export function isCommercialTrendIntention(cleaned: string): boolean {
+  const text = cleaned.trim();
+  if (text.length < TREND_INTENT_MIN_LENGTH) return false;
+
+  const tokens = trendIntentTokens(text);
+  if (tokens.length === 0) return false;
+
+  if (tokens.length === 1 && TREND_INTENT_SINGLE_WORD_BLOCKED.has(tokens[0]!)) {
+    return false;
+  }
+
+  const hay = ` ${text} `;
+  for (const phrase of TREND_INTENT_PHRASE_BLOCKED) {
+    if (phrase.includes(' ')) {
+      if (hay.includes(` ${phrase} `)) return false;
+      continue;
+    }
+    const re = new RegExp(`\\b${escapeRe(phrase)}\\b`, 'i');
+    if (re.test(text)) return false;
+  }
+
+  return true;
+}
+
 function parseSuggestBody(text: string): string[] {
   const trimmed = text.trim();
   let data: unknown;
@@ -218,14 +272,18 @@ export async function catchLocalSearchIntentions(
     const suggestions = await fetchSuggestionsForQuery(q, timeoutMs);
     suggestions.forEach((suggestion, index) => {
       const cleaned = cleanSuggestion(suggestion, localityNorms);
-      if (cleaned.length < 4) return;
+      if (!isCommercialTrendIntention(cleaned)) return;
       const weight = Math.max(0, 24 - index);
       scores.set(cleaned, (scores.get(cleaned) ?? 0) + weight + 2);
     });
     await sleep(80);
   }
 
-  const ranked = [...scores.entries()].sort((a, b) => b[1] - a[1]).map(([text]) => text);
+  const ranked = [...scores.entries()]
+    .filter(([, score]) => score > 0)
+    .sort((a, b) => b[1] - a[1])
+    .map(([text]) => text)
+    .filter(isCommercialTrendIntention);
   return ranked.slice(0, limit);
 }
 
@@ -240,23 +298,23 @@ export function padTrendQueries(
   fallbackQuery: string,
 ): string[] {
   const city = primaryLocality(radarLocation);
+  const localityNorms = localityTokens(radarLocation);
   const seen = new Set(trends.map((t) => t.toLowerCase()));
   const out = [...trends];
   const fq = fallbackQuery?.trim();
   if (fq) {
-    const pad = `${fq} ${city}`.trim();
-    if (!seen.has(pad.toLowerCase())) {
+    const pad = cleanSuggestion(`${fq} ${city}`.trim(), localityNorms);
+    if (isCommercialTrendIntention(pad) && !seen.has(pad.toLowerCase())) {
       out.push(pad);
       seen.add(pad.toLowerCase());
     }
   }
   for (const trig of TREND_INTENTION_TRIGGERS) {
     if (out.length >= 10) break;
-    const p = `${trig} ${city}`.trim();
-    if (!seen.has(p.toLowerCase())) {
-      out.push(p);
-      seen.add(p.toLowerCase());
-    }
+    const p = cleanSuggestion(`${trig} ${city}`.trim(), localityNorms);
+    if (!isCommercialTrendIntention(p) || seen.has(p.toLowerCase())) continue;
+    out.push(p);
+    seen.add(p.toLowerCase());
   }
   return out.slice(0, 10);
 }

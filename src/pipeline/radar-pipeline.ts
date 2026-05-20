@@ -18,8 +18,8 @@ import {
   type StrateScoreResult,
 } from '../lib/strate-scorer.js';
 import {
-  assessCommercialProspect,
-  collectGatekeeperTypes,
+  assessPreflightCommercialTarget,
+  isMapsListingTitlePrefilterExcluded,
 } from '../lib/gatekeeper.js';
 import { extractLighthouseScoresPercent } from '../lib/lighthouse.js';
 import { stablePlaceKey } from '../lib/place-key.js';
@@ -296,19 +296,45 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     }
   }
 
-  const gkTypes = collectGatekeeperTypes(serp);
-  const gate = await assessCommercialProspect(config, serp, gkTypes);
-  if (!gate.isCommercial) {
+  const prefilterReason = isMapsListingTitlePrefilterExcluded(serp);
+  if (prefilterReason !== null) {
     await repo.recordPlaceOutcome(placeKey, 'disqualified');
     gatekeeperExclusions.push({
       name: serp.title,
-      reason: gate.reason,
+      reason: prefilterReason,
     });
     radarVerbose(
       config,
-      `${progressTag} ${truncateTitle(serp.title)} · ⊘ Gatekeeper · ${truncateTitle(gate.reason, 88)}`,
+      `${progressTag} ${truncateTitle(serp.title)} · ⊘ Préfiltre Maps · ${truncateTitle(prefilterReason, 88)}`,
     );
     return null;
+  }
+
+  const preflight = await assessPreflightCommercialTarget(
+    config,
+    serp,
+    searchLocation ?? config.RADAR_SEARCH_LOCATION,
+  );
+  if (!preflight.isCommercialTarget) {
+    await repo.recordPlaceOutcome(placeKey, 'disqualified');
+    gatekeeperExclusions.push({
+      name: serp.title,
+      reason: `Pre-flight IA · ${preflight.reason}`,
+    });
+    radarVerbose(
+      config,
+      `${progressTag} ${truncateTitle(serp.title)} · ⊘ Pre-flight IA · ${truncateTitle(preflight.reason, 88)}`,
+    );
+    return null;
+  }
+  if (preflight.fallbackUsed) {
+    console.warn(
+      `[radar] Pre-flight Groq pass-through · ${truncateTitle(serp.title, 48)} · ${preflight.reason.slice(0, 80)}`,
+    );
+    radarVerbose(
+      config,
+      `${progressTag} ${truncateTitle(serp.title)} · ⚠ Pre-flight IA · ${truncateTitle(preflight.reason, 88)}`,
+    );
   }
 
   const skipExtendedSearch = !needCreation && needRefonte && !serp.website?.trim();
