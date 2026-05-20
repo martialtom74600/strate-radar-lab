@@ -41,7 +41,7 @@ Sans ces deux secrets, le workflow **ignore** l’étape Telegram (aucune erreur
 | `GROQ_MODEL` | `llama-3.3-70b-versatile` | Modèle Groq. |
 | `RADAR_SEARCH_LOCATION` | `Annecy, France` | Zone passée dans `textQuery` Places (ville + pays). |
 | `RADAR_DIAMOND_LOCATION_HINTS` | `annecy,chambéry` | Filtre zone « Diamant » (adresse / titre). |
-| `RADAR_MAX_PLACES_REQUESTS_PER_RUN` | `150` | Plafond d’appels Places Text Search par run (garde-fou). L’ancien nom `RADAR_MAX_SERPAPI_REQUESTS` est encore lu si la nouvelle variable est absente. |
+| `RADAR_MAX_PLACES_REQUESTS_PER_RUN` | `300` | Plafond d’appels Places Text Search par run (garde-fou). L’ancien nom `RADAR_MAX_SERPAPI_REQUESTS` est encore lu si la nouvelle variable est absente. |
 | `RADAR_MAX_WEB_SEARCH_REQUESTS_PER_RUN` | `80` | Plafond Brave Search par run (~1 000 req/mois offertes avec crédits gratuits). `0` = couche 4 désactivée. Couche 4 : top **4** résultats, refonte seulement si confiance owner **> 0,85** (nom + ville). |
 | `RADAR_STUDIO_ORIGIN` | `https://www.strate-studio.fr` | URL de la vitrine pour l’ingest. |
 

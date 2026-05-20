@@ -193,7 +193,7 @@ function parseRawEnv(env: NodeJS.ProcessEnv): RawEnv {
     RADAR_TREND_DRIVEN: boolFromEnvDefaultTrue(env.RADAR_TREND_DRIVEN),
     RADAR_MAX_PLACES_REQUESTS_PER_RUN: coerceIntInRange(
       env.RADAR_MAX_PLACES_REQUESTS_PER_RUN,
-      150,
+      300,
       10,
       500,
     ),
