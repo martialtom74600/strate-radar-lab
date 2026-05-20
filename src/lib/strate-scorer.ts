@@ -16,7 +16,7 @@ export const STRATE_DIAMANT_CREATION_SCORE = 100;
 /** @deprecated Alias historique */
 export const STRATE_DIAMANT_BRUT_SCORE = STRATE_DIAMANT_CREATION_SCORE;
 
-/** Pilier 4 (PageSpeed) uniquement si pilier2 + pilier3 > cette valeur (évite appels API trop tôt). */
+/** Pilier 4 (PageSpeed) si pilier2 + pilier3 ≥ cette somme (inclus). */
 export const STRATE_PILIER4_SUM_TRIGGER_EXCLUSIVE = 30;
 
 export type StratePilierBreakdown = {
@@ -840,6 +840,116 @@ export function scoreContactFriction(
   };
 }
 
+export type CtaHeuristicResult = {
+  readonly hasClearCta: boolean;
+  readonly reason: string;
+};
+
+/** Détection locale de CTA — stabilise le pilier 3 si Groq varie entre deux runs. */
+export function assessCtaHeuristic(html: string): CtaHeuristicResult {
+  if (!html || html.trim().length < 40) {
+    return { hasClearCta: false, reason: 'HTML trop court pour détecter un CTA' };
+  }
+
+  if (/href\s*=\s*["']tel:/i.test(html) || /href\s*=\s*["']mailto:/i.test(html)) {
+    return { hasClearCta: true, reason: 'Liens tel:/mailto: détectés' };
+  }
+
+  const ctaPatterns: readonly RegExp[] = [
+    /demander\s+un\s+devis/i,
+    /devis\s+gratuit/i,
+    /nous\s+contacter/i,
+    /contactez[-\s]nous/i,
+    /prendre\s+rendez[-\s]?vous/i,
+    /r[ée]server\s+(en\s+ligne|maintenant|votre)/i,
+    /appelez[-\s]nous/i,
+    /request\s+a\s+quote/i,
+    /contact\s+us/i,
+    /get\s+in\s+touch/i,
+    /obtenir\s+un\s+devis/i,
+  ];
+  for (const re of ctaPatterns) {
+    if (re.test(html)) {
+      return { hasClearCta: true, reason: 'Motif texte CTA détecté dans le HTML' };
+    }
+  }
+
+  if (/<form[\s\S]*?(type\s*=\s*["']submit["']|<button)/i.test(html)) {
+    return { hasClearCta: true, reason: 'Formulaire ou bouton submit détecté' };
+  }
+
+  if (
+    /<a[^>]+class\s*=\s*["'][^"']*btn[^"']*["'][^>]+href\s*=\s*["'](?!#|javascript:)[^"']+["']/i.test(
+      html,
+    )
+  ) {
+    return { hasClearCta: true, reason: 'Lien bouton (btn) avec href' };
+  }
+
+  return { hasClearCta: false, reason: 'Aucun CTA clair détecté (heuristique HTML)' };
+}
+
+export type DeadBrochureSignal = {
+  readonly deadBrochure: boolean;
+  readonly briefReason: string;
+  readonly source: 'groq' | 'heuristic' | 'both';
+};
+
+/** Groq + heuristique : points plaquette si Groq ou HTML concordent sur l'absence de CTA. */
+export async function resolveDeadBrochureSignal(args: {
+  readonly html: string;
+  readonly businessName: string;
+  readonly analyzeDeadBrochure: (
+    htmlExcerpt: string,
+    businessName: string,
+  ) => Promise<{ readonly deadBrochureSite: boolean; readonly briefReason: string }>;
+}): Promise<DeadBrochureSignal> {
+  const { html, businessName, analyzeDeadBrochure } = args;
+  const heuristic = assessCtaHeuristic(html);
+
+  let groq: { readonly deadBrochureSite: boolean; readonly briefReason: string } | null = null;
+  try {
+    groq = await analyzeDeadBrochure(excerptForAi(html), businessName);
+  } catch {
+    groq = null;
+  }
+
+  if (groq?.deadBrochureSite) {
+    return {
+      deadBrochure: true,
+      briefReason: groq.briefReason || 'Plaquette / conversion floue (Groq)',
+      source: heuristic.hasClearCta ? 'groq' : 'both',
+    };
+  }
+
+  if (!heuristic.hasClearCta) {
+    const reason = groq?.briefReason?.trim()
+      ? `Heuristique : ${heuristic.reason} — Groq : ${groq.briefReason}`
+      : heuristic.reason;
+    return {
+      deadBrochure: true,
+      briefReason: reason,
+      source: groq ? 'heuristic' : 'heuristic',
+    };
+  }
+
+  return {
+    deadBrochure: false,
+    briefReason: groq?.briefReason?.trim() || heuristic.reason,
+    source: 'groq',
+  };
+}
+
+export function summarizeStrateNearMiss(strate: StrateScoreResult): string {
+  const parts: string[] = [];
+  if (strate.pageSpeedSkippedReason) parts.push(strate.pageSpeedSkippedReason);
+  if (strate.pilier3.earned < 30) parts.push(`Pilier 3 conversion : ${strate.pilier3.earned}/40`);
+  if ((strate.pilier4?.earned ?? 0) === 0 && strate.pageSpeedRun) {
+    parts.push('PageSpeed mobile faible ou indisponible');
+  }
+  return parts.join(' · ').slice(0, 220) || 'Score matrice sous le seuil diamant refonte';
+}
+
 export type StrateMatrixContext = {
   readonly serp: SerpLocalResult;
   readonly resolved: ResolvedWebsite;
@@ -863,7 +973,7 @@ function excerptForAi(html: string, maxLen = 14_000): string {
 }
 
 /**
- * Matrice Strate complète (prospect avec site). Pilier 4 seulement si p2+p3 > 30.
+ * Matrice Strate complète (prospect avec site). Pilier 4 si p2+p3 ≥ 30.
  */
 export type StrateMatrixRunOutput = {
   readonly strate: StrateScoreResult;
@@ -889,25 +999,24 @@ export async function runStrateMatrixScore(
   let p3EarnedSub = nap.earned + friction.earned;
   const p3Items = [...nap.items, ...friction.items];
 
-  let groqBrochure = false;
-  let groqReason = '';
+  let brochureLabel = '';
   if (html && html.trim().length > 80) {
-    try {
-      const ai = await ctx.analyzeDeadBrochure(excerptForAi(html), serp.title);
-      groqBrochure = ai.deadBrochureSite;
-      groqReason = ai.briefReason;
-    } catch {
-      /* Groq échoué : pas de points plaquette */
+    const brochure = await resolveDeadBrochureSignal({
+      html,
+      businessName: serp.title,
+      analyzeDeadBrochure: ctx.analyzeDeadBrochure,
+    });
+    if (brochure.deadBrochure) {
+      p3EarnedSub += 15;
+      const sourceTag =
+        brochure.source === 'groq'
+          ? 'Groq'
+          : brochure.source === 'both'
+            ? 'Groq + heuristique'
+            : 'heuristique HTML';
+      brochureLabel = `Plaquette / zéro CTA (${sourceTag}) : ${brochure.briefReason} (+15)`;
+      p3Items.push(brochureLabel);
     }
-  }
-
-  if (groqBrochure) {
-    p3EarnedSub += 15;
-    p3Items.push(
-      groqReason
-        ? `Plaquette / zéro CTA (Groq) : ${groqReason} (+15)`
-        : 'Plaquette morte / intention de conversion floue (Groq) (+15)',
-    );
   }
 
   const p3: StratePilierBreakdown = {
@@ -923,8 +1032,8 @@ export async function runStrateMatrixScore(
   let pageSpeedPsi: PageSpeedInsightsV5 | null = null;
   let pageSpeedMobilePercent: number | null = null;
 
-  if (techConvSum <= STRATE_PILIER4_SUM_TRIGGER_EXCLUSIVE) {
-    pageSpeedSkippedReason = `Pilier 2+3 = ${techConvSum} ≤ ${STRATE_PILIER4_SUM_TRIGGER_EXCLUSIVE} — PageSpeed non sollicité`;
+  if (techConvSum < STRATE_PILIER4_SUM_TRIGGER_EXCLUSIVE) {
+    pageSpeedSkippedReason = `Pilier 2+3 = ${techConvSum} < ${STRATE_PILIER4_SUM_TRIGGER_EXCLUSIVE} — PageSpeed non sollicité`;
   } else {
     pageSpeedRun = true;
     const { psi, mobilePercent } = await ctx.loadOrRunPageSpeed();

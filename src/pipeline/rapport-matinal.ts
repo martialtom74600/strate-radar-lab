@@ -130,6 +130,21 @@ export function renderRapportMatinal(
     ``,
   ].join('\n');
 
+  const nearMissBlock =
+    result.scoreNearMisses.length > 0
+      ? [
+          `### Fiches analysées sous le seuil refonte`,
+          ``,
+          ...result.scoreNearMisses.map((m) => {
+            const score =
+              m.strateScore !== null ? `${m.strateScore}/${m.threshold}` : '—';
+            const site = m.displayUrl ? ` · Site : ${m.displayUrl}` : '';
+            return `- **${m.name}** — Strate **${score}**${site}\n  _${m.reason}_`;
+          }),
+          ``,
+        ].join('\n')
+      : '';
+
   const hero =
     pepites.length === 0
       ? [
@@ -137,6 +152,7 @@ export function renderRapportMatinal(
           ``,
           `_Aucune pépite qualifiée dans les limites du run (requêtes Places \`${result.placesRequestsUsed}/${result.placesRequestsMax}\`, seuils ou filtres)._`,
           ``,
+          ...(nearMissBlock ? [nearMissBlock] : []),
           `---`,
           ``,
         ].join('\n')

@@ -14,6 +14,7 @@ import {
   runStrateMatrixScore,
   STRATE_DIAMOND_THRESHOLD,
   STRATE_DIAMANT_CREATION_SCORE,
+  summarizeStrateNearMiss,
   type StrateScoreResult,
 } from '../lib/strate-scorer.js';
 import {
@@ -147,6 +148,14 @@ function leadQuotasSatisfied(q: LeadQuotaState): boolean {
   return q.creationsFound >= q.targetCreation && q.refontesFound >= q.targetRefonte;
 }
 
+export type ScoreNearMiss = {
+  readonly name: string;
+  readonly strateScore: number | null;
+  readonly threshold: number;
+  readonly displayUrl: string | null;
+  readonly reason: string;
+};
+
 export type RadarPipelineResult = {
   readonly lines: readonly RadarPipelineLine[];
   readonly weekBucket: string;
@@ -180,6 +189,8 @@ export type RadarPipelineResult = {
   readonly targetProspectMisses?: readonly string[];
   /** Fiches écartées par le Gatekeeper IA (non-commercial / institutionnel). */
   readonly gatekeeperExclusions: readonly GatekeeperExclusion[];
+  /** Refonte avec site mais score matrice sous le seuil (ou présence web insuffisante). */
+  readonly scoreNearMisses: readonly ScoreNearMiss[];
   /** Run en mode campagne autonome (matrice ville × métier). */
   readonly campaign?: { readonly city: string; readonly category: string };
 };
@@ -220,6 +231,7 @@ type ProcessLocalContext = {
   /** Compteurs mutables (quotas création / refonte). */
   readonly quotaState: LeadQuotaState;
   readonly forceRescan: boolean;
+  readonly scoreNearMisses: ScoreNearMiss[];
 };
 
 
@@ -244,6 +256,7 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     placesBudget,
     quotaState,
     forceRescan,
+    scoreNearMisses,
   } = ctx;
 
   if (leadQuotasSatisfied(quotaState)) {
@@ -421,6 +434,13 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
 
   if (resolved === null) {
     await repo.recordPlaceOutcome(placeKey, 'disqualified');
+    scoreNearMisses.push({
+      name: serp.title,
+      strateScore: null,
+      threshold: STRATE_DIAMOND_THRESHOLD,
+      displayUrl: resolution.displayUrl,
+      reason: 'Présence web insuffisante — ni site owner ni intermédiaire qualifiant',
+    });
     radarVerbose(
       config,
       `${progressTag} ${truncateTitle(serp.title)} · ○ Présence web insuffisante — réputation OK mais ni site ni intermédiaire détecté`,
@@ -474,6 +494,13 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
 
   if (matrixOut.strate.total < STRATE_DIAMOND_THRESHOLD) {
     await repo.recordPlaceOutcome(placeKey, 'disqualified');
+    scoreNearMisses.push({
+      name: serp.title,
+      strateScore: matrixOut.strate.total,
+      threshold: STRATE_DIAMOND_THRESHOLD,
+      displayUrl: resolved.displayUrl,
+      reason: summarizeStrateNearMiss(matrixOut.strate),
+    });
     radarVerbose(
       config,
       `${progressTag} ${truncateTitle(serp.title)} · ○ Strate ${matrixOut.strate.total}/100 < seuil ${STRATE_DIAMOND_THRESHOLD}`,
@@ -648,6 +675,7 @@ export async function runRadarPipeline(
 
   const lines: RadarPipelineLine[] = [];
   const gatekeeperExclusions: GatekeeperExclusion[] = [];
+  const scoreNearMisses: ScoreNearMiss[] = [];
   const quotaState: LeadQuotaState = {
     creationsFound: 0,
     refontesFound: 0,
@@ -793,6 +821,7 @@ export async function runRadarPipeline(
           placesBudget: serpBudget,
           quotaState,
           forceRescan,
+          scoreNearMisses,
         });
 
         if (targetedMode) {
@@ -903,6 +932,7 @@ export async function runRadarPipeline(
     ...(targetProspectMisses.length > 0 ? { targetProspectMisses } : {}),
     ...(placesStopMessage !== undefined ? { placesStopMessage } : {}),
     gatekeeperExclusions,
+    scoreNearMisses,
     ...(campaignPair !== undefined ? { campaign: campaignPair } : {}),
   };
 }

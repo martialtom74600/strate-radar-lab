@@ -121,6 +121,21 @@ export function buildTelegramReportSections(args: {
     sections.push('—— LEADS QUALIFIÉS ——\n\nAucun diamant qualifié ce run.');
   }
 
+  if (telemetry.scoreNearMisses.length > 0) {
+    sections.push(
+      [
+        '—— SOUS SEUIL REFONTE ——',
+        '',
+        ...telemetry.scoreNearMisses.map((m) => {
+          const score =
+            m.strateScore !== null ? `${m.strateScore}/${m.threshold}` : '—';
+          const url = m.displayUrl ? `\n  Site : ${m.displayUrl}` : '';
+          return `• ${m.name} · Strate ${score}\n  ${m.reason}${url}`;
+        }),
+      ].join('\n'),
+    );
+  }
+
   if (telemetry.warnings.length > 0 || telemetry.errors.length > 0) {
     const alertLines = ['—— ALERTES ——', ''];
     if (telemetry.warnings.length > 0) {

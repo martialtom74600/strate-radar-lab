@@ -71,6 +71,13 @@ export type RunTelemetryPayload = {
   readonly errors: readonly string[];
   readonly targetedMode: boolean;
   readonly targetedMisses: readonly string[];
+  readonly scoreNearMisses: readonly {
+    readonly name: string;
+    readonly strateScore: number | null;
+    readonly threshold: number;
+    readonly displayUrl: string | null;
+    readonly reason: string;
+  }[];
 };
 
 function titleByPlaceKey(result: RadarPipelineResult): Map<string, string> {
@@ -154,6 +161,11 @@ function buildWarningsAndErrors(args: {
   }
   if (result.gatekeeperExclusions.length > 0) {
     warnings.push(`${result.gatekeeperExclusions.length} fiche(s) écartée(s) par le Gatekeeper.`);
+  }
+  for (const miss of result.scoreNearMisses ?? []) {
+    const scoreLabel =
+      miss.strateScore !== null ? `${miss.strateScore}/${miss.threshold}` : '—';
+    warnings.push(`Sous seuil refonte · ${miss.name} · Strate ${scoreLabel} · ${miss.reason}`);
   }
 
   for (const issue of webSearchIssues) {
@@ -268,5 +280,6 @@ export function buildRunTelemetry(args: {
     errors,
     targetedMode: result.targetedMode,
     targetedMisses: [...new Set([...targetedMisses, ...(result.targetProspectMisses ?? [])])],
+    scoreNearMisses: result.scoreNearMisses ?? [],
   };
 }
