@@ -233,6 +233,11 @@ export function renderRapportMatinal(
     `- **Fiches Maps parcourues :** ${result.totalBusinessesScanned}`,
     `- **Requêtes Places (plafond run) :** ${result.placesRequestsUsed} / ${result.placesRequestsMax}`,
     `- **Requêtes Brave Search (plafond run) :** ${result.webSearchRequestsUsed} / ${result.webSearchRequestsMax}`,
+    ...(result.webSearchGateBlockedCount > 0
+      ? [
+          `- **⏸ Double vérif Brave en attente :** ${result.webSearchGateBlockedCount} fiche(s) non qualifiée(s) (plafond run — retry prochain run).`,
+        ]
+      : []),
     ...(result.placesStoppedEarly
       ? [
           `- **⚠ Arrêt Google Places :** quota / limite (HTTP 429) — run terminé avec résultats partiels.`,

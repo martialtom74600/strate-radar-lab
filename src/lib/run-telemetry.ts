@@ -98,9 +98,13 @@ function collectWebSearchIssues(
     const note = attempt?.note?.trim() ?? '';
     if (!note) continue;
     if (
-      note.startsWith('HTTP ') ||
       note.includes('Plafond recherche web') ||
-      note.includes(WEB_SEARCH_BUDGET_EXHAUSTED_REASON) ||
+      note.includes(WEB_SEARCH_BUDGET_EXHAUSTED_REASON)
+    ) {
+      continue;
+    }
+    if (
+      note.startsWith('HTTP ') ||
       note.includes('dailyLimitExceeded') ||
       note.includes('quotaExceeded')
     ) {
@@ -148,6 +152,11 @@ function buildWarningsAndErrors(args: {
   ) {
     warnings.push(
       `Plafond recherche web du run atteint (${result.webSearchRequestsUsed}/${result.webSearchRequestsMax}).`,
+    );
+  }
+  if (result.webSearchGateBlockedCount > 0) {
+    warnings.push(
+      `${result.webSearchGateBlockedCount} fiche(s) en attente double vérif Brave (plafond run) — retry prochain run.`,
     );
   }
   if (!result.targetedMode && result.creationsFound < result.targetCreationCount) {

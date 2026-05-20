@@ -29,7 +29,9 @@ import {
   resolveProspectWebsitePresence,
   type WebsiteResolution,
 } from '../lib/website-resolver.js';
+import { assessWebSearchDoubleCheckGate } from '../lib/web-search-verification.js';
 import { createBraveSearchWebClient, describeWebSearchBoot } from '../services/serp/brave-search.client.js';
+import type { WebSearchClient } from '../services/serp/web-search.types.js';
 import { wrapWebSearchClientWithBudget, WEB_SEARCH_BUDGET_EXHAUSTED_REASON } from '../services/serp/web-search-budget.js';
 import {
   catchLocalSearchIntentions,
@@ -209,6 +211,8 @@ export type RadarPipelineResult = {
   /** Refonte avec site mais score matrice sous le seuil (affichage plafonné). */
   readonly scoreNearMisses: readonly ScoreNearMiss[];
   readonly scoreNearMissesTotal: number;
+  /** Fiches non qualifiées faute de double vérif Brave (plafond run) — retry prochain run. */
+  readonly webSearchGateBlockedCount: number;
   /** Run en mode campagne autonome (matrice ville × métier). */
   readonly campaign?: { readonly city: string; readonly category: string };
 };
@@ -235,7 +239,7 @@ type ProcessLocalContext = {
   readonly psiClient: PageSpeedClient;
   readonly groqClient: GroqClient;
   readonly serpClient: SerpClient;
-  readonly webSearchClient: ReturnType<typeof createBraveSearchWebClient>;
+  readonly webSearchClient: WebSearchClient | null;
   readonly searchLocation: string | null;
   readonly searchHl: string | undefined;
   readonly searchGl: string | undefined;
@@ -250,6 +254,7 @@ type ProcessLocalContext = {
   readonly quotaState: LeadQuotaState;
   readonly forceRescan: boolean;
   readonly scoreNearMisses: ScoreNearMiss[];
+  readonly webSearchGateBlocked: { count: number };
 };
 
 
@@ -275,6 +280,7 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     quotaState,
     forceRescan,
     scoreNearMisses,
+    webSearchGateBlocked,
   } = ctx;
 
   if (leadQuotasSatisfied(quotaState)) {
@@ -381,6 +387,20 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
       config,
       `${progressTag} ${truncateTitle(serp.title)} · web ${resolution.status}${resolution.presencePlatform ? ` (${resolution.presencePlatform})` : ''}${resolution.url ? ` · ${truncateTitle(resolution.url, 72)}` : ''}`,
     );
+  }
+
+  const webSearchGate = assessWebSearchDoubleCheckGate({
+    resolution,
+    skipExtendedSearch,
+    webSearchConfigured: webSearchClient !== null,
+  });
+  if (!webSearchGate.allowed) {
+    webSearchGateBlocked.count += 1;
+    radarVerbose(
+      config,
+      `${progressTag} ${truncateTitle(serp.title)} · ◇ ${truncateTitle(webSearchGate.reason, 100)}`,
+    );
+    return null;
   }
 
   const seed = seedCategory !== undefined ? { seedCategory } : {};
@@ -720,6 +740,7 @@ export async function runRadarPipeline(
   const lines: RadarPipelineLine[] = [];
   const gatekeeperExclusions: GatekeeperExclusion[] = [];
   const scoreNearMisses: ScoreNearMiss[] = [];
+  const webSearchGateBlocked = { count: 0 };
   const quotaState: LeadQuotaState = {
     creationsFound: 0,
     refontesFound: 0,
@@ -866,6 +887,7 @@ export async function runRadarPipeline(
           quotaState,
           forceRescan,
           scoreNearMisses,
+          webSearchGateBlocked,
         });
 
         if (targetedMode) {
@@ -980,6 +1002,7 @@ export async function runRadarPipeline(
     gatekeeperExclusions,
     scoreNearMisses: nearMissReport.shown,
     scoreNearMissesTotal: nearMissReport.total,
+    webSearchGateBlockedCount: webSearchGateBlocked.count,
     ...(campaignPair !== undefined ? { campaign: campaignPair } : {}),
   };
 }
