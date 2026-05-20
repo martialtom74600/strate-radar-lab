@@ -46,7 +46,7 @@ function mapBraveWebResults(json: unknown): OrganicSerpHit[] {
       link,
       ...(snippet !== undefined ? { snippet } : {}),
     });
-    if (out.length >= 8) break;
+    if (out.length >= 4) break;
   }
   return out;
 }
@@ -112,7 +112,7 @@ async function fetchBraveWebSearch(
 ): Promise<{ readonly json: unknown; readonly ok: boolean; readonly status: number; readonly text: string }> {
   const params = new URLSearchParams({
     q: query,
-    count: '8',
+    count: '4',
     safesearch: 'moderate',
   });
   const country = resolveBraveCountry(opts?.gl);

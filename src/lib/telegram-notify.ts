@@ -1,6 +1,31 @@
 import type { RunTelemetryPayload } from './run-telemetry.js';
 
 const TELEGRAM_MAX_MESSAGE = 4000;
+/** Sous-seuil refonte : détail limité sur Telegram (nuit = long). */
+const TELEGRAM_NEAR_MISS_DETAIL_MAX = 5;
+
+function truncateTitle(text: string, max = 56): string {
+  const t = text.trim();
+  return t.length <= max ? t : `${t.slice(0, max - 1)}…`;
+}
+
+function formatNearMissTelegramBlock(
+  misses: RunTelemetryPayload['scoreNearMisses'],
+  total?: number,
+): string {
+  if (misses.length === 0) return '';
+  const shown = misses.slice(0, TELEGRAM_NEAR_MISS_DETAIL_MAX);
+  const lines = shown.map((m) => {
+    const score = m.strateScore !== null ? `${m.strateScore}/${m.threshold}` : '—';
+    return `• ${truncateTitle(m.name)} · ${score}${m.displayUrl ? ` · ${truncateTitle(m.displayUrl, 48)}` : ''}`;
+  });
+  const grandTotal = total ?? misses.length;
+  const omitted = grandTotal - misses.length;
+  if (omitted > 0) {
+    lines.push(`… +${omitted} autre(s) — voir rapport_matinal.md (artefact Actions).`);
+  }
+  return ['—— SOUS SEUIL REFONTE ——', '', ...lines].join('\n');
+}
 
 function chunkText(text: string, max = TELEGRAM_MAX_MESSAGE): string[] {
   if (text.length <= max) return [text];
@@ -123,16 +148,7 @@ export function buildTelegramReportSections(args: {
 
   if (telemetry.scoreNearMisses.length > 0) {
     sections.push(
-      [
-        '—— SOUS SEUIL REFONTE ——',
-        '',
-        ...telemetry.scoreNearMisses.map((m) => {
-          const score =
-            m.strateScore !== null ? `${m.strateScore}/${m.threshold}` : '—';
-          const url = m.displayUrl ? `\n  Site : ${m.displayUrl}` : '';
-          return `• ${m.name} · Strate ${score}\n  ${m.reason}${url}`;
-        }),
-      ].join('\n'),
+      formatNearMissTelegramBlock(telemetry.scoreNearMisses, telemetry.scoreNearMissesTotal),
     );
   }
 
@@ -192,7 +208,13 @@ export function buildTelegramReportSections(args: {
   sections.push(`—— LIEN RUN ——\n${runUrl}`);
 
   if (rapportMarkdown && rapportMarkdown.trim()) {
-    sections.push(`—— RAPPORT MATINAL ——\n\n${rapportMarkdown.trim()}`);
+    if (telemetry.targetedMode) {
+      sections.push(`—— RAPPORT MATINAL ——\n\n${rapportMarkdown.trim()}`);
+    } else {
+      sections.push(
+        '—— RAPPORT ——\n\n📄 Rapport markdown complet : artefact GitHub Actions (`rapport_matinal.md`).',
+      );
+    }
   }
 
   return sections;

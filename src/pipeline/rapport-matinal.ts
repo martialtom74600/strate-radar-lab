@@ -131,9 +131,9 @@ export function renderRapportMatinal(
   ].join('\n');
 
   const nearMissBlock =
-    result.scoreNearMisses.length > 0
+    result.scoreNearMissesTotal > 0
       ? [
-          `### Fiches analysées sous le seuil refonte`,
+          `### Fiches analysées sous le seuil refonte (${result.scoreNearMissesTotal} au total)`,
           ``,
           ...result.scoreNearMisses.map((m) => {
             const score =
@@ -141,7 +141,12 @@ export function renderRapportMatinal(
             const site = m.displayUrl ? ` · Site : ${m.displayUrl}` : '';
             return `- **${m.name}** — Strate **${score}**${site}\n  _${m.reason}_`;
           }),
-          ``,
+          ...(result.scoreNearMissesTotal > result.scoreNearMisses.length
+            ? [
+                `_… +${result.scoreNearMissesTotal - result.scoreNearMisses.length} autre(s) non listée(s) — scores les plus proches du seuil ci-dessus._`,
+                ``,
+              ]
+            : []),
         ].join('\n')
       : '';
 

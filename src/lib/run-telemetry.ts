@@ -78,6 +78,7 @@ export type RunTelemetryPayload = {
     readonly displayUrl: string | null;
     readonly reason: string;
   }[];
+  readonly scoreNearMissesTotal: number;
 };
 
 function titleByPlaceKey(result: RadarPipelineResult): Map<string, string> {
@@ -162,10 +163,14 @@ function buildWarningsAndErrors(args: {
   if (result.gatekeeperExclusions.length > 0) {
     warnings.push(`${result.gatekeeperExclusions.length} fiche(s) écartée(s) par le Gatekeeper.`);
   }
-  for (const miss of result.scoreNearMisses ?? []) {
-    const scoreLabel =
-      miss.strateScore !== null ? `${miss.strateScore}/${miss.threshold}` : '—';
-    warnings.push(`Sous seuil refonte · ${miss.name} · Strate ${scoreLabel} · ${miss.reason}`);
+  const nearMissCount = result.scoreNearMissesTotal ?? result.scoreNearMisses.length;
+  if (nearMissCount > 0) {
+    const omitted = nearMissCount - result.scoreNearMisses.length;
+    warnings.push(
+      omitted > 0
+        ? `${nearMissCount} fiche(s) sous seuil refonte (${result.scoreNearMisses.length} plus proches du seuil ci-dessous · +${omitted} dans rapport_matinal.md).`
+        : `${nearMissCount} fiche(s) sous seuil refonte (détail ci-dessous).`,
+    );
   }
 
   for (const issue of webSearchIssues) {
@@ -281,5 +286,6 @@ export function buildRunTelemetry(args: {
     targetedMode: result.targetedMode,
     targetedMisses: [...new Set([...targetedMisses, ...(result.targetProspectMisses ?? [])])],
     scoreNearMisses: result.scoreNearMisses ?? [],
+    scoreNearMissesTotal: result.scoreNearMissesTotal ?? result.scoreNearMisses.length,
   };
 }

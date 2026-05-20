@@ -1,17 +1,12 @@
 import type { ResolvedWebsite } from './diamond.js';
-import {
-  pickBestOrganicUrlForBusiness,
-  pickOrganicUrlByPlaceId,
-  tokenizeBusinessName,
-  type OrganicSerpHit,
-} from './organic-match.js';
+import { resolveStrictFromExtendedHits } from './extended-search-resolve.js';
+import type { OrganicSerpHit } from './organic-match.js';
 import {
   formatWebSearchErrorNote,
   type WebSearchClient,
 } from '../services/serp/web-search.types.js';
 import type { SerpClient } from '../services/serp/search-client.types.js';
 import type { SerpLocalResult } from '../services/serp/schemas.js';
-import { fetchHtmlWithTimeout } from './strate-scorer.js';
 import {
   classifyWebsiteUrl,
   type WebsitePresenceStatus,
@@ -69,53 +64,6 @@ type CandidatePresence = {
   readonly source: WebsiteResolutionSource;
   readonly layer: string;
 };
-
-function normalizeMatchHaystack(text: string): string {
-  return text
-    .normalize('NFD')
-    .replace(/\p{M}/gu, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ');
-}
-
-async function scoreOwnerCandidate(
-  url: string,
-  businessName: string,
-  cityHint: string | null,
-  timeoutMs: number,
-): Promise<number> {
-  const base = 0.62;
-  const classified = classifyWebsiteUrl(url);
-  if (!classified || classified.urlClass !== 'owner') return 0;
-
-  const tokens = tokenizeBusinessName(businessName);
-  if (tokens.length === 0) return base;
-
-  const fetchResult = await fetchHtmlWithTimeout(classified.displayUrl, timeoutMs);
-  if (!fetchResult.ok || fetchResult.html.trim().length < 80) {
-    return base - 0.08;
-  }
-
-  const hay = normalizeMatchHaystack(
-    `${fetchResult.finalUrl} ${fetchResult.html.slice(0, 12_000)}`,
-  );
-  const cityTokens = cityHint
-    ? tokenizeBusinessName(cityHint.split(',')[0] ?? cityHint)
-    : [];
-
-  let hits = 0;
-  for (const t of tokens) {
-    if (hay.includes(t)) hits += 1;
-  }
-  for (const t of cityTokens) {
-    if (hay.includes(t)) hits += 0.5;
-  }
-
-  const ratio = hits / Math.max(tokens.length, 1);
-  if (ratio >= 0.45) return Math.min(0.96, base + 0.28);
-  if (ratio >= 0.2) return Math.min(0.88, base + 0.12);
-  return base;
-}
 
 function recordAttempt(
   attempts: WebsiteResolutionAttempt[],
@@ -230,6 +178,53 @@ function ingestClassifiedUrl(
   recordAttempt(attempts, layer, classified.displayUrl, 'presence_only');
 }
 
+function mergeExtendedSearchResult(
+  resolved: Awaited<ReturnType<typeof resolveStrictFromExtendedHits>>,
+  layer: string,
+  source: WebsiteResolutionSource,
+  attempts: WebsiteResolutionAttempt[],
+  ownerCandidates: CandidateOwner[],
+  presenceCandidates: CandidatePresence[],
+): void {
+  if (resolved.owner) {
+    ownerCandidates.push({
+      displayUrl: resolved.owner.displayUrl,
+      normalizedUrl: resolved.owner.normalizedUrl,
+      source,
+      confidence: resolved.owner.confidence,
+      layer,
+    });
+    recordAttempt(
+      attempts,
+      layer,
+      resolved.owner.displayUrl,
+      'owner_site',
+      resolved.summaryNote ?? undefined,
+    );
+    return;
+  }
+
+  if (resolved.presence) {
+    presenceCandidates.push({
+      displayUrl: resolved.presence.displayUrl,
+      normalizedUrl: resolved.presence.normalizedUrl,
+      platformLabel: resolved.presence.platformLabel,
+      source,
+      layer,
+    });
+    recordAttempt(
+      attempts,
+      layer,
+      resolved.presence.displayUrl,
+      'presence_only',
+      resolved.summaryNote ?? undefined,
+    );
+    return;
+  }
+
+  recordAttempt(attempts, layer, null, 'skipped', resolved.summaryNote ?? 'aucun lien');
+}
+
 /** Requête web sans guillemets (Brave renvoie bad_results avec phrase exacte). */
 function buildWebSearchQuery(businessName: string, searchLocation: string | null): string {
   const name = businessName.trim();
@@ -241,7 +236,7 @@ function buildWebSearchQuery(businessName: string, searchLocation: string | null
 
 /**
  * Cascade de résolution web : Maps → Place Details → Places requery → Brave Search → validation HTTP.
- * Priorité finale : owner_site > presence_only > none.
+ * Couches 3–4 : top 4 résultats, owner retenu seulement si confiance > 0.85 (nom + ville).
  */
 export async function resolveProspectWebsitePresence(args: {
   readonly serp: SerpLocalResult;
@@ -325,21 +320,23 @@ export async function resolveProspectWebsitePresence(args: {
           ...(h.place_id !== undefined ? { place_id: h.place_id } : {}),
         }));
 
-        const byPlaceId = placeId !== null ? pickOrganicUrlByPlaceId(placeId, hits) : null;
-        const pickedUrl = byPlaceId ?? pickBestOrganicUrlForBusiness(serp.title, hits);
-        if (pickedUrl) {
-          ingestClassifiedUrl(
-            pickedUrl,
-            'places_requery',
-            'places_requery',
-            attempts,
-            ownerCandidates,
-            presenceCandidates,
-            0.72,
-          );
-        } else {
-          recordAttempt(attempts, 'places_requery', null, 'skipped', 'aucun lien');
-        }
+        const requeryOut = await resolveStrictFromExtendedHits({
+          hits,
+          businessName: serp.title,
+          cityHint: searchLocation,
+          placeId,
+          source: 'places_requery',
+          layer: 'places_requery',
+          fetchTimeoutMs: opts.fetchTimeoutMs,
+        });
+        mergeExtendedSearchResult(
+          requeryOut,
+          'places_requery',
+          'places_requery',
+          attempts,
+          ownerCandidates,
+          presenceCandidates,
+        );
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         recordAttempt(attempts, 'places_requery', null, 'skipped', msg.slice(0, 120));
@@ -365,41 +362,23 @@ export async function resolveProspectWebsitePresence(args: {
               formatWebSearchErrorNote(webResult.error),
             );
           } else {
-            const pickedWeb = pickBestOrganicUrlForBusiness(serp.title, webResult.hits);
-            if (pickedWeb) {
-              const confidence = await scoreOwnerCandidate(
-                pickedWeb,
-                serp.title,
-                searchLocation,
-                opts.fetchTimeoutMs,
-              );
-              if (confidence >= 0.55) {
-                const classified = classifyWebsiteUrl(pickedWeb);
-                if (classified?.urlClass === 'owner') {
-                  ownerCandidates.push({
-                    displayUrl: classified.displayUrl,
-                    normalizedUrl: classified.normalizedUrl,
-                    source: 'web_search',
-                    confidence,
-                    layer: 'web_search',
-                  });
-                  recordAttempt(attempts, 'web_search', classified.displayUrl, 'owner_site');
-                } else if (classified?.urlClass === 'presence') {
-                  presenceCandidates.push({
-                    displayUrl: classified.displayUrl,
-                    normalizedUrl: classified.normalizedUrl,
-                    platformLabel: classified.platformLabel,
-                    source: 'web_search',
-                    layer: 'web_search',
-                  });
-                  recordAttempt(attempts, 'web_search', classified.displayUrl, 'presence_only');
-                }
-              } else {
-                recordAttempt(attempts, 'web_search', pickedWeb, 'invalid', 'confiance insuffisante');
-              }
-            } else {
-              recordAttempt(attempts, 'web_search', null, 'skipped', 'aucun lien');
-            }
+            const webOut = await resolveStrictFromExtendedHits({
+              hits: webResult.hits,
+              businessName: serp.title,
+              cityHint: searchLocation,
+              placeId,
+              source: 'web_search',
+              layer: 'web_search',
+              fetchTimeoutMs: opts.fetchTimeoutMs,
+            });
+            mergeExtendedSearchResult(
+              webOut,
+              'web_search',
+              'web_search',
+              attempts,
+              ownerCandidates,
+              presenceCandidates,
+            );
           }
         }
       } catch (e) {

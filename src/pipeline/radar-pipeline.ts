@@ -156,6 +156,23 @@ export type ScoreNearMiss = {
   readonly reason: string;
 };
 
+const SCORE_NEAR_MISS_REPORT_MAX = 8;
+
+/** Garde les near-miss les plus proches du seuil (Telegram / rapport). */
+export function trimScoreNearMissesForReport(
+  misses: readonly ScoreNearMiss[],
+  max = SCORE_NEAR_MISS_REPORT_MAX,
+): { readonly shown: ScoreNearMiss[]; readonly total: number } {
+  const total = misses.length;
+  if (total <= max) {
+    return { shown: [...misses], total };
+  }
+  const shown = [...misses]
+    .sort((a, b) => (b.strateScore ?? -1) - (a.strateScore ?? -1))
+    .slice(0, max);
+  return { shown, total };
+}
+
 export type RadarPipelineResult = {
   readonly lines: readonly RadarPipelineLine[];
   readonly weekBucket: string;
@@ -189,8 +206,9 @@ export type RadarPipelineResult = {
   readonly targetProspectMisses?: readonly string[];
   /** Fiches écartées par le Gatekeeper IA (non-commercial / institutionnel). */
   readonly gatekeeperExclusions: readonly GatekeeperExclusion[];
-  /** Refonte avec site mais score matrice sous le seuil (ou présence web insuffisante). */
+  /** Refonte avec site mais score matrice sous le seuil (affichage plafonné). */
   readonly scoreNearMisses: readonly ScoreNearMiss[];
+  readonly scoreNearMissesTotal: number;
   /** Run en mode campagne autonome (matrice ville × métier). */
   readonly campaign?: { readonly city: string; readonly category: string };
 };
@@ -297,7 +315,7 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
   if (skipExtendedSearch && config.RADAR_VERBOSE) {
     radarVerbose(
       config,
-      `${progressTag} ${truncateTitle(serp.title)} · ◇ Quota création atteint · recherche web étendue désactivée (besoin refonte)`,
+      `${progressTag} ${truncateTitle(serp.title)} · ◇ Quota création atteint · requery Places désactivée (besoin refonte)`,
     );
   }
 
@@ -905,6 +923,8 @@ export async function runRadarPipeline(
     ...(options.search.gl !== undefined ? { gl: options.search.gl } : {}),
   };
 
+  const nearMissReport = trimScoreNearMissesForReport(scoreNearMisses);
+
   return {
     lines,
     weekBucket,
@@ -932,7 +952,8 @@ export async function runRadarPipeline(
     ...(targetProspectMisses.length > 0 ? { targetProspectMisses } : {}),
     ...(placesStopMessage !== undefined ? { placesStopMessage } : {}),
     gatekeeperExclusions,
-    scoreNearMisses,
+    scoreNearMisses: nearMissReport.shown,
+    scoreNearMissesTotal: nearMissReport.total,
     ...(campaignPair !== undefined ? { campaign: campaignPair } : {}),
   };
 }

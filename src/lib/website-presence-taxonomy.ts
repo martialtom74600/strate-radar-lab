@@ -96,6 +96,51 @@ const PRESENCE_PLATFORM_ROOTS: readonly PlatformRoot[] = [
   { root: 'just-eat.fr', label: 'Just Eat' },
 ];
 
+/** Annuaires locaux / agrégateurs — jamais site propriétaire. */
+const DIRECTORY_HOST_MARKERS: readonly string[] = [
+  'le-site-de.com',
+  'lac-annecy.com',
+  'paisible.ai',
+  'sanitaire-social.com',
+  'bottin.fr',
+  '118000.fr',
+  'cylex.fr',
+  'cylex-locale.fr',
+  'hotfrog.fr',
+  'tupalo.com',
+  'societe.com',
+  'verif.com',
+  'manageo.fr',
+  'infobel.com',
+  'hoodspot.fr',
+  'petitesaffiches.fr',
+  'score3.fr',
+  'kompass.com',
+  'europages.fr',
+  'france-voyage.com',
+  'restaurantguru.com',
+  'lafourche.fr',
+  'carbu.com',
+  'stationessence.com',
+  'ledauphine.com',
+  'lefigaro.fr',
+  'annuaire-mairie.fr',
+  'annuaire.',
+  'horaires.',
+];
+
+function directoryLabelForHost(host: string): string | null {
+  const h = host.toLowerCase();
+  for (const marker of DIRECTORY_HOST_MARKERS) {
+    if (marker.endsWith('.')) {
+      if (h.includes(marker)) return 'Annuaire';
+    } else if (h === marker || h.endsWith(`.${marker}`) || h.includes(marker)) {
+      return 'Annuaire';
+    }
+  }
+  return null;
+}
+
 function hostMatchesRoot(host: string, root: string): boolean {
   return host === root || host.endsWith(`.${root}`);
 }
@@ -157,6 +202,16 @@ export function classifyWebsiteUrl(raw: string): ClassifiedWebsiteUrl | null {
       displayUrl,
       normalizedUrl,
       platformLabel: platform.label,
+    };
+  }
+
+  const directory = directoryLabelForHost(host);
+  if (directory) {
+    return {
+      urlClass: 'presence',
+      displayUrl,
+      normalizedUrl,
+      platformLabel: directory,
     };
   }
 
