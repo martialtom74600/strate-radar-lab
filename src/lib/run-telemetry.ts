@@ -1,5 +1,6 @@
 import type { AppConfig } from '../config/index.js';
 import type { RadarPipelineResult } from '../pipeline/radar-pipeline.js';
+import { WEB_SEARCH_BUDGET_EXHAUSTED_REASON } from '../services/serp/web-search-budget.js';
 import { stablePlaceKey } from './place-key.js';
 import type {
   StudioIngestFailure,
@@ -88,7 +89,8 @@ function collectWebSearchIssues(
     if (!note) continue;
     if (
       note.startsWith('HTTP ') ||
-      note.includes('Plafond Custom Search') ||
+      note.includes('Plafond recherche web') ||
+      note.includes(WEB_SEARCH_BUDGET_EXHAUSTED_REASON) ||
       note.includes('dailyLimitExceeded') ||
       note.includes('quotaExceeded')
     ) {
@@ -135,7 +137,7 @@ function buildWarningsAndErrors(args: {
     result.webSearchRequestsUsed >= result.webSearchRequestsMax
   ) {
     warnings.push(
-      `Plafond Custom Search du run atteint (${result.webSearchRequestsUsed}/${result.webSearchRequestsMax}).`,
+      `Plafond recherche web du run atteint (${result.webSearchRequestsUsed}/${result.webSearchRequestsMax}).`,
     );
   }
   if (!result.targetedMode && result.creationsFound < result.targetCreationCount) {
@@ -153,7 +155,7 @@ function buildWarningsAndErrors(args: {
   }
 
   for (const issue of webSearchIssues) {
-    errors.push(`Custom Search · ${issue.name} · ${issue.note}`);
+    errors.push(`Recherche web · ${issue.name} · ${issue.note}`);
   }
   for (const f of ingest.failures) {
     errors.push(`Ingest vitrine · ${f.name} · HTTP ${f.status} · ${f.message}`);

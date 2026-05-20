@@ -14,7 +14,7 @@ La base **`data/strate-radar.sqlite`** n’est **plus versionnée**. Entre deux 
 |--------|-------------|------|
 | `GOOGLE_PLACES_API_KEY` | Oui (mode live) | Clé [Places API](https://developers.google.com/maps/documentation/places/web-service/op-overview) — Text Search (pack local + résolution site). |
 | `GOOGLE_PAGESPEED_API_KEY` | Oui (mode live) | Clé [PageSpeed Insights API](https://developers.google.com/speed/docs/insights/v5/get-started). |
-| `GOOGLE_SEARCH_API_KEY` | Recommandé | Clé [Custom Search JSON API](https://developers.google.com/custom-search/v1/overview) — couche 4 recherche web (website-resolver). Sans elle, la couche 4 est ignorée. |
+| `BRAVE_SEARCH_API_KEY` | Recommandé | Clé [Brave Search API](https://brave.com/search/api/) (plan Search) — couche 4 recherche web (website-resolver). Sans elle, la couche 4 est ignorée. |
 | `GROQ_API_KEY` | Oui (mode live) | Clé [Groq Console](https://console.groq.com/keys). |
 | `RADAR_INGEST_SECRET` | Oui (ingest vitrine) | Même secret que `RADAR_INGEST_SECRET` côté Next.js — POST `/api/audits/ingest`. |
 | `RADAR_SEARCH_LOCATION` | Recommandé | Zone de prospection (ex. `Annecy, France`) — secret ou variable dépôt. |
@@ -42,7 +42,7 @@ Sans ces deux secrets, le workflow **ignore** l’étape Telegram (aucune erreur
 | `RADAR_SEARCH_LOCATION` | `Annecy, France` | Zone passée dans `textQuery` Places (ville + pays). |
 | `RADAR_DIAMOND_LOCATION_HINTS` | `annecy,chambéry` | Filtre zone « Diamant » (adresse / titre). |
 | `RADAR_MAX_PLACES_REQUESTS_PER_RUN` | `150` | Plafond d’appels Places Text Search par run (garde-fou). L’ancien nom `RADAR_MAX_SERPAPI_REQUESTS` est encore lu si la nouvelle variable est absente. |
-| `RADAR_MAX_WEB_SEARCH_REQUESTS_PER_RUN` | `80` | Plafond Custom Search par run (quota Google ~100/jour). `0` = couche 4 désactivée. |
+| `RADAR_MAX_WEB_SEARCH_REQUESTS_PER_RUN` | `80` | Plafond Brave Search par run (~1 000 req/mois offertes avec crédits gratuits). `0` = couche 4 désactivée. |
 | `RADAR_STUDIO_ORIGIN` | `https://www.strate-studio.fr` | URL de la vitrine pour l’ingest. |
 
 ## Permissions Git

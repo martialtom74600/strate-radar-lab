@@ -90,7 +90,7 @@ export function buildTelegramReportSections(args: {
     '—— SCAN ——',
     `Fiches parcourues : ${telemetry.totalBusinessesScanned}`,
     `Places API : ${telemetry.placesRequestsUsed}/${telemetry.placesRequestsMax}`,
-    `Custom Search : ${telemetry.webSearchRequestsUsed}/${telemetry.webSearchRequestsMax}`,
+    `Brave Search : ${telemetry.webSearchRequestsUsed}/${telemetry.webSearchRequestsMax}`,
     '',
     '—— INGEST VITRINE ——',
     `Configuré : ${telemetry.ingest.configured ? 'oui' : 'non'}`,
@@ -138,7 +138,7 @@ export function buildTelegramReportSections(args: {
   if (telemetry.webSearchIssues.length > 0) {
     sections.push(
       [
-        '—— CUSTOM SEARCH (détail) ——',
+        '—— RECHERCHE WEB (détail) ——',
         '',
         ...telemetry.webSearchIssues.map((i) => `• ${i.name}\n  ${i.note}`),
       ].join('\n'),

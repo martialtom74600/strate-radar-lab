@@ -28,8 +28,8 @@ import {
   resolveProspectWebsitePresence,
   type WebsiteResolution,
 } from '../lib/website-resolver.js';
-import { createGoogleCustomSearchWebClient } from '../services/serp/google-custom-search.client.js';
-import { wrapGoogleCustomSearchWebClientWithBudget } from '../services/serp/web-search-budget.js';
+import { createBraveSearchWebClient } from '../services/serp/brave-search.client.js';
+import { wrapWebSearchClientWithBudget, WEB_SEARCH_BUDGET_EXHAUSTED_REASON } from '../services/serp/web-search-budget.js';
 import {
   catchLocalSearchIntentions,
   padTrendQueries,
@@ -203,7 +203,7 @@ type ProcessLocalContext = {
   readonly psiClient: PageSpeedClient;
   readonly groqClient: GroqClient;
   readonly serpClient: SerpClient;
-  readonly webSearchClient: ReturnType<typeof createGoogleCustomSearchWebClient>;
+  readonly webSearchClient: ReturnType<typeof createBraveSearchWebClient>;
   readonly searchLocation: string | null;
   readonly searchHl: string | undefined;
   readonly searchGl: string | undefined;
@@ -304,13 +304,14 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     const webNote = webAttempt?.note ?? '';
     if (
       webNote.startsWith('HTTP ') ||
-      webNote.includes('Plafond Custom Search') ||
+      webNote.includes('Plafond recherche web') ||
+      webNote.includes(WEB_SEARCH_BUDGET_EXHAUSTED_REASON) ||
       webNote.includes('dailyLimitExceeded') ||
       webNote.includes('quotaExceeded')
     ) {
       radarVerbose(
         config,
-        `${progressTag} ${truncateTitle(serp.title)} · ⚠ Custom Search · ${truncateTitle(webNote, 100)}`,
+        `${progressTag} ${truncateTitle(serp.title)} · ⚠ Brave Search · ${truncateTitle(webNote, 100)}`,
       );
     }
   }
@@ -633,10 +634,10 @@ export async function runRadarPipeline(
   const psiClient = createPageSpeedClient(config);
   const groqClient = createGroqClient(config);
   const baseWebSearchClient =
-    webSearchRequestsMax > 0 ? createGoogleCustomSearchWebClient(config) : null;
+    webSearchRequestsMax > 0 ? createBraveSearchWebClient(config) : null;
   const webSearchClient =
     baseWebSearchClient !== null
-      ? wrapGoogleCustomSearchWebClientWithBudget(baseWebSearchClient, webSearchBudget)
+      ? wrapWebSearchClientWithBudget(baseWebSearchClient, webSearchBudget)
       : null;
 
   const lines: RadarPipelineLine[] = [];
@@ -653,7 +654,7 @@ export async function runRadarPipeline(
 
   radarVerbose(
     config,
-    `\n—— Strate Radar · ${reportCityDisplayName} · quotas création ${targetCreationCount} · refonte ${targetRefonteCount} · plafond Places ${placesRequestsMax} · Custom Search ${webSearchRequestsMax}/run ——`,
+    `\n—— Strate Radar · ${reportCityDisplayName} · quotas création ${targetCreationCount} · refonte ${targetRefonteCount} · plafond Places ${placesRequestsMax} · Brave Search ${webSearchRequestsMax}/run ——`,
   );
   radarVerbose(
     config,
@@ -837,7 +838,7 @@ export async function runRadarPipeline(
 
   radarVerbose(
     config,
-    `\n—— Fin · création ${quotaState.creationsFound}/${quotaState.targetCreation} · refonte ${quotaState.refontesFound}/${quotaState.targetRefonte} · ${totalBusinessesScanned} fiches · Places ${serpBudget.used}/${placesRequestsMax} · Custom Search ${webSearchBudget.used}/${webSearchRequestsMax}${
+    `\n—— Fin · création ${quotaState.creationsFound}/${quotaState.targetCreation} · refonte ${quotaState.refontesFound}/${quotaState.targetRefonte} · ${totalBusinessesScanned} fiches · Places ${serpBudget.used}/${placesRequestsMax} · Brave Search ${webSearchBudget.used}/${webSearchRequestsMax}${
       serpBudgetExhausted ? ' (plafond budget Places)' : ''
     }${placesStoppedEarly ? ' (arrêt HTTP 429 Places)' : ''} ——\n`,
   );

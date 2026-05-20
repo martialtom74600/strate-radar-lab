@@ -11,6 +11,24 @@ import type { DiamondPainType } from '../lib/diamond.js';
 import type { RadarNearbyCompetitor } from '../lib/nearby-competitors.js';
 import type { PipelineStrateScore, RadarPipelineResult } from './radar-pipeline.js';
 
+function formatVitrineIngestSummary(result: RadarPipelineResult, vitrineCount: number): string {
+  if (vitrineCount > 0) {
+    return `${vitrineCount} publication(s) — liens sous chaque pépite`;
+  }
+  const refonteCount = result.lines.filter((l) => l.conversionBadge === 'DIAMANT_REFONTE').length;
+  const ingestableCount = result.lines.filter(
+    (l) =>
+      l.conversionBadge === 'DIAMANT_CREATION' || l.conversionBadge === 'DIAMANT_PRESENCE',
+  ).length;
+  if (ingestableCount === 0 && refonteCount > 0) {
+    return `_aucune publication — ${refonteCount} refonte(s) détectée(s) ; l’ingest vitrine ne couvre que création et présence_`;
+  }
+  if (ingestableCount === 0) {
+    return '_aucun lead création/présence à publier sur la vitrine_';
+  }
+  return '_aucun envoi réussi (vérifiez RADAR_INGEST_SECRET ou les logs ingest)_';
+}
+
 function painLabelFr(p: DiamondPainType): string {
   switch (p) {
     case 'no_website':
@@ -193,7 +211,7 @@ export function renderRapportMatinal(
     `- **Création :** ${result.creationsFound} / ${result.targetCreationCount} · **Refonte :** ${result.refontesFound} / ${result.targetRefonteCount}`,
     `- **Fiches Maps parcourues :** ${result.totalBusinessesScanned}`,
     `- **Requêtes Places (plafond run) :** ${result.placesRequestsUsed} / ${result.placesRequestsMax}`,
-    `- **Requêtes Custom Search (plafond run) :** ${result.webSearchRequestsUsed} / ${result.webSearchRequestsMax}`,
+    `- **Requêtes Brave Search (plafond run) :** ${result.webSearchRequestsUsed} / ${result.webSearchRequestsMax}`,
     ...(result.placesStoppedEarly
       ? [
           `- **⚠ Arrêt Google Places :** quota / limite (HTTP 429) — run terminé avec résultats partiels.`,
@@ -202,7 +220,7 @@ export function renderRapportMatinal(
             : []),
         ]
       : []),
-    `- **Audits vitrine Strate Studio :** ${vitrineCount > 0 ? `${vitrineCount} publication(s) — liens sous chaque pépite` : '_aucun envoi (configurez RADAR_INGEST_SECRET) ou échec API_'}`,
+    `- **Audits vitrine Strate Studio :** ${formatVitrineIngestSummary(result, vitrineCount)}`,
     `- **Export JSON local (Shadow) :** \`data/shadow-sites-export.json\``,
     `- **Écartements Gatekeeper (non-commercial) :** ${result.gatekeeperExclusions.length}`,
     ``,

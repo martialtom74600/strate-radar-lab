@@ -63,7 +63,7 @@ async function main(): Promise<void> {
   );
 
   console.log(
-    `Leads : création ${result.creationsFound}/${result.targetCreationCount} · refonte ${result.refontesFound}/${result.targetRefonteCount} · Fiches : ${result.totalBusinessesScanned} · Places : ${result.placesRequestsUsed}/${result.placesRequestsMax} · Custom Search : ${result.webSearchRequestsUsed}/${result.webSearchRequestsMax}`,
+    `Leads : création ${result.creationsFound}/${result.targetCreationCount} · refonte ${result.refontesFound}/${result.targetRefonteCount} · Fiches : ${result.totalBusinessesScanned} · Places : ${result.placesRequestsUsed}/${result.placesRequestsMax} · Brave Search : ${result.webSearchRequestsUsed}/${result.webSearchRequestsMax}`,
   );
 }
 

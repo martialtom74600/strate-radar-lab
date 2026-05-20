@@ -1,29 +1,26 @@
-import type {
-  GoogleCustomSearchWebClient,
-  GoogleCustomSearchWebResult,
-} from './google-custom-search.client.js';
+import type { WebSearchClient, WebSearchResult } from './web-search.types.js';
 
 export const WEB_SEARCH_BUDGET_EXHAUSTED_REASON = 'WEB_SEARCH_BUDGET_EXHAUSTED';
 
-/** Encadre le client Custom Search : chaque appel consomme le plafond du run. */
-export function wrapGoogleCustomSearchWebClientWithBudget(
-  client: GoogleCustomSearchWebClient,
+/** Encadre le client recherche web : chaque appel consomme le plafond du run. */
+export function wrapWebSearchClientWithBudget(
+  client: WebSearchClient,
   budget: { readonly max: number; used: number },
-): GoogleCustomSearchWebClient {
+): WebSearchClient {
   return {
-    searchGoogleWeb(q, opts) {
+    searchWeb(q, opts) {
       if (budget.used >= budget.max) {
         return Promise.resolve({
           hits: [],
           error: {
             httpStatus: 0,
             reason: WEB_SEARCH_BUDGET_EXHAUSTED_REASON,
-            message: `Plafond Custom Search du run atteint (${budget.max}/${budget.max} — quota journalier Google ~100 req/jour).`,
+            message: `Plafond recherche web du run atteint (${budget.max}/${budget.max}).`,
           },
-        } satisfies GoogleCustomSearchWebResult);
+        } satisfies WebSearchResult);
       }
       budget.used += 1;
-      return client.searchGoogleWeb(q, opts);
+      return client.searchWeb(q, opts);
     },
   };
 }

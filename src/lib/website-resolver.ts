@@ -6,9 +6,9 @@ import {
   type OrganicSerpHit,
 } from './organic-match.js';
 import {
-  formatGoogleCustomSearchErrorNote,
-  type GoogleCustomSearchWebClient,
-} from '../services/serp/google-custom-search.client.js';
+  formatWebSearchErrorNote,
+  type WebSearchClient,
+} from '../services/serp/web-search.types.js';
 import type { SerpClient } from '../services/serp/search-client.types.js';
 import type { SerpLocalResult } from '../services/serp/schemas.js';
 import { fetchHtmlWithTimeout } from './strate-scorer.js';
@@ -230,14 +230,23 @@ function ingestClassifiedUrl(
   recordAttempt(attempts, layer, classified.displayUrl, 'presence_only');
 }
 
+/** Requête web sans guillemets (Brave renvoie bad_results avec phrase exacte). */
+function buildWebSearchQuery(businessName: string, searchLocation: string | null): string {
+  const name = businessName.trim();
+  if (!name) return '';
+  const loc = searchLocation?.trim() ?? '';
+  const city = loc.split(',')[0]?.trim() ?? loc;
+  return [name, city].filter((part) => part.length > 0).join(' ').trim();
+}
+
 /**
- * Cascade de résolution web : Maps → Place Details → Places requery → Google Custom Search → validation HTTP.
+ * Cascade de résolution web : Maps → Place Details → Places requery → Brave Search → validation HTTP.
  * Priorité finale : owner_site > presence_only > none.
  */
 export async function resolveProspectWebsitePresence(args: {
   readonly serp: SerpLocalResult;
   readonly serpClient: SerpClient;
-  readonly webSearchClient: GoogleCustomSearchWebClient | null;
+  readonly webSearchClient: WebSearchClient | null;
   readonly searchLocation: string | null;
   readonly hl: string | undefined;
   readonly gl: string | undefined;
@@ -339,54 +348,58 @@ export async function resolveProspectWebsitePresence(args: {
 
     if (webSearchClient && deepQuery) {
       try {
-        const webQuery = `"${serp.title}" ${locationHint}`.trim();
-        const webResult = await webSearchClient.searchGoogleWeb(webQuery, {
-          ...(hl !== undefined ? { hl } : {}),
-          ...(gl !== undefined ? { gl } : {}),
-        });
-        if (webResult.error) {
-          recordAttempt(
-            attempts,
-            'web_search',
-            null,
-            'skipped',
-            formatGoogleCustomSearchErrorNote(webResult.error),
-          );
+        const webQuery = buildWebSearchQuery(serp.title, searchLocation);
+        if (!webQuery) {
+          recordAttempt(attempts, 'web_search', null, 'skipped', 'requête vide');
         } else {
-          const pickedWeb = pickBestOrganicUrlForBusiness(serp.title, webResult.hits);
-          if (pickedWeb) {
-            const confidence = await scoreOwnerCandidate(
-              pickedWeb,
-              serp.title,
-              searchLocation,
-              opts.fetchTimeoutMs,
+          const webResult = await webSearchClient.searchWeb(webQuery, {
+            ...(hl !== undefined ? { hl } : {}),
+            ...(gl !== undefined ? { gl } : {}),
+          });
+          if (webResult.error) {
+            recordAttempt(
+              attempts,
+              'web_search',
+              null,
+              'skipped',
+              formatWebSearchErrorNote(webResult.error),
             );
-            if (confidence >= 0.55) {
-              const classified = classifyWebsiteUrl(pickedWeb);
-              if (classified?.urlClass === 'owner') {
-                ownerCandidates.push({
-                  displayUrl: classified.displayUrl,
-                  normalizedUrl: classified.normalizedUrl,
-                  source: 'web_search',
-                  confidence,
-                  layer: 'web_search',
-                });
-                recordAttempt(attempts, 'web_search', classified.displayUrl, 'owner_site');
-              } else if (classified?.urlClass === 'presence') {
-                presenceCandidates.push({
-                  displayUrl: classified.displayUrl,
-                  normalizedUrl: classified.normalizedUrl,
-                  platformLabel: classified.platformLabel,
-                  source: 'web_search',
-                  layer: 'web_search',
-                });
-                recordAttempt(attempts, 'web_search', classified.displayUrl, 'presence_only');
+          } else {
+            const pickedWeb = pickBestOrganicUrlForBusiness(serp.title, webResult.hits);
+            if (pickedWeb) {
+              const confidence = await scoreOwnerCandidate(
+                pickedWeb,
+                serp.title,
+                searchLocation,
+                opts.fetchTimeoutMs,
+              );
+              if (confidence >= 0.55) {
+                const classified = classifyWebsiteUrl(pickedWeb);
+                if (classified?.urlClass === 'owner') {
+                  ownerCandidates.push({
+                    displayUrl: classified.displayUrl,
+                    normalizedUrl: classified.normalizedUrl,
+                    source: 'web_search',
+                    confidence,
+                    layer: 'web_search',
+                  });
+                  recordAttempt(attempts, 'web_search', classified.displayUrl, 'owner_site');
+                } else if (classified?.urlClass === 'presence') {
+                  presenceCandidates.push({
+                    displayUrl: classified.displayUrl,
+                    normalizedUrl: classified.normalizedUrl,
+                    platformLabel: classified.platformLabel,
+                    source: 'web_search',
+                    layer: 'web_search',
+                  });
+                  recordAttempt(attempts, 'web_search', classified.displayUrl, 'presence_only');
+                }
+              } else {
+                recordAttempt(attempts, 'web_search', pickedWeb, 'invalid', 'confiance insuffisante');
               }
             } else {
-              recordAttempt(attempts, 'web_search', pickedWeb, 'invalid', 'confiance insuffisante');
+              recordAttempt(attempts, 'web_search', null, 'skipped', 'aucun lien');
             }
-          } else {
-            recordAttempt(attempts, 'web_search', null, 'skipped', 'aucun lien');
           }
         }
       } catch (e) {
@@ -399,7 +412,7 @@ export async function resolveProspectWebsitePresence(args: {
         'web_search',
         null,
         'skipped',
-        'Google Custom Search désactivé, clé absente ou plafond run à 0',
+        'Recherche web désactivée, clé Brave absente ou plafond run à 0',
       );
     }
   } else {
