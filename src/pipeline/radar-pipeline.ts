@@ -19,7 +19,7 @@ import {
 } from '../lib/strate-scorer.js';
 import {
   assessPreflightCommercialTarget,
-  isMapsListingTitlePrefilterExcluded,
+  isMapsListingPrefilterExcluded,
 } from '../lib/gatekeeper.js';
 import { extractLighthouseScoresPercent } from '../lib/lighthouse.js';
 import { stablePlaceKey } from '../lib/place-key.js';
@@ -335,7 +335,7 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     }
   }
 
-  const prefilterReason = isMapsListingTitlePrefilterExcluded(serp);
+  const prefilterReason = isMapsListingPrefilterExcluded(serp);
   if (prefilterReason !== null) {
     await repo.recordPlaceOutcome(placeKey, 'disqualified');
     gatekeeperExclusions.push({

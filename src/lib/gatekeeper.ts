@@ -109,7 +109,20 @@ export function isParkingInfrastructureSerp(serp: SerpLocalResult): boolean {
 export const PREFLIGHT_COLLECTIVE_EXCLUSION_REASON =
   'Entité collective ou marché public — hors cible pour un site vitrine unitaire.';
 
-const MAPS_TITLE_INSTITUTIONAL_MARKERS = ['mairie', 'commissariat', 'la poste', 'gare'] as const;
+const MAPS_TITLE_INSTITUTIONAL_MARKERS = [
+  'mairie',
+  'hotel de ville',
+  'commissariat',
+  'la poste',
+  'gare',
+  'finances publiques',
+  'france services',
+  'espace france services',
+  'pole emploi',
+  'impots ',
+  'impots.',
+  'impots,',
+] as const;
 
 /** Marchés, foires, halles collaboratives, regroupements multi-artisans. */
 const MAPS_TITLE_COLLECTIVE_MARKERS = [
@@ -136,6 +149,111 @@ const MAPS_TITLE_COLLECTIVE_MARKERS = [
   'atelier partagé',
 ] as const;
 
+/** Sites institutionnels, lieux-dits touristiques, réseaux nationaux (sans appel Groq). */
+const MAPS_TITLE_NON_COMMERCIAL_MARKERS = [
+  'ville.fr',
+  '-ville.fr',
+  'office de tourisme',
+  'city tour',
+  'visite guid',
+  'parc animalier',
+  'jardins de l',
+  'jardin public',
+  'station service',
+  'station-service',
+  'boutique sfr',
+  ' sfr ',
+  ' sixt',
+  'sixt ',
+  'tui store',
+  ' tui ',
+  'mobilboard',
+  'union financiere de france',
+  ' uff ',
+  'uff -',
+  'centre services',
+  'lockin',
+  'consigne bagages',
+  'water taxi',
+  'lounge boat',
+  'residence services',
+  'ehpad',
+  'maison de retraite',
+  'service radiologie',
+  'radiologie de la clinique',
+] as const;
+
+/** Catégories Google Maps — hors cible commerciale unitaire (primary type ou types secondaires). */
+const MAPS_NON_COMMERCIAL_PRIMARY_TYPES = new Set([
+  'local_government_office',
+  'city_hall',
+  'government_office',
+  'courthouse',
+  'embassy',
+  'police',
+  'fire_station',
+  'post_office',
+  'school',
+  'primary_school',
+  'secondary_school',
+  'university',
+  'library',
+  'hospital',
+  'park',
+  'national_park',
+  'tourist_information_center',
+  'transit_station',
+  'bus_station',
+  'train_station',
+  'subway_station',
+  'light_rail_station',
+  'airport',
+  'zoo',
+  'amusement_park',
+  'aquarium',
+  'museum',
+  'cemetery',
+  'church',
+  'hindu_temple',
+  'mosque',
+  'synagogue',
+  'place_of_worship',
+  'gas_station',
+  'parking',
+  'parking_lot',
+  'stadium',
+  'convention_center',
+]);
+
+const MAPS_NON_COMMERCIAL_SECONDARY_TYPES = new Set(['tourist_attraction']);
+
+function collectNormalizedMapsTypes(serp: SerpLocalResult): string[] {
+  const out = new Set<string>();
+  const primary = serp.type?.trim().toLowerCase();
+  if (primary) out.add(primary);
+  for (const t of serp.types ?? []) {
+    const s = t.trim().toLowerCase();
+    if (s) out.add(s);
+  }
+  return [...out];
+}
+
+function isMapsCityInstitutionalWebsiteTitle(hay: string): boolean {
+  return hay.includes('ville.fr') || /-ville\.fr\b/.test(hay);
+}
+
+function isMapsLandmarkTitle(hay: string, types: readonly string[]): boolean {
+  if (types.includes('tourist_attraction') || types.includes('park')) {
+    if (/^pont\b/.test(hay) || hay.includes(' pont des ') || hay.startsWith('pont des ')) {
+      return true;
+    }
+    if (hay.includes('belvedere') || hay.includes('promenade du') || hay.includes('esplanade')) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /**
  * Préfiltre gratuit sur le nom Maps — avant Place Details / Groq / cascade web.
  */
@@ -144,6 +262,15 @@ export function isMapsListingTitlePrefilterExcluded(serp: SerpLocalResult): stri
     return 'Parking / stationnement (nom ou catégorie Maps) — hors cible commerciale.';
   }
   const hay = normalizeGatekeeperText(serp.title);
+  const types = collectNormalizedMapsTypes(serp);
+
+  if (isMapsCityInstitutionalWebsiteTitle(hay)) {
+    return 'Site institutionnel municipal (nom Maps) — hors cible commerciale.';
+  }
+  if (isMapsLandmarkTitle(hay, types)) {
+    return 'Lieu touristique / monument (nom + catégorie Maps) — hors cible commerciale.';
+  }
+
   for (const marker of MAPS_TITLE_COLLECTIVE_MARKERS) {
     if (hay.includes(marker)) {
       return PREFLIGHT_COLLECTIVE_EXCLUSION_REASON;
@@ -154,11 +281,44 @@ export function isMapsListingTitlePrefilterExcluded(serp: SerpLocalResult): stri
       const label =
         marker === 'la poste'
           ? 'La Poste'
-          : marker.charAt(0).toUpperCase() + marker.slice(1);
+          : marker === 'hotel de ville'
+            ? 'Hôtel de ville'
+            : marker.charAt(0).toUpperCase() + marker.slice(1);
       return `${label} (nom Maps) — hors cible commerciale.`;
     }
   }
+  for (const marker of MAPS_TITLE_NON_COMMERCIAL_MARKERS) {
+    if (hay.includes(marker)) {
+      return 'Entité publique, réseau ou infrastructure (nom Maps) — hors cible commerciale.';
+    }
+  }
   return null;
+}
+
+/** Préfiltre sur catégories Google Maps (primary + types). */
+export function isMapsListingCategoryPrefilterExcluded(serp: SerpLocalResult): string | null {
+  if (hasPriceLevelCommercialSignal(serp)) {
+    return null;
+  }
+  const types = collectNormalizedMapsTypes(serp);
+  if (types.length === 0) {
+    return null;
+  }
+  const primary = serp.type?.trim().toLowerCase();
+  if (primary && MAPS_NON_COMMERCIAL_PRIMARY_TYPES.has(primary)) {
+    return `Catégorie Maps « ${serp.type!.trim()} » — hors cible commerciale.`;
+  }
+  for (const t of types) {
+    if (MAPS_NON_COMMERCIAL_SECONDARY_TYPES.has(t)) {
+      return `Catégorie Maps « ${t} » — hors cible commerciale.`;
+    }
+  }
+  return null;
+}
+
+/** Préfiltre titre + catégorie Maps — avant Place Details / Groq / cascade web. */
+export function isMapsListingPrefilterExcluded(serp: SerpLocalResult): string | null {
+  return isMapsListingTitlePrefilterExcluded(serp) ?? isMapsListingCategoryPrefilterExcluded(serp);
 }
 
 /** Niveau de prix Maps renseigné (€, €€…) → signal fort de commerce (pas d’appel Groq). */
@@ -223,7 +383,30 @@ function primaryLocalityLabel(locationHint: string): string {
   return first.length > 0 ? first : 'la zone cible';
 }
 
-const PREFLIGHT_GROQ_RATE_LIMIT_COOLDOWN_MS = 1500;
+const PREFLIGHT_GROQ_RATE_LIMIT_COOLDOWN_MS = 3_000;
+const PREFLIGHT_GROQ_MIN_INTERVAL_MS = 350;
+const PREFLIGHT_GROQ_TIMEOUT_RETRY_DELAY_MS = 400;
+
+let preflightGroqQueue: Promise<void> = Promise.resolve();
+let preflightGroqLastStartedAt = 0;
+
+function schedulePreflightGroqCall<T>(fn: () => Promise<T>): Promise<T> {
+  const run = preflightGroqQueue.then(async () => {
+    const waitMs = Math.max(
+      0,
+      PREFLIGHT_GROQ_MIN_INTERVAL_MS - (Date.now() - preflightGroqLastStartedAt),
+    );
+    if (waitMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, waitMs));
+    }
+    preflightGroqLastStartedAt = Date.now();
+  }).then(fn);
+  preflightGroqQueue = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  return run;
+}
 
 function isGroqPreflightRateLimitError(err: unknown): boolean {
   if (err instanceof RateLimitError) return true;
@@ -241,29 +424,11 @@ function preflightGroqRateLimitCooldown(): Promise<void> {
 function buildPreflightSystemPrompt(): string {
   const collectiveReason = PREFLIGHT_COLLECTIVE_EXCLUSION_REASON;
   return [
-    'Tu es un filtre pre-flight ultra-strict pour une agence web B2B en France.',
-    'Ta mission : autoriser UNIQUEMENT les prospects pour lesquels un site vitrine unitaire (une enseigne, un métier, un interlocuteur) a du sens.',
-    '',
-    'CRITÈRE D\'UNITÉ COMMERCIALE STRICTE (prioritaire) :',
-    '- isCommercialTarget TRUE seulement si l\'établissement est une entité juridique ou commerciale UNITAIRE :',
-    '  une seule entreprise, un seul artisan, un seul commerce physique ou en ligne, une enseigne identifiable, une activité pérenne à l\'année.',
-    '- isCommercialTarget FALSE dès que la fiche décrit une entité COLLECTIVE, MULTI-VENDEURS ou ÉVÉNEMENTIELLE,',
-    '  même si elle a une activité économique ou apparaît sur Google Maps comme un "commerce".',
-    '',
-    'REJETTE IMMÉDIATEMENT (FALSE) sans ambiguïté :',
-    '- marchés publics, marchés locaux, marchés couverts, halles alimentaires à étals multiples ;',
-    '- foires, brocantes récurrentes, salons, manifestations, événements temporaires ou saisonniers ;',
-    '- halles collaboratives, regroupements / groupements / collectifs d\'artisans, pôles multi-artisans ;',
-    '- coopératives ou structures mutualisées sans enseigne commerciale unitaire ;',
-    '- entités publiques, administrations, écoles, hôpitaux, parkings ;',
-    '- grandes multinationales (FNAC, Orange, SFR, Carrefour…).',
-    '',
-    'RAISON D\'EXCLUSION TYPÉE (obligatoire si FALSE pour un cas collectif / marché / foire / événement) :',
-    `Utilise exactement cette formulation dans "reason" : « ${collectiveReason} »`,
-    'Pour une exclusion institutionnelle ou autre (mairie, parking, multinationale), une phrase courte distincte suffit.',
-    '',
-    'Réponds UNIQUEMENT par un JSON strict : { "isCommercialTarget": boolean, "reason": string }.',
-    'reason : phrase en français, max 120 caractères, sans markdown.',
+    'Filtre pre-flight agence web B2B (France). JSON strict : { "isCommercialTarget": boolean, "reason": string }.',
+    'TRUE = une seule enseigne/entreprise unitaire (artisan, commerçant, PME, pro libérale) — site vitrine pertinent.',
+    'FALSE = collectif/multi-vendeurs/événementiel, public, monument, parc, réseau national (SFR, Sixt, TUI, Eni…), parking.',
+    `Si collectif/marché/foire : reason exacte « ${collectiveReason} ».`,
+    'reason : français, max 120 caractères.',
   ].join('\n');
 }
 
@@ -274,25 +439,14 @@ function buildPreflightUserContent(
 ): string {
   const collectiveReason = PREFLIGHT_COLLECTIVE_EXCLUSION_REASON;
   return [
-    `Établissement : « ${title} »`,
-    `Catégorie Google Maps principale : ${primaryCategory}`,
-    `Zone : ${localityLabel}, France`,
-    '',
-    'Question : cet établissement est-il une entreprise privée UNITAIRE pour laquelle vendre la création ou la refonte d\'un site web vitrine a du sens ?',
-    '',
-    'Rappel — FALSE immédiat si collectif / multi-vendeurs / événementiel :',
-    'marché (public, local, couvert), halles à étals, foire, brocante, salon, manifestation, regroupement d\'artisans, pôle multi-artisans, coopérative sans enseigne unique, stand saisonnier.',
-    '',
-    'Rappel — TRUE seulement si : une enseigne, un métier, un interlocuteur identifiable, activité pérenne (PME, artisan, commerçant, profession libérale locale).',
-    '',
-    'Exemples de réponses attendues :',
-    `- Marché / foire / collectif : { "isCommercialTarget": false, "reason": "${collectiveReason}" }`,
-    '- Mairie : { "isCommercialTarget": false, "reason": "Entité publique — hors cible commerciale." }',
-    '- Plombier SARL local : { "isCommercialTarget": true, "reason": "Artisan local unitaire — cible site vitrine." }',
+    `« ${title} » · catégorie : ${primaryCategory} · ${localityLabel}, France`,
+    'Entité unitaire pour un site vitrine ?',
+    `Ex. FALSE marché : { "isCommercialTarget": false, "reason": "${collectiveReason}" }`,
+    'Ex. TRUE plombier local : { "isCommercialTarget": true, "reason": "Artisan local unitaire." }',
   ].join('\n');
 }
 
-async function assessPreflightWithGroq(
+async function assessPreflightWithGroqOnce(
   config: AppConfig,
   title: string,
   primaryCategory: string,
@@ -310,7 +464,7 @@ async function assessPreflightWithGroq(
     groq.chat.completions.create({
       model: config.GROQ_PREFLIGHT_MODEL,
       temperature: 0,
-      max_tokens: 128,
+      max_tokens: 96,
       response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: buildPreflightSystemPrompt() },
@@ -337,6 +491,25 @@ async function assessPreflightWithGroq(
     isCommercialTarget: parsed.isCommercialTarget,
     reason: parsed.reason,
   };
+}
+
+async function assessPreflightWithGroq(
+  config: AppConfig,
+  title: string,
+  primaryCategory: string,
+  localityLabel: string,
+): Promise<Omit<PreflightGateAssessment, 'fallbackUsed'>> {
+  return schedulePreflightGroqCall(async () => {
+    try {
+      return await assessPreflightWithGroqOnce(config, title, primaryCategory, localityLabel);
+    } catch (e) {
+      if (e instanceof StrateRadarError && e.code === 'GROQ_PREFLIGHT_TIMEOUT') {
+        await new Promise((resolve) => setTimeout(resolve, PREFLIGHT_GROQ_TIMEOUT_RETRY_DELAY_MS));
+        return assessPreflightWithGroqOnce(config, title, primaryCategory, localityLabel);
+      }
+      throw e;
+    }
+  });
 }
 
 /**
@@ -369,6 +542,15 @@ export async function assessPreflightCommercialTarget(
   const primaryCategory =
     serp.type?.trim() || types[0]?.trim() || '(catégorie Maps non renseignée)';
   const localityLabel = primaryLocalityLabel(locationHint);
+
+  const categoryPrefilter = isMapsListingCategoryPrefilterExcluded(serp);
+  if (categoryPrefilter !== null) {
+    return {
+      isCommercialTarget: false,
+      reason: categoryPrefilter,
+      fallbackUsed: false,
+    };
+  }
 
   try {
     const r = await assessPreflightWithGroq(config, title, primaryCategory, localityLabel);
