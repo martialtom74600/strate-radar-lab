@@ -54,6 +54,14 @@ jobs:
           RADAR_SEARCH_LOCATION: ${{ secrets.RADAR_SEARCH_LOCATION || vars.RADAR_SEARCH_LOCATION }}
           # Campagne autonome (matrice villes | métiers Groq) — variables dépôt optionnelles
           RADAR_CAMPAIGN_MODE: ${{ vars.RADAR_CAMPAIGN_MODE || 'false' }}
+          RADAR_CREATION_HUNT_MODE: ${{ vars.RADAR_CREATION_HUNT_MODE || 'true' }}
+          RADAR_TARGET_CREATION_COUNT: ${{ vars.RADAR_TARGET_CREATION_COUNT || '5' }}
+          RADAR_TARGET_REFONTE_COUNT: '0'
+          RADAR_CREATION_HUNT_MIN_PER_NIGHT: ${{ vars.RADAR_CREATION_HUNT_MIN_PER_NIGHT || '5' }}
+          RADAR_CREATION_HUNT_SECTORS_PER_ZONE: ${{ vars.RADAR_CREATION_HUNT_SECTORS_PER_ZONE || '6' }}
+          RADAR_CREATION_HUNT_MAX_EXPANSIONS: ${{ vars.RADAR_CREATION_HUNT_MAX_EXPANSIONS || '4' }}
+          RADAR_MAX_WEB_SEARCH_REQUESTS_PER_RUN: ${{ vars.RADAR_MAX_WEB_SEARCH_REQUESTS_PER_RUN || '120' }}
+          RADAR_TREND_DRIVEN: 'false'
           TARGET_CITIES: ${{ vars.TARGET_CITIES }}
           RADAR_VERBOSE: 'false'
           # Vitrine Strate Studio — POST https://www.strate-studio.fr/api/audits/ingest (même secret que la route Next)

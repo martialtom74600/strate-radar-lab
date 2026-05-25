@@ -124,7 +124,7 @@ export function renderRapportMatinal(
     `**Zone :** ${result.search.location ?? '—'}`,
     `**Recherche :** ${result.search.q}`,
     `**Semaine ISO :** \`${result.weekBucket}\``,
-    `${result.demandDrivenMode ? `**Mode :** demand-driven (${result.trendQueriesResolved.length} intentions Suggest)` : result.multiCategoryMode ? `**Mode :** liste de grainage (${result.seedCategoriesResolved.length} familles)` : `**Mode :** requête unique`}`,
+    `${result.creationHuntMode ? `**Mode :** Creation Hunt · anneau ${result.creationHuntExpansionRing ?? 0} · ${result.creationHuntZones?.length ?? 1} zone(s) · ${result.seedCategoriesResolved.length} métier(s)` : result.demandDrivenMode ? `**Mode :** demand-driven (${result.trendQueriesResolved.length} intentions Suggest)` : result.multiCategoryMode ? `**Mode :** liste de grainage (${result.seedCategoriesResolved.length} familles)` : `**Mode :** requête unique`}`,
     ``,
     `---`,
     ``,

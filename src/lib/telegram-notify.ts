@@ -44,6 +44,10 @@ function chunkText(text: string, max = TELEGRAM_MAX_MESSAGE): string[] {
 function formatMode(t: RunTelemetryPayload): string {
   if (t.targetedMode) return `Audit ciblé · ${t.searchQuery}`;
   if (t.campaign) return `Campagne · ${t.campaign.city} × ${t.campaign.category}`;
+  if (t.creationHuntMode) {
+    const zones = t.creationHuntZones?.length ?? 1;
+    return `Creation Hunt · anneau ${t.creationHuntExpansionRing ?? 0} · ${zones} zone(s) · ${t.trendQueries.length} req.`;
+  }
   if (t.demandDrivenMode) return `Demand-driven · ${t.trendQueries.length} intention(s)`;
   if (t.multiCategoryMode) return `Grainage multi-métiers · ${t.seedCategories.length} famille(s)`;
   return 'Requête unique';

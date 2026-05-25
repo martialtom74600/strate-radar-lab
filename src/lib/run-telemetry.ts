@@ -79,6 +79,10 @@ export type RunTelemetryPayload = {
     readonly reason: string;
   }[];
   readonly scoreNearMissesTotal: number;
+  readonly creationHuntMode: boolean;
+  readonly creationHuntZones?: readonly string[];
+  readonly creationHuntSectors?: readonly string[];
+  readonly creationHuntExpansionRing?: number;
 };
 
 function titleByPlaceKey(result: RadarPipelineResult): Map<string, string> {
@@ -160,20 +164,32 @@ function buildWarningsAndErrors(args: {
     );
   }
   if (!result.targetedMode && result.creationsFound < result.targetCreationCount) {
-    warnings.push(
-      `Quota création non atteint : ${result.creationsFound}/${result.targetCreationCount}.`,
-    );
+    if (!result.creationHuntMode) {
+      warnings.push(
+        `Quota création non atteint : ${result.creationsFound}/${result.targetCreationCount}.`,
+      );
+    }
   }
   if (!result.targetedMode && result.refontesFound < result.targetRefonteCount) {
     warnings.push(
       `Quota refonte non atteint : ${result.refontesFound}/${result.targetRefonteCount}.`,
     );
   }
+  if (
+    result.creationHuntMode &&
+    result.creationsFound < result.targetCreationCount &&
+    (result.creationHuntExpansionRing ?? 0) >= 0
+  ) {
+    const zones = result.creationHuntZones?.join(' · ') ?? result.search.location ?? '—';
+    warnings.push(
+      `Creation Hunt : ${result.creationsFound}/${result.targetCreationCount} après anneau ${result.creationHuntExpansionRing ?? 0} — zones : ${zones}.`,
+    );
+  }
   if (result.gatekeeperExclusions.length > 0) {
     warnings.push(`${result.gatekeeperExclusions.length} fiche(s) écartée(s) par le Gatekeeper.`);
   }
   const nearMissCount = result.scoreNearMissesTotal ?? result.scoreNearMisses.length;
-  if (nearMissCount > 0) {
+  if (nearMissCount > 0 && !result.creationHuntMode) {
     const omitted = nearMissCount - result.scoreNearMisses.length;
     warnings.push(
       omitted > 0
@@ -296,5 +312,13 @@ export function buildRunTelemetry(args: {
     targetedMisses: [...new Set([...targetedMisses, ...(result.targetProspectMisses ?? [])])],
     scoreNearMisses: result.scoreNearMisses ?? [],
     scoreNearMissesTotal: result.scoreNearMissesTotal ?? result.scoreNearMisses.length,
+    creationHuntMode: result.creationHuntMode,
+    ...(result.creationHuntZones !== undefined ? { creationHuntZones: result.creationHuntZones } : {}),
+    ...(result.creationHuntSectors !== undefined
+      ? { creationHuntSectors: result.creationHuntSectors }
+      : {}),
+    ...(result.creationHuntExpansionRing !== undefined
+      ? { creationHuntExpansionRing: result.creationHuntExpansionRing }
+      : {}),
   };
 }

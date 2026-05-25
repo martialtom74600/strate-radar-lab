@@ -149,6 +149,14 @@ export type RawEnv = {
   readonly RADAR_WEB_SEARCH_ENABLED: boolean;
   /** Plafond de requêtes recherche web par run (défaut 80). 0 = couche 4 désactivée. */
   readonly RADAR_MAX_WEB_SEARCH_REQUESTS_PER_RUN: number;
+  /** Mode chasse création : grainage artisan, refonte off, expansion géo si quota non atteint. */
+  readonly RADAR_CREATION_HUNT_MODE: boolean;
+  /** Minimum de créations requis par nuit en mode chasse (plancher quota). */
+  readonly RADAR_CREATION_HUNT_MIN_PER_NIGHT: number;
+  /** Nombre de métiers (grains) scannés par zone et par anneau. */
+  readonly RADAR_CREATION_HUNT_SECTORS_PER_ZONE: number;
+  /** Expansions géographiques max (anneaux Groq) si quota création non atteint. */
+  readonly RADAR_CREATION_HUNT_MAX_EXPANSIONS: number;
 };
 
 /** Quotas finaux après résolution legacy (70/30) ou défauts 15 / 5. */
@@ -234,6 +242,25 @@ function parseRawEnv(env: NodeJS.ProcessEnv): RawEnv {
       80,
       0,
       200,
+    ),
+    RADAR_CREATION_HUNT_MODE: boolFromEnv(env.RADAR_CREATION_HUNT_MODE),
+    RADAR_CREATION_HUNT_MIN_PER_NIGHT: coerceIntInRange(
+      env.RADAR_CREATION_HUNT_MIN_PER_NIGHT,
+      5,
+      1,
+      30,
+    ),
+    RADAR_CREATION_HUNT_SECTORS_PER_ZONE: coerceIntInRange(
+      env.RADAR_CREATION_HUNT_SECTORS_PER_ZONE,
+      6,
+      2,
+      20,
+    ),
+    RADAR_CREATION_HUNT_MAX_EXPANSIONS: coerceIntInRange(
+      env.RADAR_CREATION_HUNT_MAX_EXPANSIONS,
+      4,
+      0,
+      12,
     ),
   };
 }

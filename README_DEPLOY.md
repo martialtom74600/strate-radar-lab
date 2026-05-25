@@ -42,7 +42,14 @@ Sans ces deux secrets, le workflow **ignore** l’étape Telegram (aucune erreur
 | `RADAR_SEARCH_LOCATION` | `Annecy, France` | Zone passée dans `textQuery` Places (ville + pays). |
 | `RADAR_DIAMOND_LOCATION_HINTS` | `annecy,chambéry` | Filtre zone « Diamant » (adresse / titre). |
 | `RADAR_MAX_PLACES_REQUESTS_PER_RUN` | `300` | Plafond d’appels Places Text Search par run (garde-fou). L’ancien nom `RADAR_MAX_SERPAPI_REQUESTS` est encore lu si la nouvelle variable est absente. |
-| `RADAR_MAX_WEB_SEARCH_REQUESTS_PER_RUN` | `80` | Plafond Brave Search par run (~1 000 req/mois offertes avec crédits gratuits). `0` = couche 4 désactivée. Couche 4 : top **4** résultats, refonte seulement si confiance owner **> 0,85** (nom + ville). |
+| `RADAR_MAX_WEB_SEARCH_REQUESTS_PER_RUN` | `120` | Plafond Brave Search par run (~1 000 req/mois offertes avec crédits gratuits). `0` = couche 4 désactivée. |
+| `RADAR_CREATION_HUNT_MODE` | `true` | **Mode recommandé** — chasse création : grainage artisan, refonte off, expansion géo si quota non atteint. |
+| `RADAR_TARGET_CREATION_COUNT` | `5` | Objectif créations / nuit (ingest vitrine). |
+| `RADAR_TARGET_REFONTE_COUNT` | `0` | Mettre à `0` en chasse création (refontes non ingestées). |
+| `RADAR_CREATION_HUNT_MIN_PER_NIGHT` | `5` | Plancher quota création (même si `RADAR_TARGET_CREATION_COUNT` plus bas). |
+| `RADAR_CREATION_HUNT_SECTORS_PER_ZONE` | `6` | Métiers rotatifs scannés par zone et par anneau. |
+| `RADAR_CREATION_HUNT_MAX_EXPANSIONS` | `4` | Anneaux d’expansion Groq (villes limitrophes) si quota création non atteint. |
+| `RADAR_TREND_DRIVEN` | `false` | Désactivé en Creation Hunt (Suggest trop orienté restauration / hôtellerie). |
 | `RADAR_STUDIO_ORIGIN` | `https://www.strate-studio.fr` | URL de la vitrine pour l’ingest. |
 
 ## Permissions Git

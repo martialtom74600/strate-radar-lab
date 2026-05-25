@@ -77,6 +77,14 @@ import {
   fetchNearbyWebsiteCompetitorsForDiamond,
   type RadarNearbyCompetitor,
 } from '../lib/nearby-competitors.js';
+import {
+  CreationHuntRepository,
+  describeCreationHuntPlan,
+  migrateCreationHuntTables,
+  planCreationHuntWave,
+  planNextCreationHuntExpansion,
+  type CreationHuntPlan,
+} from '../lib/creation-hunt/index.js';
 
 export type { TargetProspectSpec } from '../lib/targeted-prospect.js';
 
@@ -215,6 +223,18 @@ export type RadarPipelineResult = {
   readonly webSearchGateBlockedCount: number;
   /** Run en mode campagne autonome (matrice ville × métier). */
   readonly campaign?: { readonly city: string; readonly category: string };
+  /** Chasse création : grainage artisan + expansion géo. */
+  readonly creationHuntMode: boolean;
+  readonly creationHuntZones?: readonly string[];
+  readonly creationHuntSectors?: readonly string[];
+  readonly creationHuntExpansionRing?: number;
+};
+
+type PipelineSearchJob = {
+  readonly q: string;
+  readonly location: string;
+  readonly seedCategory?: string;
+  readonly trendingQuery: string;
 };
 
 export type RunRadarPipelineOptions = {
@@ -255,6 +275,8 @@ type ProcessLocalContext = {
   readonly forceRescan: boolean;
   readonly scoreNearMisses: ScoreNearMiss[];
   readonly webSearchGateBlocked: { count: number };
+  /** Refonte désactivée — économise Places / Brave / PageSpeed sur les sites existants. */
+  readonly creationOnlyMode: boolean;
 };
 
 
@@ -281,6 +303,7 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     forceRescan,
     scoreNearMisses,
     webSearchGateBlocked,
+    creationOnlyMode,
   } = ctx;
 
   if (leadQuotasSatisfied(quotaState)) {
@@ -343,11 +366,17 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     );
   }
 
-  const skipExtendedSearch = !needCreation && needRefonte && !serp.website?.trim();
+  const skipExtendedSearch = creationOnlyMode
+    ? Boolean(serp.website?.trim())
+    : !needCreation && needRefonte && !serp.website?.trim();
   if (skipExtendedSearch && config.RADAR_VERBOSE) {
     radarVerbose(
       config,
-      `${progressTag} ${truncateTitle(serp.title)} · ◇ Quota création atteint · requery Places désactivée (besoin refonte)`,
+      `${progressTag} ${truncateTitle(serp.title)} · ◇ ${
+        creationOnlyMode
+          ? 'Site Maps — cascade web courte (mode chasse création)'
+          : 'Quota création atteint · requery Places désactivée (besoin refonte)'
+      }`,
     );
   }
 
@@ -387,6 +416,15 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
       config,
       `${progressTag} ${truncateTitle(serp.title)} · web ${resolution.status}${resolution.presencePlatform ? ` (${resolution.presencePlatform})` : ''}${resolution.url ? ` · ${truncateTitle(resolution.url, 72)}` : ''}`,
     );
+  }
+
+  if (creationOnlyMode && resolution.status === 'owner_site') {
+    await repo.recordPlaceOutcome(placeKey, 'disqualified');
+    radarVerbose(
+      config,
+      `${progressTag} ${truncateTitle(serp.title)} · ◇ Site propriétaire — ignoré (chasse création)`,
+    );
+    return null;
   }
 
   const webSearchGate = assessWebSearchDoubleCheckGate({
@@ -627,6 +665,44 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
   };
 }
 
+function buildSearchJobsFromCreationPlan(plan: CreationHuntPlan): PipelineSearchJob[] {
+  const jobs: PipelineSearchJob[] = [];
+  for (const wave of plan.waves) {
+    for (const query of wave.queries) {
+      jobs.push({
+        q: query.q,
+        location: query.zone,
+        seedCategory: query.sector,
+        trendingQuery: query.q,
+      });
+    }
+  }
+  return jobs;
+}
+
+function buildLegacySearchJobs(args: {
+  readonly seeds: readonly string[];
+  readonly demandDrivenMode: boolean;
+  readonly multiCategoryMode: boolean;
+  readonly cityLocation: string;
+}): PipelineSearchJob[] {
+  const { seeds, demandDrivenMode, multiCategoryMode, cityLocation } = args;
+  return seeds.map((seed) => {
+    const q = demandDrivenMode
+      ? seed
+      : multiCategoryMode
+        ? buildSeedSearchQuery(seed, cityLocation)
+        : seed;
+    const seedLabel = demandDrivenMode ? undefined : multiCategoryMode ? seed : undefined;
+    return {
+      q,
+      location: cityLocation,
+      ...(seedLabel !== undefined ? { seedCategory: seedLabel } : {}),
+      trendingQuery: q,
+    };
+  });
+}
+
 export async function runRadarPipeline(
   options: RunRadarPipelineOptions,
 ): Promise<RadarPipelineResult> {
@@ -634,9 +710,6 @@ export async function runRadarPipeline(
   const weekBucket = formatIsoWeekBucket(new Date());
   const generatedAtIso = new Date().toISOString();
 
-  const targetCreationCount =
-    options.targetCreationCount ?? config.RADAR_TARGET_CREATION_COUNT;
-  const targetRefonteCount = options.targetRefonteCount ?? config.RADAR_TARGET_REFONTE_COUNT;
   const maxPages = config.RADAR_SERP_MAX_PAGES;
   const placesRequestsMax = config.RADAR_MAX_PLACES_REQUESTS_PER_RUN;
   const recentDays = config.RADAR_SQLITE_RECENT_DAYS;
@@ -652,6 +725,21 @@ export async function runRadarPipeline(
   const targetProspectMisses: string[] = [];
   let targetProspectHandled = false;
 
+  const creationHuntMode =
+    config.RADAR_CREATION_HUNT_MODE && !targetedMode && !config.RADAR_CAMPAIGN_MODE;
+
+  let targetCreationCount =
+    options.targetCreationCount ?? config.RADAR_TARGET_CREATION_COUNT;
+  let targetRefonteCount = options.targetRefonteCount ?? config.RADAR_TARGET_REFONTE_COUNT;
+
+  if (creationHuntMode) {
+    targetRefonteCount = 0;
+    targetCreationCount = Math.max(
+      config.RADAR_CREATION_HUNT_MIN_PER_NIGHT,
+      targetCreationCount,
+    );
+  }
+
   if (targetedMode) {
     demandDrivenMode = false;
     multiCategoryMode = false;
@@ -666,6 +754,13 @@ export async function runRadarPipeline(
   } else if (config.RADAR_CAMPAIGN_MODE) {
     demandDrivenMode = false;
     multiCategoryMode = true;
+  } else if (creationHuntMode) {
+    demandDrivenMode = false;
+    multiCategoryMode = true;
+    radarVerbose(
+      config,
+      `\n🎯 Creation Hunt · grainage artisan · quota création ≥ ${targetCreationCount} · refonte off`,
+    );
   } else if (demandDrivenMode) {
     radarVerbose(
       config,
@@ -715,18 +810,54 @@ export async function runRadarPipeline(
   }
 
   const seedCategoriesResolved = seeds;
-  const trendQueriesResolved = seeds;
 
   const repo = new ProspectRepository(db);
 
+  let creationHuntPlan: CreationHuntPlan | undefined;
+  let creationHuntRepo: CreationHuntRepository | undefined;
+  let creationHuntExpansionRing = 0;
+  let searchJobs: PipelineSearchJob[] = [];
+  const huntQueriesProcessed: string[] = [];
+  const huntSectorStats = new Map<string, number>();
+  const huntZonesProcessed = new Set<string>();
+
   const serpBudget = { used: 0, max: placesRequestsMax };
-  const webSearchRequestsMax = config.RADAR_MAX_WEB_SEARCH_REQUESTS_PER_RUN;
+  const webSearchRequestsMax = creationHuntMode
+    ? Math.max(config.RADAR_MAX_WEB_SEARCH_REQUESTS_PER_RUN, 120)
+    : config.RADAR_MAX_WEB_SEARCH_REQUESTS_PER_RUN;
   const webSearchBudget = { used: 0, max: webSearchRequestsMax };
   const baseSerp = createRadarSearchClient(config);
   const serpClient = wrapSerpClientWithBudget(baseSerp, serpBudget);
 
   const psiClient = createPageSpeedClient(config);
   const groqClient = createGroqClient(config);
+
+  if (creationHuntMode) {
+    await migrateCreationHuntTables(db);
+    creationHuntRepo = new CreationHuntRepository(db);
+    creationHuntPlan = await planCreationHuntWave({
+      config,
+      repo: creationHuntRepo,
+      groq: groqClient,
+      anchorZone: options.search.location ?? config.RADAR_SEARCH_LOCATION,
+      sectorsPerZone: config.RADAR_CREATION_HUNT_SECTORS_PER_ZONE,
+      expansionRing: 0,
+    });
+    seeds = [...creationHuntPlan.sectorsUsed];
+    searchJobs = buildSearchJobsFromCreationPlan(creationHuntPlan);
+    radarVerbose(
+      config,
+      `   → ${describeCreationHuntPlan(creationHuntPlan)} · ${searchJobs.length} requête(s)`,
+    );
+  } else {
+    searchJobs = buildLegacySearchJobs({
+      seeds,
+      demandDrivenMode,
+      multiCategoryMode,
+      cityLocation,
+    });
+  }
+
   const webSearchBoot = describeWebSearchBoot(config);
   const baseWebSearchClient =
     webSearchRequestsMax > 0 ? createBraveSearchWebClient(config) : null;
@@ -759,174 +890,216 @@ export async function runRadarPipeline(
     config,
     targetedMode
       ? `Mode : audit ciblé · jusqu’à ${maxPages} pages Places`
-      : demandDrivenMode
-        ? `Mode : demand-driven (${seeds.length} intentions · jusqu’à ${maxPages} pages Places par requête)`
-        : multiCategoryMode
-          ? `Mode : liste de grainage (${seeds.length} familles · jusqu’à ${maxPages} pages Places par famille)`
-          : `Mode : une seule requête`,
+      : creationHuntMode
+        ? `Mode : Creation Hunt · ${searchJobs.length} requêtes · expansion max ${config.RADAR_CREATION_HUNT_MAX_EXPANSIONS} anneau(x)`
+        : demandDrivenMode
+          ? `Mode : demand-driven (${seeds.length} intentions · jusqu’à ${maxPages} pages Places par requête)`
+          : multiCategoryMode
+            ? `Mode : liste de grainage (${seeds.length} familles · jusqu’à ${maxPages} pages Places par famille)`
+            : `Mode : une seule requête`,
   );
 
   let serpBudgetExhausted = false;
   let placesStoppedEarly = false;
   let placesStopMessage: string | undefined;
 
-  runOuter: for (const seed of seeds) {
-    if (leadQuotasSatisfied(quotaState)) break;
-    if (serpBudget.used >= placesRequestsMax) break;
+  const creationOnlyMode = targetRefonteCount === 0;
 
-    const q = demandDrivenMode
-      ? seed
-      : multiCategoryMode
-        ? buildSeedSearchQuery(seed, cityLocation)
-        : seed;
-    const seedLabel = demandDrivenMode ? seed : multiCategoryMode ? seed : undefined;
+  huntExpandLoop: while (true) {
+    runOuter: for (const job of searchJobs) {
+      if (leadQuotasSatisfied(quotaState)) break huntExpandLoop;
+      if (serpBudget.used >= placesRequestsMax) break huntExpandLoop;
 
-    radarVerbose(
-      config,
-      `\n▸ ${demandDrivenMode ? 'Tendance' : multiCategoryMode ? `Famille « ${seed} »` : 'Recherche'} · ${truncateTitle(q, 88)}`,
-    );
+      cityLocation = job.location;
+      huntZonesProcessed.add(job.location);
+      huntQueriesProcessed.push(job.trendingQuery);
+      const q = job.q;
+      const seedLabel = job.seedCategory;
 
-    let placesPageToken: string | undefined;
-
-    for (let pageIndex = 0; pageIndex < maxPages; pageIndex++) {
-      if (leadQuotasSatisfied(quotaState)) break runOuter;
-      if (serpBudget.used >= placesRequestsMax) break runOuter;
+      if (creationHuntMode && seedLabel !== undefined) {
+        const statKey = `${job.location}|${seedLabel}`;
+        if (!huntSectorStats.has(statKey)) huntSectorStats.set(statKey, 0);
+      }
 
       radarVerbose(
         config,
-        `   Places Text Search · page ${pageIndex + 1}/${maxPages} · consommés ${serpBudget.used}/${placesRequestsMax}`,
+        `\n▸ ${creationHuntMode ? `Chasse · ${job.location}` : demandDrivenMode ? 'Tendance' : multiCategoryMode ? `Famille « ${seedLabel ?? q} »` : 'Recherche'} · ${truncateTitle(q, 88)}`,
       );
 
-      const serpParams: GoogleLocalSearchParams = {
-        q,
-        location: cityLocation,
-        ...(options.search.hl !== undefined ? { hl: options.search.hl } : {}),
-        ...(options.search.gl !== undefined ? { gl: options.search.gl } : {}),
-        ...(placesPageToken !== undefined ? { pageToken: placesPageToken } : {}),
-      };
+      let placesPageToken: string | undefined;
 
-      let maps;
-      try {
-        maps = await serpClient.searchGoogleLocal(serpParams);
-      } catch (e) {
-        if (e instanceof StrateRadarError && e.code === 'SERP_BUDGET') {
-          serpBudgetExhausted = true;
-          radarVerbose(config, `\n⚠ ${e.message}`);
-          break runOuter;
-        }
-        if (
-          e instanceof StrateRadarError &&
-          e.code === 'HTTP_STATUS' &&
-          e.status === 429
-        ) {
-          placesStoppedEarly = true;
-          placesStopMessage = e.message;
-          radarVerbose(
-            config,
-            `\n⚠ Google Places : quota ou limite (HTTP 429) — fin du run avec résultats partiels.\n   ${truncateTitle(e.message, 120)}`,
-          );
-          break runOuter;
-        }
-        throw e;
-      }
+      for (let pageIndex = 0; pageIndex < maxPages; pageIndex++) {
+        if (leadQuotasSatisfied(quotaState)) break huntExpandLoop;
+        if (serpBudget.used >= placesRequestsMax) break huntExpandLoop;
 
-      const locals = maps.local_results ?? [];
-      radarVerbose(config, `   → ${locals.length} résultat(s) Maps`);
-      if (locals.length === 0) {
-        radarVerbose(config, `   (plus de résultats pour cette famille → suivante)`);
-        break;
-      }
-
-      let rowsToScan: SerpLocalResult[] = [...locals];
-      if (targetedMode) {
-        const match = pickBestPlacesMatch(options.targetProspect!.name, locals);
-        if (!match) {
-          radarVerbose(
-            config,
-            `   ◇ Aucun match suffisant pour « ${truncateTitle(options.targetProspect!.name, 56)} » sur cette page`,
-          );
-          placesPageToken =
-            maps.next_page_token !== undefined && maps.next_page_token !== ''
-              ? maps.next_page_token
-              : undefined;
-          if (!placesPageToken) break;
-          continue;
-        }
-        rowsToScan = [match];
         radarVerbose(
           config,
-          `   ✓ Match Maps : « ${truncateTitle(match.title, 72)} »`,
+          `   Places Text Search · page ${pageIndex + 1}/${maxPages} · consommés ${serpBudget.used}/${placesRequestsMax}`,
         );
-      }
 
-      for (const row of rowsToScan) {
-        if (leadQuotasSatisfied(quotaState)) break runOuter;
-        if (serpBudget.used >= placesRequestsMax) break runOuter;
+        const serpParams: GoogleLocalSearchParams = {
+          q,
+          location: cityLocation,
+          ...(options.search.hl !== undefined ? { hl: options.search.hl } : {}),
+          ...(options.search.gl !== undefined ? { gl: options.search.gl } : {}),
+          ...(placesPageToken !== undefined ? { pageToken: placesPageToken } : {}),
+        };
 
-        totalBusinessesScanned += 1;
-        const progressTag = `[#${totalBusinessesScanned} · req. ${serpBudget.used}/${placesRequestsMax}]`;
-
-        const line = await processLocalRow({
-          config,
-          serp: row,
-          weekBucket,
-          recentDays,
-          repo,
-          psiClient,
-          groqClient,
-          serpClient,
-          webSearchClient,
-          searchLocation: cityLocation,
-          searchHl: options.search.hl,
-          searchGl: options.search.gl,
-          seedCategory: seedLabel,
-          trendingQuery: q,
-          progressTag,
-          gatekeeperExclusions,
-          placesBudget: serpBudget,
-          quotaState,
-          forceRescan,
-          scoreNearMisses,
-          webSearchGateBlocked,
-        });
-
-        if (targetedMode) {
-          targetProspectHandled = true;
+        let maps;
+        try {
+          maps = await serpClient.searchGoogleLocal(serpParams);
+        } catch (e) {
+          if (e instanceof StrateRadarError && e.code === 'SERP_BUDGET') {
+            serpBudgetExhausted = true;
+            radarVerbose(config, `\n⚠ ${e.message}`);
+            break huntExpandLoop;
+          }
+          if (
+            e instanceof StrateRadarError &&
+            e.code === 'HTTP_STATUS' &&
+            e.status === 429
+          ) {
+            placesStoppedEarly = true;
+            placesStopMessage = e.message;
+            radarVerbose(
+              config,
+              `\n⚠ Google Places : quota ou limite (HTTP 429) — fin du run avec résultats partiels.\n   ${truncateTitle(e.message, 120)}`,
+            );
+            break huntExpandLoop;
+          }
+          throw e;
         }
 
-        if (line !== null) {
-          lines.push(line);
-          if (
-            line.conversionBadge === 'DIAMANT_CREATION' ||
-            line.conversionBadge === 'DIAMANT_PRESENCE'
-          ) {
-            quotaState.creationsFound += 1;
-          } else if (line.conversionBadge === 'DIAMANT_REFONTE') {
-            quotaState.refontesFound += 1;
+        const locals = maps.local_results ?? [];
+        radarVerbose(config, `   → ${locals.length} résultat(s) Maps`);
+        if (locals.length === 0) {
+          radarVerbose(config, `   (plus de résultats pour cette famille → suivante)`);
+          break;
+        }
+
+        let rowsToScan: SerpLocalResult[] = [...locals];
+        if (targetedMode) {
+          const match = pickBestPlacesMatch(options.targetProspect!.name, locals);
+          if (!match) {
+            radarVerbose(
+              config,
+              `   ◇ Aucun match suffisant pour « ${truncateTitle(options.targetProspect!.name, 56)} » sur cette page`,
+            );
+            placesPageToken =
+              maps.next_page_token !== undefined && maps.next_page_token !== ''
+                ? maps.next_page_token
+                : undefined;
+            if (!placesPageToken) break;
+            continue;
           }
+          rowsToScan = [match];
           radarVerbose(
             config,
-            `   … Progression : création ${quotaState.creationsFound}/${quotaState.targetCreation} · refonte ${quotaState.refontesFound}/${quotaState.targetRefonte}`,
+            `   ✓ Match Maps : « ${truncateTitle(match.title, 72)} »`,
           );
         }
 
+        for (const row of rowsToScan) {
+          if (leadQuotasSatisfied(quotaState)) break huntExpandLoop;
+          if (serpBudget.used >= placesRequestsMax) break huntExpandLoop;
+
+          totalBusinessesScanned += 1;
+          const progressTag = `[#${totalBusinessesScanned} · req. ${serpBudget.used}/${placesRequestsMax}]`;
+
+          const line = await processLocalRow({
+            config,
+            serp: row,
+            weekBucket,
+            recentDays,
+            repo,
+            psiClient,
+            groqClient,
+            serpClient,
+            webSearchClient,
+            searchLocation: cityLocation,
+            searchHl: options.search.hl,
+            searchGl: options.search.gl,
+            seedCategory: seedLabel,
+            trendingQuery: job.trendingQuery,
+            progressTag,
+            gatekeeperExclusions,
+            placesBudget: serpBudget,
+            quotaState,
+            forceRescan,
+            scoreNearMisses,
+            webSearchGateBlocked,
+            creationOnlyMode,
+          });
+
+          if (targetedMode) {
+            targetProspectHandled = true;
+          }
+
+          if (line !== null) {
+            lines.push(line);
+            if (
+              line.conversionBadge === 'DIAMANT_CREATION' ||
+              line.conversionBadge === 'DIAMANT_PRESENCE'
+            ) {
+              quotaState.creationsFound += 1;
+              if (creationHuntMode && seedLabel) {
+                const statKey = `${cityLocation}|${seedLabel}`;
+                huntSectorStats.set(statKey, (huntSectorStats.get(statKey) ?? 0) + 1);
+              }
+            } else if (line.conversionBadge === 'DIAMANT_REFONTE') {
+              quotaState.refontesFound += 1;
+            }
+            radarVerbose(
+              config,
+              `   … Progression : création ${quotaState.creationsFound}/${quotaState.targetCreation} · refonte ${quotaState.refontesFound}/${quotaState.targetRefonte}`,
+            );
+          }
+
+          if (targetedMode) {
+            break huntExpandLoop;
+          }
+        }
+
         if (targetedMode) {
-          break runOuter;
+          break;
+        }
+
+        placesPageToken =
+          maps.next_page_token !== undefined && maps.next_page_token !== ''
+            ? maps.next_page_token
+            : undefined;
+        if (!placesPageToken) {
+          break;
         }
       }
-
-      if (targetedMode) {
-        break;
-      }
-
-      placesPageToken =
-        maps.next_page_token !== undefined && maps.next_page_token !== ''
-          ? maps.next_page_token
-          : undefined;
-      if (!placesPageToken) {
-        break;
-      }
     }
+
+    if (!creationHuntMode) break;
+    if (quotaState.creationsFound >= quotaState.targetCreation) break;
+    if (creationHuntExpansionRing >= config.RADAR_CREATION_HUNT_MAX_EXPANSIONS) break;
+    if (serpBudget.used >= placesRequestsMax) break;
+    if (placesStoppedEarly || serpBudgetExhausted) break;
+
+    const nextPlan = await planNextCreationHuntExpansion({
+      config,
+      repo: creationHuntRepo!,
+      groq: groqClient,
+      anchorZone: options.search.location ?? config.RADAR_SEARCH_LOCATION,
+      sectorsPerZone: config.RADAR_CREATION_HUNT_SECTORS_PER_ZONE,
+      expansionRing: creationHuntExpansionRing,
+      currentRing: creationHuntExpansionRing,
+      maxExpansions: config.RADAR_CREATION_HUNT_MAX_EXPANSIONS,
+    });
+    if (nextPlan === null) break;
+
+    creationHuntExpansionRing = nextPlan.expansionRing;
+    creationHuntPlan = nextPlan;
+    searchJobs = buildSearchJobsFromCreationPlan(nextPlan);
+    for (const z of nextPlan.zonesUsed) huntZonesProcessed.add(z);
+    radarVerbose(
+      config,
+      `\n🌍 Expansion géo · anneau ${creationHuntExpansionRing} · ${describeCreationHuntPlan(nextPlan)} · création ${quotaState.creationsFound}/${quotaState.targetCreation}`,
+    );
   }
 
   if (targetedMode && !targetProspectHandled) {
@@ -954,18 +1127,42 @@ export async function runRadarPipeline(
     await applyCampaignSaturationIfNeeded(campaignRepo, campaignPair.city);
   }
 
+  if (creationHuntRepo !== undefined) {
+    for (const [key, count] of huntSectorStats) {
+      const sep = key.indexOf('|');
+      if (sep <= 0) continue;
+      const zone = key.slice(0, sep);
+      const sector = key.slice(sep + 1);
+      await creationHuntRepo.recordSectorRun(zone, sector, count, generatedAtIso);
+    }
+    for (const zone of huntZonesProcessed) {
+      let zoneCreations = 0;
+      for (const [key, count] of huntSectorStats) {
+        if (key.startsWith(`${zone}|`)) zoneCreations += count;
+      }
+      await creationHuntRepo.recordZoneRun(zone, zoneCreations, generatedAtIso);
+    }
+  }
+
   await closeDatabase(db);
+
+  const trendQueriesResolved =
+    creationHuntMode && huntQueriesProcessed.length > 0
+      ? [...new Set(huntQueriesProcessed)]
+      : seeds;
 
   const searchSummary: RadarSearchParams = {
     q: targetedMode
       ? `Ciblé · ${options.targetProspect!.name.trim()}`
-      : campaignPair !== undefined
-        ? `Campagne · ${campaignPair.category}`
-        : demandDrivenMode
-          ? `Demand-driven · ${seeds.length} intention(s) Suggest`
-          : multiCategoryMode
-            ? `Grainage multi-métiers (${seeds.length} familles)`
-            : options.search.q,
+      : creationHuntMode
+        ? `Creation Hunt · anneau ${creationHuntExpansionRing} · ${trendQueriesResolved.length} requête(s)`
+        : campaignPair !== undefined
+          ? `Campagne · ${campaignPair.category}`
+          : demandDrivenMode
+            ? `Demand-driven · ${seeds.length} intention(s) Suggest`
+            : multiCategoryMode
+              ? `Grainage multi-métiers (${seeds.length} familles)`
+              : options.search.q,
     location: options.search.location ?? cityLocation,
     ...(options.search.hl !== undefined ? { hl: options.search.hl } : {}),
     ...(options.search.gl !== undefined ? { gl: options.search.gl } : {}),
@@ -1003,6 +1200,14 @@ export async function runRadarPipeline(
     scoreNearMisses: nearMissReport.shown,
     scoreNearMissesTotal: nearMissReport.total,
     webSearchGateBlockedCount: webSearchGateBlocked.count,
+    creationHuntMode,
+    ...(creationHuntMode
+      ? {
+          creationHuntZones: [...huntZonesProcessed],
+          creationHuntSectors: creationHuntPlan?.sectorsUsed ?? seeds,
+          creationHuntExpansionRing,
+        }
+      : {}),
     ...(campaignPair !== undefined ? { campaign: campaignPair } : {}),
   };
 }
