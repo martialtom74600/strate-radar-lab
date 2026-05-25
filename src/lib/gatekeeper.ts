@@ -105,25 +105,35 @@ export function isParkingInfrastructureSerp(serp: SerpLocalResult): boolean {
   return primary === 'parking' || primary === 'parking_lot';
 }
 
-const MAPS_TITLE_PREFILTER_MARKERS = [
-  'mairie',
-  'commissariat',
-  'la poste',
-  'gare',
-  // Marchés / foires / collectifs — hors entreprise privée unitaire
+/** Raison standard pre-flight / préfiltre — entités collectives ou événementielles. */
+export const PREFLIGHT_COLLECTIVE_EXCLUSION_REASON =
+  'Entité collective ou marché public — hors cible pour un site vitrine unitaire.';
+
+const MAPS_TITLE_INSTITUTIONAL_MARKERS = ['mairie', 'commissariat', 'la poste', 'gare'] as const;
+
+/** Marchés, foires, halles collaboratives, regroupements multi-artisans. */
+const MAPS_TITLE_COLLECTIVE_MARKERS = [
   'marche couvert',
   'marche hebdomadaire',
   'marche hebdo',
   'marche public',
   'marche municipal',
   'marche de noel',
+  'halles de',
+  'halle de',
   'foire de',
   'foire du',
   'foire aux',
+  'brocante de',
+  'brocante du',
   'regroupement des artisans',
   'regroupement d artisans',
   'groupement d artisans',
   'collectif d artisans',
+  'pôle artisans',
+  'pole artisans',
+  'atelier partage',
+  'atelier partagé',
 ] as const;
 
 /**
@@ -134,7 +144,12 @@ export function isMapsListingTitlePrefilterExcluded(serp: SerpLocalResult): stri
     return 'Parking / stationnement (nom ou catégorie Maps) — hors cible commerciale.';
   }
   const hay = normalizeGatekeeperText(serp.title);
-  for (const marker of MAPS_TITLE_PREFILTER_MARKERS) {
+  for (const marker of MAPS_TITLE_COLLECTIVE_MARKERS) {
+    if (hay.includes(marker)) {
+      return PREFLIGHT_COLLECTIVE_EXCLUSION_REASON;
+    }
+  }
+  for (const marker of MAPS_TITLE_INSTITUTIONAL_MARKERS) {
     if (hay.includes(marker)) {
       const label =
         marker === 'la poste'
@@ -224,11 +239,31 @@ function preflightGroqRateLimitCooldown(): Promise<void> {
 }
 
 function buildPreflightSystemPrompt(): string {
+  const collectiveReason = PREFLIGHT_COLLECTIVE_EXCLUSION_REASON;
   return [
-    'Tu es un filtre ultra-rapide pour une agence web B2B en France.',
-    'Cible exclusive : entreprise privée unitaire (une enseigne, une activité commerciale autonome).',
+    'Tu es un filtre pre-flight ultra-strict pour une agence web B2B en France.',
+    'Ta mission : autoriser UNIQUEMENT les prospects pour lesquels un site vitrine unitaire (une enseigne, un métier, un interlocuteur) a du sens.',
+    '',
+    'CRITÈRE D\'UNITÉ COMMERCIALE STRICTE (prioritaire) :',
+    '- isCommercialTarget TRUE seulement si l\'établissement est une entité juridique ou commerciale UNITAIRE :',
+    '  une seule entreprise, un seul artisan, un seul commerce physique ou en ligne, une enseigne identifiable, une activité pérenne à l\'année.',
+    '- isCommercialTarget FALSE dès que la fiche décrit une entité COLLECTIVE, MULTI-VENDEURS ou ÉVÉNEMENTIELLE,',
+    '  même si elle a une activité économique ou apparaît sur Google Maps comme un "commerce".',
+    '',
+    'REJETTE IMMÉDIATEMENT (FALSE) sans ambiguïté :',
+    '- marchés publics, marchés locaux, marchés couverts, halles alimentaires à étals multiples ;',
+    '- foires, brocantes récurrentes, salons, manifestations, événements temporaires ou saisonniers ;',
+    '- halles collaboratives, regroupements / groupements / collectifs d\'artisans, pôles multi-artisans ;',
+    '- coopératives ou structures mutualisées sans enseigne commerciale unitaire ;',
+    '- entités publiques, administrations, écoles, hôpitaux, parkings ;',
+    '- grandes multinationales (FNAC, Orange, SFR, Carrefour…).',
+    '',
+    'RAISON D\'EXCLUSION TYPÉE (obligatoire si FALSE pour un cas collectif / marché / foire / événement) :',
+    `Utilise exactement cette formulation dans "reason" : « ${collectiveReason} »`,
+    'Pour une exclusion institutionnelle ou autre (mairie, parking, multinationale), une phrase courte distincte suffit.',
+    '',
     'Réponds UNIQUEMENT par un JSON strict : { "isCommercialTarget": boolean, "reason": string }.',
-    'reason : une courte phrase en français (max 120 caractères).',
+    'reason : phrase en français, max 120 caractères, sans markdown.',
   ].join('\n');
 }
 
@@ -237,21 +272,23 @@ function buildPreflightUserContent(
   primaryCategory: string,
   localityLabel: string,
 ): string {
+  const collectiveReason = PREFLIGHT_COLLECTIVE_EXCLUSION_REASON;
   return [
     `Établissement : « ${title} »`,
     `Catégorie Google Maps principale : ${primaryCategory}`,
     `Zone : ${localityLabel}, France`,
     '',
-    `Analyse si cet établissement de ${localityLabel} est une entreprise privée unitaire (PME, artisan, commerçant, profession libérale) pertinente pour lui vendre la création ou la refonte d'un site web.`,
-    'Réponds isCommercialTarget FALSE si l\'une de ces situations s\'applique (même reformulée) :',
-    '- entité publique, administration, école, hôpital, parking, association non lucrative ;',
-    '- grande multinationale (FNAC, Orange, SFR, Carrefour…) ;',
-    '- marché public, marché couvert ou halles alimentaires collectives (étals multiples, gestion municipale ou associative) ;',
-    '- foire, brocante récurrente, salon ou manifestation organisée comme événement collectif ;',
-    '- regroupement / groupement / collectif d\'artisans (atelier partagé, pôle multi-artisans, coopérative sans enseigne unitaire) ;',
-    '- événement temporaire ou stand saisonnier sans activité commerciale autonome à l\'année.',
+    'Question : cet établissement est-il une entreprise privée UNITAIRE pour laquelle vendre la création ou la refonte d\'un site web vitrine a du sens ?',
     '',
-    'Réponds isCommercialTarget TRUE uniquement pour un commerce ou service privé local unitaire : une enseigne identifiable, un interlocuteur métier, une activité pérenne.',
+    'Rappel — FALSE immédiat si collectif / multi-vendeurs / événementiel :',
+    'marché (public, local, couvert), halles à étals, foire, brocante, salon, manifestation, regroupement d\'artisans, pôle multi-artisans, coopérative sans enseigne unique, stand saisonnier.',
+    '',
+    'Rappel — TRUE seulement si : une enseigne, un métier, un interlocuteur identifiable, activité pérenne (PME, artisan, commerçant, profession libérale locale).',
+    '',
+    'Exemples de réponses attendues :',
+    `- Marché / foire / collectif : { "isCommercialTarget": false, "reason": "${collectiveReason}" }`,
+    '- Mairie : { "isCommercialTarget": false, "reason": "Entité publique — hors cible commerciale." }',
+    '- Plombier SARL local : { "isCommercialTarget": true, "reason": "Artisan local unitaire — cible site vitrine." }',
   ].join('\n');
 }
 
@@ -273,7 +310,7 @@ async function assessPreflightWithGroq(
     groq.chat.completions.create({
       model: config.GROQ_PREFLIGHT_MODEL,
       temperature: 0,
-      max_tokens: 96,
+      max_tokens: 128,
       response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: buildPreflightSystemPrompt() },
