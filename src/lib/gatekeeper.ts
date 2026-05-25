@@ -110,6 +110,20 @@ const MAPS_TITLE_PREFILTER_MARKERS = [
   'commissariat',
   'la poste',
   'gare',
+  // Marchés / foires / collectifs — hors entreprise privée unitaire
+  'marche couvert',
+  'marche hebdomadaire',
+  'marche hebdo',
+  'marche public',
+  'marche municipal',
+  'marche de noel',
+  'foire de',
+  'foire du',
+  'foire aux',
+  'regroupement des artisans',
+  'regroupement d artisans',
+  'groupement d artisans',
+  'collectif d artisans',
 ] as const;
 
 /**
@@ -148,8 +162,8 @@ function buildGatekeeperSystemPrompt(): string {
 function buildGatekeeperUserContent(name: string, typesLabel: string): string {
   return [
     `Analyse cette entité : ${name} (Types Google: ${typesLabel}).`,
-    'Est-ce une entreprise privée cherchant activement des clients (Artisan, Garage, Cabinet, Agence, Restaurant, etc.)',
-    'ou une entité publique/institutionnelle (Hôpital public, Parking municipal, Mairie, Église, École, Commissariat) ?',
+    'Est-ce une entreprise privée unitaire cherchant activement des clients (Artisan, Garage, Cabinet, Restaurant, etc.)',
+    'ou une entité à exclure : publique/institutionnelle (Hôpital, Mairie, École…), marché public, foire, regroupement d\'artisans collectif, événement temporaire, parking, multinationale ?',
     'Réponds par un JSON : { "is_commercial": boolean, "reason": string }.',
   ].join(' ');
 }
@@ -212,6 +226,7 @@ function preflightGroqRateLimitCooldown(): Promise<void> {
 function buildPreflightSystemPrompt(): string {
   return [
     'Tu es un filtre ultra-rapide pour une agence web B2B en France.',
+    'Cible exclusive : entreprise privée unitaire (une enseigne, une activité commerciale autonome).',
     'Réponds UNIQUEMENT par un JSON strict : { "isCommercialTarget": boolean, "reason": string }.',
     'reason : une courte phrase en français (max 120 caractères).',
   ].join('\n');
@@ -227,9 +242,16 @@ function buildPreflightUserContent(
     `Catégorie Google Maps principale : ${primaryCategory}`,
     `Zone : ${localityLabel}, France`,
     '',
-    `Analyse si cet établissement de ${localityLabel} est une entreprise privée commerciale (PME, artisan, commerçant, profession libérale) pertinente pour lui vendre la création ou la refonte d'un site web.`,
-    'Réponds isCommercialTarget FALSE s\'il s\'agit d\'une entité publique, administration, école, hôpital, grande multinationale (FNAC, Orange, SFR, Carrefour…), parking, ou association non lucrative.',
-    'Réponds isCommercialTarget TRUE pour un commerce ou service privé local typique.',
+    `Analyse si cet établissement de ${localityLabel} est une entreprise privée unitaire (PME, artisan, commerçant, profession libérale) pertinente pour lui vendre la création ou la refonte d'un site web.`,
+    'Réponds isCommercialTarget FALSE si l\'une de ces situations s\'applique (même reformulée) :',
+    '- entité publique, administration, école, hôpital, parking, association non lucrative ;',
+    '- grande multinationale (FNAC, Orange, SFR, Carrefour…) ;',
+    '- marché public, marché couvert ou halles alimentaires collectives (étals multiples, gestion municipale ou associative) ;',
+    '- foire, brocante récurrente, salon ou manifestation organisée comme événement collectif ;',
+    '- regroupement / groupement / collectif d\'artisans (atelier partagé, pôle multi-artisans, coopérative sans enseigne unitaire) ;',
+    '- événement temporaire ou stand saisonnier sans activité commerciale autonome à l\'année.',
+    '',
+    'Réponds isCommercialTarget TRUE uniquement pour un commerce ou service privé local unitaire : une enseigne identifiable, un interlocuteur métier, une activité pérenne.',
   ].join('\n');
 }
 
