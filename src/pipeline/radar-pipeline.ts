@@ -84,6 +84,8 @@ import {
   planCreationHuntWave,
   planNextCreationHuntExpansion,
   resolveAnchorZones,
+  restoreCreationHuntStateIfNeeded,
+  saveCreationHuntState,
   type CreationHuntPlan,
 } from '../lib/creation-hunt/index.js';
 
@@ -229,6 +231,12 @@ export type RadarPipelineResult = {
   readonly creationHuntZones?: readonly string[];
   readonly creationHuntSectors?: readonly string[];
   readonly creationHuntExpansionRing?: number;
+  readonly creationHuntWeeklyStats?: {
+    readonly topSectors: readonly { readonly sector: string; readonly convRate: number }[];
+    readonly activeZones: number;
+    readonly stagnantZones: number;
+    readonly stagnantSectors: readonly string[];
+  };
 };
 
 type PipelineSearchJob = {
@@ -236,6 +244,7 @@ type PipelineSearchJob = {
   readonly location: string;
   readonly seedCategory?: string;
   readonly trendingQuery: string;
+  readonly convRate?: number;
 };
 
 export type RunRadarPipelineOptions = {
@@ -675,9 +684,12 @@ function buildSearchJobsFromCreationPlan(plan: CreationHuntPlan): PipelineSearch
         location: query.zone,
         seedCategory: query.sector,
         trendingQuery: query.q,
+        convRate: query.convRate,
       });
     }
   }
+  /* Trie : meilleur taux de conversion en premier — on dépense le budget Places là où ça rapporte le plus */
+  jobs.sort((a, b) => (b.convRate ?? 0) - (a.convRate ?? 0));
   return jobs;
 }
 
@@ -837,6 +849,13 @@ export async function runRadarPipeline(
     await migrateCreationHuntTables(db);
     creationHuntRepo = new CreationHuntRepository(db);
 
+    /* Restauration depuis snapshot JSON si cache SQLite manquant */
+    const stateJsonPath = 'data/creation-hunt-state.json';
+    const restored = await restoreCreationHuntStateIfNeeded(creationHuntRepo, stateJsonPath);
+    if (restored) {
+      radarVerbose(config, '   💾 État Creation Hunt restauré depuis snapshot JSON (cache miss)');
+    }
+
     /* Maintenance SQLite : réactivation zones stales + purge anciens runs */
     const reactivated = await creationHuntRepo.reactivateStaleZones(
       config.RADAR_CREATION_HUNT_ZONE_TTL_DAYS,
@@ -862,6 +881,7 @@ export async function runRadarPipeline(
       anchorZones,
       sectorsPerZone: config.RADAR_CREATION_HUNT_SECTORS_PER_ZONE,
       expansionRing: 0,
+      ...(config.RADAR_GEO_REGION !== undefined ? { geoRegion: config.RADAR_GEO_REGION } : {}),
     });
     seeds = [...creationHuntPlan.sectorsUsed];
     searchJobs = buildSearchJobsFromCreationPlan(creationHuntPlan);
@@ -1116,6 +1136,7 @@ export async function runRadarPipeline(
       expansionRing: creationHuntExpansionRing,
       currentRing: creationHuntExpansionRing,
       maxExpansions: config.RADAR_CREATION_HUNT_MAX_EXPANSIONS,
+      ...(config.RADAR_GEO_REGION !== undefined ? { geoRegion: config.RADAR_GEO_REGION } : {}),
     });
     if (nextPlan === null) break;
 
@@ -1154,6 +1175,15 @@ export async function runRadarPipeline(
     await applyCampaignSaturationIfNeeded(campaignRepo, campaignPair.city);
   }
 
+  let creationHuntWeeklyStats:
+    | {
+        topSectors: { sector: string; convRate: number }[];
+        activeZones: number;
+        stagnantZones: number;
+        stagnantSectors: string[];
+      }
+    | undefined;
+
   if (creationHuntRepo !== undefined) {
     const allSectorKeys = new Set([...huntSectorStats.keys(), ...huntSectorScannedCounts.keys()]);
     for (const key of allSectorKeys) {
@@ -1182,6 +1212,34 @@ export async function runRadarPipeline(
         config.RADAR_CREATION_LOW_THRESHOLD,
         config.RADAR_CREATION_SATURATION_RUNS,
       );
+    }
+
+    /* Stats hebdo pour le rapport Telegram */
+    const [topSectors, zoneSummary, stagnantSectors] = await Promise.all([
+      creationHuntRepo.getTopSectorsByConvRate(7, 3),
+      creationHuntRepo.getZoneSummary(),
+      creationHuntRepo.getGloballyStagnantSectors(
+        config.RADAR_CREATION_HUNT_STAGNANT_SECTOR_NIGHTS,
+        config.RADAR_CREATION_SATURATION_RUNS,
+        config.RADAR_CREATION_LOW_THRESHOLD,
+      ),
+    ]);
+    creationHuntWeeklyStats = {
+      topSectors: topSectors.map((s) => ({ sector: s.sector, convRate: s.convRate })),
+      activeZones: zoneSummary.active,
+      stagnantZones: zoneSummary.stagnant,
+      stagnantSectors,
+    };
+
+    /* Snapshot JSON pour survie à un miss de cache Actions */
+    try {
+      await saveCreationHuntState(
+        creationHuntRepo,
+        'data/creation-hunt-state.json',
+        config.RADAR_CREATION_HUNT_DB_TTL_DAYS,
+      );
+    } catch {
+      /* Non bloquant — le pipeline continue même si l'écriture échoue */
     }
   }
 
@@ -1247,6 +1305,7 @@ export async function runRadarPipeline(
           creationHuntZones: [...huntZonesProcessed],
           creationHuntSectors: creationHuntPlan?.sectorsUsed ?? seeds,
           creationHuntExpansionRing,
+          ...(creationHuntWeeklyStats !== undefined ? { creationHuntWeeklyStats } : {}),
         }
       : {}),
     ...(campaignPair !== undefined ? { campaign: campaignPair } : {}),

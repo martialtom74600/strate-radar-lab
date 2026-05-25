@@ -98,6 +98,26 @@ async function silentAddColumn(
   }
 }
 
+export type ZoneStateRow = {
+  zone: string;
+  priority: number;
+  source: string;
+  ring: number;
+  last_run_at: string | null;
+  last_creations: number;
+  total_scanned: number;
+  consecutive_low_runs: number;
+  updated_at: string;
+};
+
+export type SectorRunStateRow = {
+  zone: string;
+  sector: string;
+  creations_found: number;
+  scanned_count: number;
+  run_at: string;
+};
+
 /** Persistance zones + rotation sectorielle pour le mode Creation Hunt. */
 export class CreationHuntRepository {
   constructor(private readonly db: sqlite3.Database) {}
@@ -199,14 +219,14 @@ export class CreationHuntRepository {
     return rows.every((r) => r.creations_found < lowThreshold);
   }
 
-  /** Secteurs les moins récemment scannés dans la zone, hors saturés. */
+  /** Secteurs les moins récemment scannés dans la zone, hors saturés. Retourne secteur + taux de conversion. */
   async pickRotatingSectors(
     zone: string,
     count: number,
     pool: readonly string[],
     lowThreshold: number,
     saturationRuns: number,
-  ): Promise<string[]> {
+  ): Promise<{ sector: string; convRate: number }[]> {
     const want = Math.max(1, Math.min(pool.length, count));
     type Cand = { sector: string; lastMs: number | null; saturated: boolean; convRate: number };
     const cands: Cand[] = [];
@@ -237,7 +257,6 @@ export class CreationHuntRepository {
     const eligible = cands.filter((c) => !c.saturated);
     const pool2 = eligible.length > 0 ? eligible : cands;
 
-    /* Trie : taux de conversion desc, puis moins récent en premier */
     const sorted = [...pool2].sort((a, b) => {
       if (a.lastMs === null && b.lastMs !== null) return -1;
       if (a.lastMs !== null && b.lastMs === null) return 1;
@@ -247,7 +266,128 @@ export class CreationHuntRepository {
       return (a.lastMs ?? 0) - (b.lastMs ?? 0);
     });
 
-    return sorted.slice(0, want).map((c) => c.sector);
+    return sorted.slice(0, want).map((c) => ({ sector: c.sector, convRate: c.convRate }));
+  }
+
+  /**
+   * Secteurs qui, toutes zones confondues, n'ont produit aucune création lors
+   * de leurs `minRuns` derniers runs dans la fenêtre `cutoffDays` jours.
+   */
+  async getGloballyStagnantSectors(
+    cutoffDays: number,
+    minRuns: number,
+    lowThreshold: number,
+  ): Promise<string[]> {
+    if (cutoffDays <= 0 || minRuns <= 0) return [];
+    const cutoff = new Date(Date.now() - cutoffDays * 24 * 3600 * 1000).toISOString();
+    const rows = await allRows<{ sector: string }>(
+      this.db,
+      `SELECT sector
+       FROM creation_hunt_sector_run
+       WHERE run_at >= ?
+       GROUP BY sector
+       HAVING COUNT(*) >= ? AND SUM(creations_found) < ?`,
+      [cutoff, minRuns, lowThreshold],
+    );
+    return rows.map((r) => r.sector);
+  }
+
+  /** Top N secteurs par taux de conversion sur les `days` derniers jours. */
+  async getTopSectorsByConvRate(
+    days: number,
+    topN: number,
+  ): Promise<{ sector: string; convRate: number; totalCreations: number; totalScanned: number }[]> {
+    if (days <= 0) return [];
+    const cutoff = new Date(Date.now() - days * 24 * 3600 * 1000).toISOString();
+    const rows = await allRows<{
+      sector: string;
+      total_c: number;
+      total_s: number;
+    }>(
+      this.db,
+      `SELECT sector,
+              SUM(creations_found) AS total_c,
+              SUM(scanned_count)   AS total_s
+       FROM creation_hunt_sector_run
+       WHERE run_at >= ?
+       GROUP BY sector
+       HAVING total_s > 0
+       ORDER BY CAST(total_c AS REAL) / total_s DESC
+       LIMIT ?`,
+      [cutoff, topN],
+    );
+    return rows.map((r) => ({
+      sector: r.sector,
+      convRate: r.total_s > 0 ? r.total_c / r.total_s : 0,
+      totalCreations: r.total_c,
+      totalScanned: r.total_s,
+    }));
+  }
+
+  /** Résumé rapide : zones actives vs déprioritisées. */
+  async getZoneSummary(): Promise<{ active: number; stagnant: number }> {
+    const row = await getRow(
+      this.db,
+      `SELECT
+         SUM(CASE WHEN priority > 0 THEN 1 ELSE 0 END) AS active,
+         SUM(CASE WHEN priority <= 0 THEN 1 ELSE 0 END) AS stagnant
+       FROM creation_hunt_zone`,
+      [],
+    );
+    return {
+      active: typeof row?.active === 'number' ? row.active : 0,
+      stagnant: typeof row?.stagnant === 'number' ? row.stagnant : 0,
+    };
+  }
+
+  /** Exporte les zones + runs sectoriels récents pour snapshot JSON. */
+  async exportState(sectorRunDays: number): Promise<{ zones: ZoneStateRow[]; sectorRuns: SectorRunStateRow[] }> {
+    const zones = await allRows<ZoneStateRow>(
+      this.db,
+      `SELECT zone, priority, source, ring, last_run_at, last_creations,
+              total_scanned, consecutive_low_runs, updated_at
+       FROM creation_hunt_zone`,
+      [],
+    );
+    const cutoff =
+      sectorRunDays > 0
+        ? new Date(Date.now() - sectorRunDays * 24 * 3600 * 1000).toISOString()
+        : new Date(0).toISOString();
+    const sectorRuns = await allRows<SectorRunStateRow>(
+      this.db,
+      `SELECT zone, sector, creations_found, scanned_count, run_at
+       FROM creation_hunt_sector_run
+       WHERE run_at >= ?
+       ORDER BY id ASC`,
+      [cutoff],
+    );
+    return { zones, sectorRuns };
+  }
+
+  /** Importe l'état depuis un snapshot JSON si la DB est vide (après un miss de cache). */
+  async importStateIfEmpty(state: { zones: ZoneStateRow[]; sectorRuns: SectorRunStateRow[] }): Promise<void> {
+    const row = await getRow(this.db, `SELECT COUNT(*) AS cnt FROM creation_hunt_zone`, []);
+    const cnt = typeof row?.cnt === 'number' ? row.cnt : 0;
+    if (cnt > 0) return;
+
+    const now = new Date().toISOString();
+    for (const z of state.zones) {
+      await run(
+        this.db,
+        `INSERT OR IGNORE INTO creation_hunt_zone
+         (zone, priority, source, ring, last_run_at, last_creations, total_scanned, consecutive_low_runs, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [z.zone, z.priority, z.source, z.ring, z.last_run_at, z.last_creations, z.total_scanned, z.consecutive_low_runs, z.updated_at ?? now],
+      );
+    }
+    for (const sr of state.sectorRuns) {
+      await run(
+        this.db,
+        `INSERT INTO creation_hunt_sector_run (zone, sector, creations_found, scanned_count, run_at)
+         VALUES (?, ?, ?, ?, ?)`,
+        [sr.zone, sr.sector, sr.creations_found, sr.scanned_count, sr.run_at],
+      );
+    }
   }
 
   async recordZoneRun(

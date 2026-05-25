@@ -12,3 +12,16 @@ export function buildSeedSearchQuery(seedKeyword: string, locationLabel: string)
   const loc = locationLabel.trim();
   return [seed, loc].filter(Boolean).join(' ');
 }
+
+/**
+ * Deux variantes de requête pour un même secteur × zone.
+ * La seconde formule ("à <zone>") capte des libellés Maps que la forme simple manque.
+ */
+export function buildSeedSearchQueryVariants(
+  seedKeyword: string,
+  locationLabel: string,
+): readonly [string, string] {
+  const seed = seedKeyword.trim();
+  const loc = locationLabel.trim();
+  return [`${seed} ${loc}`, `${seed} à ${loc}`];
+}

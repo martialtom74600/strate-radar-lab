@@ -83,6 +83,12 @@ export type RunTelemetryPayload = {
   readonly creationHuntZones?: readonly string[];
   readonly creationHuntSectors?: readonly string[];
   readonly creationHuntExpansionRing?: number;
+  readonly creationHuntWeeklyStats?: {
+    readonly topSectors: readonly { readonly sector: string; readonly convRate: number }[];
+    readonly activeZones: number;
+    readonly stagnantZones: number;
+    readonly stagnantSectors: readonly string[];
+  };
 };
 
 function titleByPlaceKey(result: RadarPipelineResult): Map<string, string> {
@@ -319,6 +325,9 @@ export function buildRunTelemetry(args: {
       : {}),
     ...(result.creationHuntExpansionRing !== undefined
       ? { creationHuntExpansionRing: result.creationHuntExpansionRing }
+      : {}),
+    ...(result.creationHuntWeeklyStats !== undefined
+      ? { creationHuntWeeklyStats: result.creationHuntWeeklyStats }
       : {}),
   };
 }

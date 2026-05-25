@@ -1,5 +1,5 @@
 import type { AppConfig } from '../../config/index.js';
-import { buildSeedSearchQuery } from '../../config/categories.js';
+import { buildSeedSearchQueryVariants } from '../../config/categories.js';
 import type { GroqClient } from '../../services/groq/index.js';
 import { CreationHuntRepository } from './repository.js';
 import { CREATION_HUNT_SECTORS } from './sectors.js';
@@ -8,6 +8,8 @@ export type CreationHuntQuery = {
   readonly q: string;
   readonly zone: string;
   readonly sector: string;
+  /** Taux de conversion historique du secteur dans cette zone (créations / fiches scannées). */
+  readonly convRate: number;
 };
 
 export type CreationHuntWave = {
@@ -29,6 +31,8 @@ export type PlanCreationHuntArgs = {
   readonly anchorZones: readonly string[];
   readonly sectorsPerZone: number;
   readonly expansionRing: number;
+  /** Région / département passé à Groq pour contraindre l'expansion géo (optionnel). */
+  readonly geoRegion?: string;
 };
 
 function uniqueStrings(items: readonly string[]): string[] {
@@ -68,7 +72,7 @@ async function ensureZonesForRing(args: PlanCreationHuntArgs): Promise<string[]>
 
     let suggested: string[] = [];
     try {
-      suggested = await groq.suggestNeighborCities(expandFrom);
+      suggested = await groq.suggestNeighborCities(expandFrom, args.geoRegion);
     } catch {
       /* Groq indisponible — on travaille avec les zones déjà connues */
       break;
@@ -90,23 +94,40 @@ async function ensureZonesForRing(args: PlanCreationHuntArgs): Promise<string[]>
 export async function planCreationHuntWave(args: PlanCreationHuntArgs): Promise<CreationHuntPlan> {
   const { repo, sectorsPerZone, expansionRing, config } = args;
   const zones = await ensureZonesForRing(args);
+
+  /* Secteurs globalement stagnants (toutes zones) → exclus du pool ce run */
+  const stagnantSectors = new Set(
+    await repo.getGloballyStagnantSectors(
+      config.RADAR_CREATION_HUNT_STAGNANT_SECTOR_NIGHTS,
+      config.RADAR_CREATION_SATURATION_RUNS,
+      config.RADAR_CREATION_LOW_THRESHOLD,
+    ),
+  );
+  const activePool = CREATION_HUNT_SECTORS.filter((s) => !stagnantSectors.has(s));
+  const pool = activePool.length > 0 ? activePool : CREATION_HUNT_SECTORS;
+
   const waves: CreationHuntWave[] = [];
   const sectorsUsed: string[] = [];
 
   for (const zone of zones) {
-    const sectors = await repo.pickRotatingSectors(
+    const picked = await repo.pickRotatingSectors(
       zone,
       sectorsPerZone,
-      CREATION_HUNT_SECTORS,
+      pool,
       config.RADAR_CREATION_LOW_THRESHOLD,
       config.RADAR_CREATION_SATURATION_RUNS,
     );
-    const queries: CreationHuntQuery[] = sectors.map((sector) => ({
-      sector,
-      zone,
-      q: buildSeedSearchQuery(sector, zone),
-    }));
-    sectorsUsed.push(...sectors);
+
+    /* 2 variantes de requête par secteur → double les chances de trouver des fiches Maps */
+    const queries: CreationHuntQuery[] = picked.flatMap(({ sector, convRate }) => {
+      const [q1, q2] = buildSeedSearchQueryVariants(sector, zone);
+      return [
+        { sector, zone, q: q1, convRate },
+        { sector, zone, q: q2, convRate },
+      ];
+    });
+
+    sectorsUsed.push(...picked.map((p) => p.sector));
     if (queries.length > 0) {
       waves.push({ zone, queries });
     }

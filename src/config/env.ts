@@ -167,6 +167,10 @@ export type RawEnv = {
   readonly RADAR_CREATION_HUNT_ZONE_TTL_DAYS: number;
   /** Rétention des logs de runs secteur en SQLite (jours) — au-delà les lignes sont purgées. */
   readonly RADAR_CREATION_HUNT_DB_TTL_DAYS: number;
+  /** Région ou département à passer à Groq pour guider l'expansion géo (ex. « Haute-Savoie », « Alpes »). */
+  readonly RADAR_GEO_REGION: string | undefined;
+  /** Nombre de nuits consécutives à 0 création (toutes zones confondues) avant blocklist auto d'un secteur. */
+  readonly RADAR_CREATION_HUNT_STAGNANT_SECTOR_NIGHTS: number;
 };
 
 /** Quotas finaux après résolution legacy (70/30) ou défauts 15 / 5. */
@@ -286,6 +290,13 @@ function parseRawEnv(env: NodeJS.ProcessEnv): RawEnv {
       90,
       7,
       730,
+    ),
+    RADAR_GEO_REGION: optString(env.RADAR_GEO_REGION),
+    RADAR_CREATION_HUNT_STAGNANT_SECTOR_NIGHTS: coerceIntInRange(
+      env.RADAR_CREATION_HUNT_STAGNANT_SECTOR_NIGHTS,
+      7,
+      3,
+      30,
     ),
   };
 }

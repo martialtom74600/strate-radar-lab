@@ -128,6 +128,26 @@ export function buildTelegramReportSections(args: {
     `Refontes ignorées (non ingestées) : ${telemetry.ingest.skippedRefonteCount}`,
   ];
 
+  if (telemetry.creationHuntMode && telemetry.creationHuntWeeklyStats) {
+    const ws = telemetry.creationHuntWeeklyStats;
+    const topLine =
+      ws.topSectors.length > 0
+        ? ws.topSectors
+            .slice(0, 3)
+            .map((s) => `${s.sector} ${Math.round(s.convRate * 100)}%`)
+            .join(' · ')
+        : '—';
+    header.push(
+      '',
+      '—— PERF. 7 JOURS ——',
+      `Top secteurs : ${topLine}`,
+      `Zones actives : ${ws.activeZones} · stagnantes : ${ws.stagnantZones}`,
+      ...(ws.stagnantSectors.length > 0
+        ? [`Secteurs bloqués : ${ws.stagnantSectors.slice(0, 5).join(', ')}${ws.stagnantSectors.length > 5 ? ` +${ws.stagnantSectors.length - 5}` : ''}`]
+        : []),
+    );
+  }
+
   if (telemetry.ingest.successes.length > 0) {
     header.push('', 'Audits publiés :');
     for (const s of telemetry.ingest.successes) {

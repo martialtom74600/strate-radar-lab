@@ -16,7 +16,7 @@ export type GroqClient = {
   /** ~50 libellés courts de métiers / segments à fort ROI pour prospection Maps (FR). */
   readonly generateCampaignTradeCategories: () => Promise<string[]>;
   /** 3 villes limitrophes ou cohérentes commercialement avec l'ancrage (noms complets, France). */
-  readonly suggestNeighborCities: (anchorCity: string) => Promise<string[]>;
+  readonly suggestNeighborCities: (anchorCity: string, geoRegion?: string) => Promise<string[]>;
 };
 
 function extractJsonText(raw: string): string {
@@ -135,13 +135,20 @@ function buildCampaignCategoriesPrompt(): string {
   ].join('\n');
 }
 
-function buildNeighborCitiesPrompt(anchorCity: string): string {
+function buildNeighborCitiesPrompt(anchorCity: string, geoRegion?: string): string {
+  const regionHint =
+    geoRegion?.trim()
+      ? `Contrainte géographique : reste dans la région / département « ${geoRegion.trim()} » ou ses immédiates abords.`
+      : '';
   return [
-    `Ville d'ancrage : « ${anchorCity} » (France).`,
+    `Ville d\'ancrage : « ${anchorCity} » (France).`,
+    regionHint,
     'Propose exactement 3 autres villes françaises LIMITROPHES ou dans le même bassin économique immédiat, pertinentes pour prospection commerciale locale.',
     'Format : noms explicites avec pays si utile (ex. « Annecy, France »).',
     'Réponds par UN objet JSON : { "cities": string[] } avec exactement 3 chaînes, sans la ville d\'ancrage elle-même.',
-  ].join('\n');
+  ]
+    .filter((l) => l.length > 0)
+    .join('\n');
 }
 
 async function generateCampaignTradeCategoriesLive(config: AppConfig): Promise<string[]> {
@@ -180,7 +187,7 @@ async function generateCampaignTradeCategoriesLive(config: AppConfig): Promise<s
   });
 }
 
-async function suggestNeighborCitiesLive(config: AppConfig, anchorCity: string): Promise<string[]> {
+async function suggestNeighborCitiesLive(config: AppConfig, anchorCity: string, geoRegion?: string): Promise<string[]> {
   const apiKey = config.GROQ_API_KEY?.trim();
   if (!apiKey) {
     throw new StrateRadarError('CONFIG', 'GROQ_API_KEY manquant en mode réel');
@@ -199,7 +206,7 @@ async function suggestNeighborCitiesLive(config: AppConfig, anchorCity: string):
           role: 'system',
           content: 'Tu réponds uniquement par JSON valide selon les instructions utilisateur.',
         },
-        { role: 'user', content: buildNeighborCitiesPrompt(anchorCity) },
+        { role: 'user', content: buildNeighborCitiesPrompt(anchorCity, geoRegion) },
       ],
     });
 
@@ -230,7 +237,7 @@ export function createGroqClient(config: AppConfig): GroqClient {
           `sim_segment_prospect_${String(i + 1).padStart(2, '0')}`,
         );
       },
-      async suggestNeighborCities(anchorCity: string) {
+      async suggestNeighborCities(anchorCity: string, _geoRegion?: string) {
         const a = anchorCity.trim().toLowerCase();
         const mock = [
           `Sim — couronne A de ${anchorCity}`,
@@ -249,8 +256,8 @@ export function createGroqClient(config: AppConfig): GroqClient {
     generateCampaignTradeCategories() {
       return generateCampaignTradeCategoriesLive(config);
     },
-    suggestNeighborCities(anchorCity: string) {
-      return suggestNeighborCitiesLive(config, anchorCity);
+    suggestNeighborCities(anchorCity: string, geoRegion?: string) {
+      return suggestNeighborCitiesLive(config, anchorCity, geoRegion);
     },
   };
 }

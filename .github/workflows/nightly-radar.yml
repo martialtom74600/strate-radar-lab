@@ -19,7 +19,7 @@ jobs:
   radar:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -63,6 +63,10 @@ jobs:
           RADAR_MAX_WEB_SEARCH_REQUESTS_PER_RUN: ${{ vars.RADAR_MAX_WEB_SEARCH_REQUESTS_PER_RUN || '120' }}
           RADAR_TREND_DRIVEN: 'false'
           TARGET_CITIES: ${{ vars.TARGET_CITIES }}
+          # Région / département pour contraindre l'expansion Groq (ex. "Haute-Savoie")
+          RADAR_GEO_REGION: ${{ vars.RADAR_GEO_REGION }}
+          # Nuits sans création (toutes zones) avant blocklist auto d'un secteur (défaut 7)
+          RADAR_CREATION_HUNT_STAGNANT_SECTOR_NIGHTS: ${{ vars.RADAR_CREATION_HUNT_STAGNANT_SECTOR_NIGHTS || '7' }}
           RADAR_VERBOSE: 'false'
           # Vitrine Strate Studio — POST https://www.strate-studio.fr/api/audits/ingest (même secret que la route Next)
           RADAR_INGEST_SECRET: ${{ secrets.RADAR_INGEST_SECRET }}
@@ -70,6 +74,15 @@ jobs:
           # true ponctuellement : log du corps de réponse en cas d'échec ingest (diagnostic 500)
           RADAR_INGEST_DEBUG: ${{ vars.RADAR_INGEST_DEBUG || 'false' }}
         run: npm run dev
+
+      - name: Commiter le snapshot Creation Hunt (survie cache miss)
+        if: success() && hashFiles('data/creation-hunt-state.json') != ''
+        run: |
+          git config user.email "radar-bot@strate-studio.fr"
+          git config user.name "Strate Radar Bot"
+          git add data/creation-hunt-state.json
+          git diff --cached --quiet || git commit -m "chore(radar): snapshot creation-hunt state [skip ci]"
+          git push
 
       - name: Enregistrer la SQLite dans le cache Actions
         if: success() && hashFiles('data/strate-radar.sqlite') != ''
