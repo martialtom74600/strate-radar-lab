@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "exportedAt": "2026-05-25T10:43:14.381Z",
+  "zones": [
+    {
+      "zone": "Annecy, France",
+      "priority": 200,
+      "source": "anchor",
+      "ring": 0,
+      "last_run_at": "2026-05-25T10:42:24.517Z",
+      "last_creations": 5,
+      "total_scanned": 41,
+      "consecutive_low_runs": 0,
+      "updated_at": "2026-05-25T10:42:24.517Z"
+    }
+  ],
+  "sectorRuns": [
+    {
+      "zone": "Annecy, France",
+      "sector": "Artisan",
+      "creations_found": 5,
+      "scanned_count": 41,
+      "run_at": "2026-05-25T10:42:24.517Z"
+    }
+  ]
+}
