@@ -83,6 +83,7 @@ import {
   migrateCreationHuntTables,
   planCreationHuntWave,
   planNextCreationHuntExpansion,
+  resolveAnchorZones,
   type CreationHuntPlan,
 } from '../lib/creation-hunt/index.js';
 
@@ -539,7 +540,7 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     scoreNearMisses.push({
       name: serp.title,
       strateScore: null,
-      threshold: STRATE_DIAMOND_THRESHOLD,
+      threshold: config.RADAR_DIAMOND_THRESHOLD,
       displayUrl: resolution.displayUrl,
       reason: 'Présence web insuffisante — ni site owner ni intermédiaire qualifiant',
     });
@@ -594,18 +595,18 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     },
   });
 
-  if (matrixOut.strate.total < STRATE_DIAMOND_THRESHOLD) {
+  if (matrixOut.strate.total < config.RADAR_DIAMOND_THRESHOLD) {
     await repo.recordPlaceOutcome(placeKey, 'disqualified');
     scoreNearMisses.push({
       name: serp.title,
       strateScore: matrixOut.strate.total,
-      threshold: STRATE_DIAMOND_THRESHOLD,
+      threshold: config.RADAR_DIAMOND_THRESHOLD,
       displayUrl: resolved.displayUrl,
       reason: summarizeStrateNearMiss(matrixOut.strate),
     });
     radarVerbose(
       config,
-      `${progressTag} ${truncateTitle(serp.title)} · ○ Strate ${matrixOut.strate.total}/100 < seuil ${STRATE_DIAMOND_THRESHOLD}`,
+      `${progressTag} ${truncateTitle(serp.title)} · ○ Strate ${matrixOut.strate.total}/100 < seuil ${config.RADAR_DIAMOND_THRESHOLD}`,
     );
     return null;
   }
@@ -835,11 +836,30 @@ export async function runRadarPipeline(
   if (creationHuntMode) {
     await migrateCreationHuntTables(db);
     creationHuntRepo = new CreationHuntRepository(db);
+
+    /* Maintenance SQLite : réactivation zones stales + purge anciens runs */
+    const reactivated = await creationHuntRepo.reactivateStaleZones(
+      config.RADAR_CREATION_HUNT_ZONE_TTL_DAYS,
+    );
+    const pruned = await creationHuntRepo.pruneOldSectorRuns(config.RADAR_CREATION_HUNT_DB_TTL_DAYS);
+    if (reactivated > 0 || pruned > 0) {
+      radarVerbose(
+        config,
+        `   🔧 Maintenance SQLite · ${reactivated} zone(s) réactivée(s) · ${pruned} run(s) secteur purgé(s)`,
+      );
+    }
+
+    const anchorZones = resolveAnchorZones(config);
+    radarVerbose(
+      config,
+      `   → ${anchorZones.length} ancre(s) : ${anchorZones.join(' | ')}`,
+    );
+
     creationHuntPlan = await planCreationHuntWave({
       config,
       repo: creationHuntRepo,
       groq: groqClient,
-      anchorZone: options.search.location ?? config.RADAR_SEARCH_LOCATION,
+      anchorZones,
       sectorsPerZone: config.RADAR_CREATION_HUNT_SECTORS_PER_ZONE,
       expansionRing: 0,
     });
@@ -872,6 +892,8 @@ export async function runRadarPipeline(
   const gatekeeperExclusions: GatekeeperExclusion[] = [];
   const scoreNearMisses: ScoreNearMiss[] = [];
   const webSearchGateBlocked = { count: 0 };
+  /** Compteur de fiches scannées par clé zone|secteur — pour calcul taux de conversion. */
+  const huntSectorScannedCounts = new Map<string, number>();
   const quotaState: LeadQuotaState = {
     creationsFound: 0,
     refontesFound: 0,
@@ -1006,6 +1028,11 @@ export async function runRadarPipeline(
           totalBusinessesScanned += 1;
           const progressTag = `[#${totalBusinessesScanned} · req. ${serpBudget.used}/${placesRequestsMax}]`;
 
+          if (creationHuntMode && seedLabel !== undefined) {
+            const scanKey = `${cityLocation}|${seedLabel}`;
+            huntSectorScannedCounts.set(scanKey, (huntSectorScannedCounts.get(scanKey) ?? 0) + 1);
+          }
+
           const line = await processLocalRow({
             config,
             serp: row,
@@ -1084,7 +1111,7 @@ export async function runRadarPipeline(
       config,
       repo: creationHuntRepo!,
       groq: groqClient,
-      anchorZone: options.search.location ?? config.RADAR_SEARCH_LOCATION,
+      anchorZones: resolveAnchorZones(config),
       sectorsPerZone: config.RADAR_CREATION_HUNT_SECTORS_PER_ZONE,
       expansionRing: creationHuntExpansionRing,
       currentRing: creationHuntExpansionRing,
@@ -1128,19 +1155,33 @@ export async function runRadarPipeline(
   }
 
   if (creationHuntRepo !== undefined) {
-    for (const [key, count] of huntSectorStats) {
+    const allSectorKeys = new Set([...huntSectorStats.keys(), ...huntSectorScannedCounts.keys()]);
+    for (const key of allSectorKeys) {
       const sep = key.indexOf('|');
       if (sep <= 0) continue;
       const zone = key.slice(0, sep);
       const sector = key.slice(sep + 1);
-      await creationHuntRepo.recordSectorRun(zone, sector, count, generatedAtIso);
+      const creationsCount = huntSectorStats.get(key) ?? 0;
+      const scannedCount = huntSectorScannedCounts.get(key) ?? 0;
+      await creationHuntRepo.recordSectorRun(zone, sector, creationsCount, scannedCount, generatedAtIso);
     }
     for (const zone of huntZonesProcessed) {
       let zoneCreations = 0;
-      for (const [key, count] of huntSectorStats) {
-        if (key.startsWith(`${zone}|`)) zoneCreations += count;
+      let zoneTotalScanned = 0;
+      for (const key of allSectorKeys) {
+        if (key.startsWith(`${zone}|`)) {
+          zoneCreations += huntSectorStats.get(key) ?? 0;
+          zoneTotalScanned += huntSectorScannedCounts.get(key) ?? 0;
+        }
       }
-      await creationHuntRepo.recordZoneRun(zone, zoneCreations, generatedAtIso);
+      await creationHuntRepo.recordZoneRun(
+        zone,
+        zoneCreations,
+        zoneTotalScanned,
+        generatedAtIso,
+        config.RADAR_CREATION_LOW_THRESHOLD,
+        config.RADAR_CREATION_SATURATION_RUNS,
+      );
     }
   }
 

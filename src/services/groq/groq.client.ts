@@ -15,7 +15,7 @@ export type GroqClient = {
   ) => Promise<ConversionBrochureAnalysis>;
   /** ~50 libellés courts de métiers / segments à fort ROI pour prospection Maps (FR). */
   readonly generateCampaignTradeCategories: () => Promise<string[]>;
-  /** 3 villes limitrophes ou cohérentes commercialement avec l’ancrage (noms complets, France). */
+  /** 3 villes limitrophes ou cohérentes commercialement avec l'ancrage (noms complets, France). */
   readonly suggestNeighborCities: (anchorCity: string) => Promise<string[]>;
 };
 
@@ -53,7 +53,7 @@ function parseConversionBrochureFromContent(raw: string): ConversionBrochureAnal
 function buildConversionBrochureSystemPrompt(): string {
   return [
     'Tu es expert CRO et acquisition locale pour Strate Studio.',
-    'Tu reçois un extrait HTML (balises et texte) d’une page d’entreprise.',
+    'Tu reçois un extrait HTML (balises et texte) d\'une page d\'entreprise.',
     'Indique si le site ressemble à une simple vitrine / plaquette sans intention de conversion nette (ex. pas de CTA clairs : appeler, réserver, devis, formulaire, RDV).',
     'Réponds en français par UN objet JSON : deadBrochureSite (boolean), briefReason (string, une phrase courte, factuelle).',
   ].join('\n');
@@ -129,7 +129,7 @@ function parseLabeledStringArray(raw: string, objectKey: string): string[] {
 function buildCampaignCategoriesPrompt(): string {
   return [
     'Tu es stratège acquisition locale pour une agence web en France.',
-    'Produis exactement 50 libellés TRÈS COURTS (2 à 5 mots max chacun) de types d’entreprises / métiers à fort ROI pour la prospection Google Maps.',
+    'Produis exactement 50 libellés TRÈS COURTS (2 à 5 mots max chacun) de types d\'entreprises / métiers à fort ROI pour la prospection Google Maps.',
     'Couvre artisans, santé (hors urgences), restauration, services B2B et autres niches rentables ; pas de doublons sémantiques.',
     'Réponds en français par UN objet JSON : { "categories": string[] } avec exactement 50 chaînes.',
   ].join('\n');
@@ -137,10 +137,10 @@ function buildCampaignCategoriesPrompt(): string {
 
 function buildNeighborCitiesPrompt(anchorCity: string): string {
   return [
-    `Ville d’ancrage : « ${anchorCity} » (France).`,
+    `Ville d'ancrage : « ${anchorCity} » (France).`,
     'Propose exactement 3 autres villes françaises LIMITROPHES ou dans le même bassin économique immédiat, pertinentes pour prospection commerciale locale.',
     'Format : noms explicites avec pays si utile (ex. « Annecy, France »).',
-    'Réponds par UN objet JSON : { "cities": string[] } avec exactement 3 chaînes, sans la ville d’ancrage elle-même.',
+    'Réponds par UN objet JSON : { "cities": string[] } avec exactement 3 chaînes, sans la ville d\'ancrage elle-même.',
   ].join('\n');
 }
 
@@ -212,11 +212,8 @@ async function suggestNeighborCitiesLive(config: AppConfig, anchorCity: string):
     const uniq = [...new Set(list.map((c) => c.trim()).filter((c) => c.length > 0))].filter(
       (c) => c.toLowerCase() !== normalizedAnchor,
     );
-    if (uniq.length < 3) {
-      throw new StrateRadarError(
-        'GROQ_CAMPAIGN',
-        'Groq doit proposer au moins 3 villes distinctes de l’ancrage',
-      );
+    if (uniq.length === 0) {
+      throw new StrateRadarError('GROQ_CAMPAIGN', 'Groq n\'a proposé aucune ville limitrophe valide');
     }
     return uniq.slice(0, 3);
   });

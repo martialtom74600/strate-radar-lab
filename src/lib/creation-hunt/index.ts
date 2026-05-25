@@ -7,6 +7,7 @@ export {
   describeCreationHuntPlan,
   planCreationHuntWave,
   planNextCreationHuntExpansion,
+  resolveAnchorZones,
   type CreationHuntPlan,
   type CreationHuntQuery,
   type CreationHuntWave,

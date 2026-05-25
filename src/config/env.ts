@@ -157,6 +157,16 @@ export type RawEnv = {
   readonly RADAR_CREATION_HUNT_SECTORS_PER_ZONE: number;
   /** Expansions géographiques max (anneaux Groq) si quota création non atteint. */
   readonly RADAR_CREATION_HUNT_MAX_EXPANSIONS: number;
+  /** Seuil matrice Strate pour qualifier un Diamant Refonte (défaut 50/100). */
+  readonly RADAR_DIAMOND_THRESHOLD: number;
+  /** Nombre max de créations en-dessous duquel un run zone est considéré « pauvre » (saturation). */
+  readonly RADAR_CREATION_LOW_THRESHOLD: number;
+  /** Nombre de runs pauvres consécutifs avant déprioritisation d'une zone ou d'un secteur. */
+  readonly RADAR_CREATION_SATURATION_RUNS: number;
+  /** Jours d'inactivité avant réactivation automatique d'une zone déprioritisée (0 = off). */
+  readonly RADAR_CREATION_HUNT_ZONE_TTL_DAYS: number;
+  /** Rétention des logs de runs secteur en SQLite (jours) — au-delà les lignes sont purgées. */
+  readonly RADAR_CREATION_HUNT_DB_TTL_DAYS: number;
 };
 
 /** Quotas finaux après résolution legacy (70/30) ou défauts 15 / 5. */
@@ -261,6 +271,21 @@ function parseRawEnv(env: NodeJS.ProcessEnv): RawEnv {
       4,
       0,
       12,
+    ),
+    RADAR_DIAMOND_THRESHOLD: coerceIntInRange(env.RADAR_DIAMOND_THRESHOLD, 50, 20, 90),
+    RADAR_CREATION_LOW_THRESHOLD: coerceIntInRange(env.RADAR_CREATION_LOW_THRESHOLD, 2, 0, 20),
+    RADAR_CREATION_SATURATION_RUNS: coerceIntInRange(env.RADAR_CREATION_SATURATION_RUNS, 3, 1, 10),
+    RADAR_CREATION_HUNT_ZONE_TTL_DAYS: coerceIntInRange(
+      env.RADAR_CREATION_HUNT_ZONE_TTL_DAYS,
+      14,
+      0,
+      365,
+    ),
+    RADAR_CREATION_HUNT_DB_TTL_DAYS: coerceIntInRange(
+      env.RADAR_CREATION_HUNT_DB_TTL_DAYS,
+      90,
+      7,
+      730,
     ),
   };
 }
