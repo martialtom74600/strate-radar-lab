@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "exportedAt": "2026-05-26T04:29:34.793Z",
+  "exportedAt": "2026-05-27T04:37:35.842Z",
   "zones": [
     {
       "zone": "Annecy, France",
       "priority": 200,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-05-26T04:29:14.765Z",
+      "last_run_at": "2026-05-27T04:33:57.496Z",
       "last_creations": 5,
-      "total_scanned": 240,
+      "total_scanned": 409,
       "consecutive_low_runs": 0,
-      "updated_at": "2026-05-26T04:29:14.765Z"
+      "updated_at": "2026-05-27T04:33:57.496Z"
     }
   ],
   "sectorRuns": [
@@ -42,6 +42,27 @@
       "creations_found": 5,
       "scanned_count": 21,
       "run_at": "2026-05-26T04:29:14.765Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Électricien",
+      "creations_found": 1,
+      "scanned_count": 88,
+      "run_at": "2026-05-27T04:33:57.496Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Plombier",
+      "creations_found": 3,
+      "scanned_count": 79,
+      "run_at": "2026-05-27T04:33:57.496Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Paysagiste",
+      "creations_found": 1,
+      "scanned_count": 2,
+      "run_at": "2026-05-27T04:33:57.496Z"
     }
   ]
 }
