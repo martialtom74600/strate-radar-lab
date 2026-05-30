@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "exportedAt": "2026-05-29T04:38:49.777Z",
+  "exportedAt": "2026-05-30T04:28:30.440Z",
   "zones": [
     {
       "zone": "Annecy, France",
       "priority": 200,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-05-29T04:32:41.795Z",
+      "last_run_at": "2026-05-30T04:25:36.194Z",
       "last_creations": 5,
-      "total_scanned": 986,
+      "total_scanned": 1115,
       "consecutive_low_runs": 0,
-      "updated_at": "2026-05-29T04:32:41.795Z"
+      "updated_at": "2026-05-30T04:25:36.194Z"
     }
   ],
   "sectorRuns": [
@@ -119,6 +119,27 @@
       "creations_found": 2,
       "scanned_count": 18,
       "run_at": "2026-05-29T04:32:41.795Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Carreleur",
+      "creations_found": 3,
+      "scanned_count": 91,
+      "run_at": "2026-05-30T04:25:36.194Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Serrurier",
+      "creations_found": 0,
+      "scanned_count": 20,
+      "run_at": "2026-05-30T04:25:36.194Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Orthodontiste",
+      "creations_found": 2,
+      "scanned_count": 18,
+      "run_at": "2026-05-30T04:25:36.194Z"
     }
   ]
 }
