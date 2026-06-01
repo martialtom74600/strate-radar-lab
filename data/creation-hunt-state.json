@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "exportedAt": "2026-05-31T04:34:49.738Z",
+  "exportedAt": "2026-06-01T04:37:06.793Z",
   "zones": [
     {
       "zone": "Annecy, France",
       "priority": 200,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-05-31T04:34:19.075Z",
+      "last_run_at": "2026-06-01T04:36:54.212Z",
       "last_creations": 5,
-      "total_scanned": 1140,
+      "total_scanned": 1159,
       "consecutive_low_runs": 0,
-      "updated_at": "2026-05-31T04:34:19.075Z"
+      "updated_at": "2026-06-01T04:36:54.212Z"
     }
   ],
   "sectorRuns": [
@@ -147,6 +147,13 @@
       "creations_found": 5,
       "scanned_count": 25,
       "run_at": "2026-05-31T04:34:19.075Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Chiropracteur",
+      "creations_found": 5,
+      "scanned_count": 19,
+      "run_at": "2026-06-01T04:36:54.212Z"
     }
   ]
 }
