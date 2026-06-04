@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "exportedAt": "2026-06-03T04:35:55.007Z",
+  "exportedAt": "2026-06-04T04:44:01.241Z",
   "zones": [
     {
       "zone": "Annecy, France",
       "priority": 200,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-06-03T04:35:08.905Z",
+      "last_run_at": "2026-06-04T04:34:32.098Z",
       "last_creations": 5,
-      "total_scanned": 1212,
+      "total_scanned": 1578,
       "consecutive_low_runs": 0,
-      "updated_at": "2026-06-03T04:35:08.905Z"
+      "updated_at": "2026-06-04T04:34:32.098Z"
     }
   ],
   "sectorRuns": [
@@ -168,6 +168,41 @@
       "creations_found": 5,
       "scanned_count": 31,
       "run_at": "2026-06-03T04:35:08.905Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Opticien",
+      "creations_found": 2,
+      "scanned_count": 107,
+      "run_at": "2026-06-04T04:34:32.098Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Géomètre",
+      "creations_found": 0,
+      "scanned_count": 32,
+      "run_at": "2026-06-04T04:34:32.098Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Ingénieur",
+      "creations_found": 0,
+      "scanned_count": 120,
+      "run_at": "2026-06-04T04:34:32.098Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Sécurité",
+      "creations_found": 0,
+      "scanned_count": 86,
+      "run_at": "2026-06-04T04:34:32.098Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Nettoyage",
+      "creations_found": 3,
+      "scanned_count": 21,
+      "run_at": "2026-06-04T04:34:32.098Z"
     }
   ]
 }
