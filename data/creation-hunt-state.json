@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "exportedAt": "2026-06-04T04:44:01.241Z",
+  "exportedAt": "2026-06-05T04:44:36.045Z",
   "zones": [
     {
       "zone": "Annecy, France",
       "priority": 200,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-06-04T04:34:32.098Z",
+      "last_run_at": "2026-06-05T04:33:31.836Z",
       "last_creations": 5,
-      "total_scanned": 1578,
+      "total_scanned": 1961,
       "consecutive_low_runs": 0,
-      "updated_at": "2026-06-04T04:34:32.098Z"
+      "updated_at": "2026-06-05T04:33:31.836Z"
     }
   ],
   "sectorRuns": [
@@ -203,6 +203,48 @@
       "creations_found": 3,
       "scanned_count": 21,
       "run_at": "2026-06-04T04:34:32.098Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Déménageur",
+      "creations_found": 0,
+      "scanned_count": 81,
+      "run_at": "2026-06-05T04:33:31.836Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Traiteur",
+      "creations_found": 1,
+      "scanned_count": 89,
+      "run_at": "2026-06-05T04:33:31.836Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Conciergerie",
+      "creations_found": 0,
+      "scanned_count": 66,
+      "run_at": "2026-06-05T04:33:31.836Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Parapente",
+      "creations_found": 0,
+      "scanned_count": 61,
+      "run_at": "2026-06-05T04:33:31.836Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Funèbres",
+      "creations_found": 0,
+      "scanned_count": 39,
+      "run_at": "2026-06-05T04:33:31.836Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Carrosserie",
+      "creations_found": 4,
+      "scanned_count": 47,
+      "run_at": "2026-06-05T04:33:31.836Z"
     }
   ]
 }
