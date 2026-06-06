@@ -2,12 +2,56 @@ export type WebsitePresenceStatus = 'owner_site' | 'presence_only' | 'none';
 
 export type WebsiteUrlClass = 'owner' | 'presence' | 'invalid';
 
+export type PresencePainFamily =
+  | 'health_booking'
+  | 'beauty_booking'
+  | 'restaurant_booking'
+  | 'hospitality_booking'
+  | 'social'
+  | 'directory'
+  | 'maps'
+  | 'messaging'
+  | 'marketplace';
+
+export type PresencePlatformTraits = {
+  readonly bookingGate: boolean;
+  readonly feudalDependency: boolean;
+};
+
 export type ClassifiedWebsiteUrl = {
   readonly urlClass: WebsiteUrlClass;
   readonly displayUrl: string;
   readonly normalizedUrl: string;
   /** Libellé plateforme si `presence` (ex. Doctolib). */
   readonly platformLabel: string | null;
+  readonly painFamily: PresencePainFamily | null;
+  readonly traits: PresencePlatformTraits | null;
+};
+
+export type PresenceSkipPolicy = 'booking_platforms' | 'all_presence' | 'feudal_booking' | 'off';
+
+export const DEFAULT_PRESENCE_SKIP_POLICY: PresenceSkipPolicy = 'booking_platforms';
+
+const BOOKING_PAIN_FAMILIES: ReadonlySet<PresencePainFamily> = new Set([
+  'health_booking',
+  'beauty_booking',
+  'restaurant_booking',
+  'hospitality_booking',
+]);
+
+const DIRECTORY_TRAITS: PresencePlatformTraits = {
+  bookingGate: false,
+  feudalDependency: false,
+};
+
+const SOCIAL_TRAITS: PresencePlatformTraits = {
+  bookingGate: false,
+  feudalDependency: false,
+};
+
+const BOOKING_TRAITS: PresencePlatformTraits = {
+  bookingGate: true,
+  feudalDependency: true,
 };
 
 function normalizeProspectUrl(raw: string): string | null {
@@ -44,56 +88,60 @@ function toAbsoluteHttpUrl(raw: string): string | null {
 type PlatformRoot = {
   readonly root: string;
   readonly label: string;
+  readonly painFamily: PresencePainFamily;
+  readonly traits: PresencePlatformTraits;
 };
 
 /** Réseaux sociaux, annuaires et plateformes de prise de rendez-vous / réservation. */
 const PRESENCE_PLATFORM_ROOTS: readonly PlatformRoot[] = [
-  { root: 'facebook.com', label: 'Facebook' },
-  { root: 'fb.com', label: 'Facebook' },
-  { root: 'instagram.com', label: 'Instagram' },
-  { root: 'linkedin.com', label: 'LinkedIn' },
-  { root: 'twitter.com', label: 'X / Twitter' },
-  { root: 'x.com', label: 'X / Twitter' },
-  { root: 'tiktok.com', label: 'TikTok' },
-  { root: 'pinterest.com', label: 'Pinterest' },
-  { root: 'youtube.com', label: 'YouTube' },
-  { root: 'youtu.be', label: 'YouTube' },
-  { root: 'snapchat.com', label: 'Snapchat' },
-  { root: 'threads.net', label: 'Threads' },
-  { root: 'linktr.ee', label: 'Linktree' },
-  { root: 'pagesjaunes.fr', label: 'PagesJaunes' },
-  { root: 'pagesjaunes.com', label: 'PagesJaunes' },
-  { root: 'yelp.com', label: 'Yelp' },
-  { root: 'yelp.fr', label: 'Yelp' },
-  { root: 'yelp.ca', label: 'Yelp' },
-  { root: 'foursquare.com', label: 'Foursquare' },
-  { root: 'mappy.com', label: 'Mappy' },
-  { root: 'waze.com', label: 'Waze' },
-  { root: 'wa.me', label: 'WhatsApp' },
-  { root: 'business.google.com', label: 'Google Business' },
-  { root: 'g.page', label: 'Google Business' },
-  { root: 'doctolib.fr', label: 'Doctolib' },
-  { root: 'doctolib.com', label: 'Doctolib' },
-  { root: 'planity.com', label: 'Planity' },
-  { root: 'maiia.com', label: 'Maiia' },
-  { root: 'keldoc.com', label: 'Keldoc' },
-  { root: 'lafourchette.com', label: 'TheFork' },
-  { root: 'thefork.com', label: 'TheFork' },
-  { root: 'thefork.fr', label: 'TheFork' },
-  { root: 'opentable.com', label: 'OpenTable' },
-  { root: 'opentable.fr', label: 'OpenTable' },
-  { root: 'resy.com', label: 'Resy' },
-  { root: 'maisonsmedicale.com', label: 'MaisonsMedicale.com' },
-  { root: 'doctoranytime.fr', label: 'DoctorAnytime' },
-  { root: 'doctoralia.fr', label: 'Doctoralia' },
-  { root: 'zocdoc.com', label: 'Zocdoc' },
-  { root: 'booking.com', label: 'Booking.com' },
-  { root: 'hotels.com', label: 'Hotels.com' },
-  { root: 'airbnb.com', label: 'Airbnb' },
-  { root: 'airbnb.fr', label: 'Airbnb' },
-  { root: 'deliveroo.fr', label: 'Deliveroo' },
-  { root: 'ubereats.com', label: 'Uber Eats' },
-  { root: 'just-eat.fr', label: 'Just Eat' },
+  { root: 'facebook.com', label: 'Facebook', painFamily: 'social', traits: SOCIAL_TRAITS },
+  { root: 'fb.com', label: 'Facebook', painFamily: 'social', traits: SOCIAL_TRAITS },
+  { root: 'instagram.com', label: 'Instagram', painFamily: 'social', traits: SOCIAL_TRAITS },
+  { root: 'linkedin.com', label: 'LinkedIn', painFamily: 'social', traits: SOCIAL_TRAITS },
+  { root: 'twitter.com', label: 'X / Twitter', painFamily: 'social', traits: SOCIAL_TRAITS },
+  { root: 'x.com', label: 'X / Twitter', painFamily: 'social', traits: SOCIAL_TRAITS },
+  { root: 'tiktok.com', label: 'TikTok', painFamily: 'social', traits: SOCIAL_TRAITS },
+  { root: 'pinterest.com', label: 'Pinterest', painFamily: 'social', traits: SOCIAL_TRAITS },
+  { root: 'youtube.com', label: 'YouTube', painFamily: 'social', traits: SOCIAL_TRAITS },
+  { root: 'youtu.be', label: 'YouTube', painFamily: 'social', traits: SOCIAL_TRAITS },
+  { root: 'snapchat.com', label: 'Snapchat', painFamily: 'social', traits: SOCIAL_TRAITS },
+  { root: 'threads.net', label: 'Threads', painFamily: 'social', traits: SOCIAL_TRAITS },
+  { root: 'linktr.ee', label: 'Linktree', painFamily: 'social', traits: SOCIAL_TRAITS },
+  { root: 'pagesjaunes.fr', label: 'PagesJaunes', painFamily: 'directory', traits: DIRECTORY_TRAITS },
+  { root: 'pagesjaunes.com', label: 'PagesJaunes', painFamily: 'directory', traits: DIRECTORY_TRAITS },
+  { root: 'yelp.com', label: 'Yelp', painFamily: 'directory', traits: DIRECTORY_TRAITS },
+  { root: 'yelp.fr', label: 'Yelp', painFamily: 'directory', traits: DIRECTORY_TRAITS },
+  { root: 'yelp.ca', label: 'Yelp', painFamily: 'directory', traits: DIRECTORY_TRAITS },
+  { root: 'foursquare.com', label: 'Foursquare', painFamily: 'directory', traits: DIRECTORY_TRAITS },
+  { root: 'mappy.com', label: 'Mappy', painFamily: 'directory', traits: DIRECTORY_TRAITS },
+  { root: 'waze.com', label: 'Waze', painFamily: 'maps', traits: SOCIAL_TRAITS },
+  { root: 'wa.me', label: 'WhatsApp', painFamily: 'messaging', traits: SOCIAL_TRAITS },
+  { root: 'business.google.com', label: 'Google Business', painFamily: 'maps', traits: SOCIAL_TRAITS },
+  { root: 'g.page', label: 'Google Business', painFamily: 'maps', traits: SOCIAL_TRAITS },
+  { root: 'doctolib.fr', label: 'Doctolib', painFamily: 'health_booking', traits: BOOKING_TRAITS },
+  { root: 'doctolib.com', label: 'Doctolib', painFamily: 'health_booking', traits: BOOKING_TRAITS },
+  { root: 'planity.com', label: 'Planity', painFamily: 'beauty_booking', traits: BOOKING_TRAITS },
+  { root: 'treatwell.fr', label: 'Treatwell', painFamily: 'beauty_booking', traits: BOOKING_TRAITS },
+  { root: 'treatwell.com', label: 'Treatwell', painFamily: 'beauty_booking', traits: BOOKING_TRAITS },
+  { root: 'maiia.com', label: 'Maiia', painFamily: 'health_booking', traits: BOOKING_TRAITS },
+  { root: 'keldoc.com', label: 'Keldoc', painFamily: 'health_booking', traits: BOOKING_TRAITS },
+  { root: 'lafourchette.com', label: 'TheFork', painFamily: 'restaurant_booking', traits: BOOKING_TRAITS },
+  { root: 'thefork.com', label: 'TheFork', painFamily: 'restaurant_booking', traits: BOOKING_TRAITS },
+  { root: 'thefork.fr', label: 'TheFork', painFamily: 'restaurant_booking', traits: BOOKING_TRAITS },
+  { root: 'opentable.com', label: 'OpenTable', painFamily: 'restaurant_booking', traits: BOOKING_TRAITS },
+  { root: 'opentable.fr', label: 'OpenTable', painFamily: 'restaurant_booking', traits: BOOKING_TRAITS },
+  { root: 'resy.com', label: 'Resy', painFamily: 'restaurant_booking', traits: BOOKING_TRAITS },
+  { root: 'maisonsmedicale.com', label: 'MaisonsMedicale.com', painFamily: 'health_booking', traits: BOOKING_TRAITS },
+  { root: 'doctoranytime.fr', label: 'DoctorAnytime', painFamily: 'health_booking', traits: BOOKING_TRAITS },
+  { root: 'doctoralia.fr', label: 'Doctoralia', painFamily: 'health_booking', traits: BOOKING_TRAITS },
+  { root: 'zocdoc.com', label: 'Zocdoc', painFamily: 'health_booking', traits: BOOKING_TRAITS },
+  { root: 'booking.com', label: 'Booking.com', painFamily: 'hospitality_booking', traits: BOOKING_TRAITS },
+  { root: 'hotels.com', label: 'Hotels.com', painFamily: 'hospitality_booking', traits: BOOKING_TRAITS },
+  { root: 'airbnb.com', label: 'Airbnb', painFamily: 'hospitality_booking', traits: BOOKING_TRAITS },
+  { root: 'airbnb.fr', label: 'Airbnb', painFamily: 'hospitality_booking', traits: BOOKING_TRAITS },
+  { root: 'deliveroo.fr', label: 'Deliveroo', painFamily: 'marketplace', traits: SOCIAL_TRAITS },
+  { root: 'ubereats.com', label: 'Uber Eats', painFamily: 'marketplace', traits: SOCIAL_TRAITS },
+  { root: 'just-eat.fr', label: 'Just Eat', painFamily: 'marketplace', traits: SOCIAL_TRAITS },
 ];
 
 /** Annuaires locaux / agrégateurs — jamais site propriétaire. */
@@ -156,17 +204,180 @@ function hostnameFromRaw(raw: string): string | null {
   }
 }
 
+function normalizePlatformLabel(label: string): string {
+  return label
+    .trim()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '');
+}
+
 function presencePlatformForHost(host: string): PlatformRoot | null {
   if (/tripadvisor\./i.test(host)) {
-    return { root: 'tripadvisor', label: 'Tripadvisor' };
+    return {
+      root: 'tripadvisor',
+      label: 'Tripadvisor',
+      painFamily: 'directory',
+      traits: DIRECTORY_TRAITS,
+    };
   }
   if (host === 'maps.google.com') {
-    return { root: 'maps.google.com', label: 'Google Maps' };
+    return {
+      root: 'maps.google.com',
+      label: 'Google Maps',
+      painFamily: 'maps',
+      traits: SOCIAL_TRAITS,
+    };
   }
   for (const p of PRESENCE_PLATFORM_ROOTS) {
     if (hostMatchesRoot(host, p.root)) return p;
   }
   return null;
+}
+
+function presencePlatformForLabel(label: string | null | undefined): PlatformRoot | null {
+  if (!label?.trim()) return null;
+  const norm = normalizePlatformLabel(label);
+  if (!norm) return null;
+  if (norm === 'annuaire') {
+    return {
+      root: 'annuaire',
+      label: 'Annuaire',
+      painFamily: 'directory',
+      traits: DIRECTORY_TRAITS,
+    };
+  }
+  return (
+    PRESENCE_PLATFORM_ROOTS.find(
+      (entry) =>
+        normalizePlatformLabel(entry.label) === norm ||
+        normalizePlatformLabel(entry.root.replace(/\.[a-z]+$/, '')) === norm,
+    ) ?? null
+  );
+}
+
+function presenceMetaFromClassified(classified: ClassifiedWebsiteUrl): {
+  readonly painFamily: PresencePainFamily | null;
+  readonly traits: PresencePlatformTraits | null;
+} {
+  if (classified.urlClass !== 'presence') {
+    return { painFamily: null, traits: null };
+  }
+  if (classified.painFamily !== null) {
+    return { painFamily: classified.painFamily, traits: classified.traits };
+  }
+  const byLabel = presencePlatformForLabel(classified.platformLabel);
+  if (byLabel) {
+    return { painFamily: byLabel.painFamily, traits: byLabel.traits };
+  }
+  return { painFamily: null, traits: null };
+}
+
+export function parsePresenceSkipPolicy(value: unknown): PresenceSkipPolicy {
+  const raw = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  if (
+    raw === 'booking_platforms' ||
+    raw === 'all_presence' ||
+    raw === 'feudal_booking' ||
+    raw === 'off'
+  ) {
+    return raw;
+  }
+  return DEFAULT_PRESENCE_SKIP_POLICY;
+}
+
+function shouldSkipClassifiedPresence(
+  classified: ClassifiedWebsiteUrl,
+  policy: PresenceSkipPolicy,
+): { readonly skip: boolean; readonly reason: string | null } {
+  if (policy === 'off' || classified.urlClass !== 'presence') {
+    return { skip: false, reason: null };
+  }
+
+  const meta = presenceMetaFromClassified(classified);
+  const label = classified.platformLabel ?? 'présence tierce';
+
+  if (policy === 'all_presence') {
+    return { skip: true, reason: `Présence tierce · ${label}` };
+  }
+
+  if (policy === 'feudal_booking') {
+    if (meta.traits?.bookingGate && meta.traits.feudalDependency) {
+      return { skip: true, reason: `Plateforme réservation · ${label}` };
+    }
+    return { skip: false, reason: null };
+  }
+
+  if (meta.painFamily !== null && BOOKING_PAIN_FAMILIES.has(meta.painFamily)) {
+    return { skip: true, reason: `Plateforme réservation · ${label}` };
+  }
+
+  return { skip: false, reason: null };
+}
+
+export type PresencePipelineSkipAssessment = {
+  readonly skip: boolean;
+  readonly reason: string | null;
+};
+
+/** Évalue si une URL ou un libellé de présence doit être exclu du pipeline. */
+export function assessPresencePipelineSkip(
+  input: {
+    readonly rawUrl?: string | null;
+    readonly platformLabel?: string | null;
+  },
+  policy: PresenceSkipPolicy = DEFAULT_PRESENCE_SKIP_POLICY,
+): PresencePipelineSkipAssessment {
+  const rawUrl = input.rawUrl?.trim();
+  if (rawUrl) {
+    const classified = classifyWebsiteUrl(rawUrl);
+    if (classified) return shouldSkipClassifiedPresence(classified, policy);
+  }
+
+  const platformLabel = input.platformLabel?.trim();
+  if (platformLabel) {
+    const entry = presencePlatformForLabel(platformLabel);
+    if (entry) {
+      return shouldSkipClassifiedPresence(
+        {
+          urlClass: 'presence',
+          displayUrl: rawUrl ?? '',
+          normalizedUrl: rawUrl ? (normalizeProspectUrl(rawUrl) ?? '') : '',
+          platformLabel: entry.label,
+          painFamily: entry.painFamily,
+          traits: entry.traits,
+        },
+        policy,
+      );
+    }
+  }
+
+  return { skip: false, reason: null };
+}
+
+/** Hosts de plateformes à ignorer en recherche web (dérivé du registre + politique). */
+export function isPipelineSkippedPresenceHost(
+  hostname: string,
+  policy: PresenceSkipPolicy = DEFAULT_PRESENCE_SKIP_POLICY,
+): boolean {
+  const host = hostname.trim().toLowerCase().replace(/^www\./, '');
+  if (!host) return false;
+
+  const platform = presencePlatformForHost(host);
+  if (!platform) return false;
+
+  return shouldSkipClassifiedPresence(
+    {
+      urlClass: 'presence',
+      displayUrl: `https://${host}/`,
+      normalizedUrl: host,
+      platformLabel: platform.label,
+      painFamily: platform.painFamily,
+      traits: platform.traits,
+    },
+    policy,
+  ).skip;
 }
 
 /** Classe une URL absolue : site propriétaire, présence tierce ou invalide. */
@@ -188,6 +399,8 @@ export function classifyWebsiteUrl(raw: string): ClassifiedWebsiteUrl | null {
           displayUrl,
           normalizedUrl,
           platformLabel: 'Google Maps',
+          painFamily: 'maps',
+          traits: SOCIAL_TRAITS,
         };
       }
     } catch {
@@ -202,6 +415,8 @@ export function classifyWebsiteUrl(raw: string): ClassifiedWebsiteUrl | null {
       displayUrl,
       normalizedUrl,
       platformLabel: platform.label,
+      painFamily: platform.painFamily,
+      traits: platform.traits,
     };
   }
 
@@ -212,6 +427,8 @@ export function classifyWebsiteUrl(raw: string): ClassifiedWebsiteUrl | null {
       displayUrl,
       normalizedUrl,
       platformLabel: directory,
+      painFamily: 'directory',
+      traits: DIRECTORY_TRAITS,
     };
   }
 
@@ -220,6 +437,8 @@ export function classifyWebsiteUrl(raw: string): ClassifiedWebsiteUrl | null {
     displayUrl,
     normalizedUrl,
     platformLabel: null,
+    painFamily: null,
+    traits: null,
   };
 }
 

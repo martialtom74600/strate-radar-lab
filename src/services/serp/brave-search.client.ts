@@ -13,7 +13,10 @@ const BRAVE_WEB_SEARCH_URL = 'https://api.search.brave.com/res/v1/web/search';
 
 export { formatWebSearchErrorNote };
 
-function mapBraveWebResults(json: unknown): OrganicSerpHit[] {
+function mapBraveWebResults(
+  json: unknown,
+  presenceSkipPolicy: AppConfig['RADAR_PRESENCE_SKIP_POLICY'],
+): OrganicSerpHit[] {
   if (!json || typeof json !== 'object') return [];
   const root = json as Record<string, unknown>;
   const web = root.web;
@@ -33,7 +36,7 @@ function mapBraveWebResults(json: unknown): OrganicSerpHit[] {
     } catch {
       continue;
     }
-    if (shouldSkipWebSearchHost(hostname)) continue;
+    if (shouldSkipWebSearchHost(hostname, presenceSkipPolicy)) continue;
     const title = typeof r.title === 'string' ? r.title : link;
     const snippet =
       typeof r.description === 'string'
@@ -196,14 +199,14 @@ export function createBraveSearchWebClient(config: AppConfig): WebSearchClient |
           };
         }
 
-        let hits = mapBraveWebResults(response.json);
+        let hits = mapBraveWebResults(response.json, config.RADAR_PRESENCE_SKIP_POLICY);
         if (hits.length === 0) {
           const fallbackQuery = extractBraveQueryFallback(response.json, activeQuery);
           if (fallbackQuery) {
             activeQuery = fallbackQuery;
             response = await fetchBraveWebSearch(apiKey, activeQuery, opts);
             if (response.ok) {
-              hits = mapBraveWebResults(response.json);
+              hits = mapBraveWebResults(response.json, config.RADAR_PRESENCE_SKIP_POLICY);
             }
           }
         }

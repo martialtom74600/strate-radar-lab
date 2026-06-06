@@ -1,4 +1,9 @@
 import type { OrganicSerpHit } from '../../lib/organic-match.js';
+import {
+  DEFAULT_PRESENCE_SKIP_POLICY,
+  isPipelineSkippedPresenceHost,
+  type PresenceSkipPolicy,
+} from '../../lib/website-presence-taxonomy.js';
 
 export type WebSearchError = {
   readonly httpStatus: number;
@@ -18,24 +23,26 @@ export type WebSearchClient = {
   ) => Promise<WebSearchResult>;
 };
 
-export function shouldSkipWebSearchHost(hostname: string): boolean {
+function isStaticWebSearchNoiseHost(hostname: string): boolean {
   const h = hostname.toLowerCase();
   const blocked = [
     'google.',
     'googleusercontent.',
     'gstatic.',
     'youtube.',
-    'facebook.',
-    'instagram.',
-    'linkedin.',
-    'twitter.',
-    'x.com',
-    'tiktok.',
     'wikipedia.org',
     'wikidata.org',
     'search.brave.com',
   ];
   return blocked.some((b) => h.includes(b));
+}
+
+export function shouldSkipWebSearchHost(
+  hostname: string,
+  presenceSkipPolicy: PresenceSkipPolicy = DEFAULT_PRESENCE_SKIP_POLICY,
+): boolean {
+  if (isStaticWebSearchNoiseHost(hostname)) return true;
+  return isPipelineSkippedPresenceHost(hostname, presenceSkipPolicy);
 }
 
 /** Note lisible pour `websiteResolution.attempts` (couche web_search). */

@@ -29,6 +29,7 @@ import {
   resolveProspectWebsitePresence,
   type WebsiteResolution,
 } from '../lib/website-resolver.js';
+import { assessPresencePipelineSkip } from '../lib/website-presence-taxonomy.js';
 import { assessWebSearchDoubleCheckGate } from '../lib/web-search-verification.js';
 import { createBraveSearchWebClient, describeWebSearchBoot } from '../services/serp/brave-search.client.js';
 import type { WebSearchClient } from '../services/serp/web-search.types.js';
@@ -349,6 +350,23 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     return null;
   }
 
+  const mapsPresenceSkip = assessPresencePipelineSkip(
+    { rawUrl: serp.website ?? null },
+    config.RADAR_PRESENCE_SKIP_POLICY,
+  );
+  if (mapsPresenceSkip.skip) {
+    await repo.recordPlaceOutcome(placeKey, 'disqualified');
+    gatekeeperExclusions.push({
+      name: serp.title,
+      reason: mapsPresenceSkip.reason ?? 'Présence réservation tierce',
+    });
+    radarVerbose(
+      config,
+      `${progressTag} ${truncateTitle(serp.title)} · ⊘ Présence réservation · ${truncateTitle(mapsPresenceSkip.reason ?? '', 88)}`,
+    );
+    return null;
+  }
+
   const preflight = await assessPreflightCommercialTarget(
     config,
     serp,
@@ -493,6 +511,26 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
       websiteResolution: resolution,
       ...(nearbyCompetitors !== undefined ? { nearbyCompetitors } : {}),
     };
+  }
+
+  const resolvedPresenceSkip = assessPresencePipelineSkip(
+    {
+      rawUrl: resolution.url ?? resolution.displayUrl,
+      platformLabel: resolution.presencePlatform,
+    },
+    config.RADAR_PRESENCE_SKIP_POLICY,
+  );
+  if (resolvedPresenceSkip.skip) {
+    await repo.recordPlaceOutcome(placeKey, 'disqualified');
+    gatekeeperExclusions.push({
+      name: serp.title,
+      reason: resolvedPresenceSkip.reason ?? 'Présence réservation tierce',
+    });
+    radarVerbose(
+      config,
+      `${progressTag} ${truncateTitle(serp.title)} · ⊘ Présence réservation · ${truncateTitle(resolvedPresenceSkip.reason ?? '', 88)}`,
+    );
+    return null;
   }
 
   if (qualifiesDiamantPresence(serp, resolution.status)) {

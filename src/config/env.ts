@@ -89,6 +89,11 @@ function radarStudioOriginFromEnv(value: unknown): string {
   }
 }
 
+import {
+  parsePresenceSkipPolicy,
+  type PresenceSkipPolicy,
+} from '../lib/website-presence-taxonomy.js';
+
 function radarAuditPayloadVersionFromEnv(value: unknown): string | undefined {
   const t = optionalTrimmedNonEmpty(value);
   if (t === undefined) return undefined;
@@ -171,6 +176,11 @@ export type RawEnv = {
   readonly RADAR_GEO_REGION: string | undefined;
   /** Nombre de nuits consécutives à 0 création (toutes zones confondues) avant blocklist auto d'un secteur. */
   readonly RADAR_CREATION_HUNT_STAGNANT_SECTOR_NIGHTS: number;
+  /**
+   * Politique d'exclusion des présences tierces (Doctolib, Planity…).
+   * Défaut `booking_platforms` : santé / beauté / restauration / hôtellerie sous clé de réservation.
+   */
+  readonly RADAR_PRESENCE_SKIP_POLICY: PresenceSkipPolicy;
 };
 
 /** Quotas finaux après résolution legacy (70/30) ou défauts 15 / 5. */
@@ -298,6 +308,7 @@ function parseRawEnv(env: NodeJS.ProcessEnv): RawEnv {
       3,
       30,
     ),
+    RADAR_PRESENCE_SKIP_POLICY: parsePresenceSkipPolicy(env.RADAR_PRESENCE_SKIP_POLICY),
   };
 }
 

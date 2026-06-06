@@ -4,9 +4,14 @@ import {
 } from './website-presence-taxonomy.js';
 
 export {
+  assessPresencePipelineSkip,
   classifyWebsiteUrl,
   parseOwnerWebsiteUrl,
+  parsePresenceSkipPolicy,
   type ClassifiedWebsiteUrl,
+  type PresencePainFamily,
+  type PresencePipelineSkipAssessment,
+  type PresenceSkipPolicy,
   type WebsitePresenceStatus,
   type WebsiteUrlClass,
 } from './website-presence-taxonomy.js';
