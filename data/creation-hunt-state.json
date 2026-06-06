@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "exportedAt": "2026-06-05T04:44:36.045Z",
+  "exportedAt": "2026-06-06T04:30:04.618Z",
   "zones": [
     {
       "zone": "Annecy, France",
       "priority": 200,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-06-05T04:33:31.836Z",
+      "last_run_at": "2026-06-06T04:26:16.679Z",
       "last_creations": 5,
-      "total_scanned": 1961,
+      "total_scanned": 2159,
       "consecutive_low_runs": 0,
-      "updated_at": "2026-06-05T04:33:31.836Z"
+      "updated_at": "2026-06-06T04:26:16.679Z"
     }
   ],
   "sectorRuns": [
@@ -245,6 +245,20 @@
       "creations_found": 4,
       "scanned_count": 47,
       "run_at": "2026-06-05T04:33:31.836Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Laboratoire",
+      "creations_found": 1,
+      "scanned_count": 120,
+      "run_at": "2026-06-06T04:26:16.679Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Radiologie",
+      "creations_found": 4,
+      "scanned_count": 78,
+      "run_at": "2026-06-06T04:26:16.679Z"
     }
   ]
 }
