@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "exportedAt": "2026-06-06T04:30:04.618Z",
+  "exportedAt": "2026-06-07T04:39:28.700Z",
   "zones": [
     {
       "zone": "Annecy, France",
       "priority": 200,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-06-06T04:26:16.679Z",
+      "last_run_at": "2026-06-07T04:34:28.436Z",
       "last_creations": 5,
-      "total_scanned": 2159,
+      "total_scanned": 2329,
       "consecutive_low_runs": 0,
-      "updated_at": "2026-06-06T04:26:16.679Z"
+      "updated_at": "2026-06-07T04:34:28.436Z"
     }
   ],
   "sectorRuns": [
@@ -259,6 +259,48 @@
       "creations_found": 4,
       "scanned_count": 78,
       "run_at": "2026-06-06T04:26:16.679Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Élagage",
+      "creations_found": 1,
+      "scanned_count": 20,
+      "run_at": "2026-06-07T04:34:28.436Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Forage",
+      "creations_found": 0,
+      "scanned_count": 4,
+      "run_at": "2026-06-07T04:34:28.436Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Ascenseurs",
+      "creations_found": 0,
+      "scanned_count": 22,
+      "run_at": "2026-06-07T04:34:28.436Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Isolation",
+      "creations_found": 1,
+      "scanned_count": 71,
+      "run_at": "2026-06-07T04:34:28.436Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Piscine",
+      "creations_found": 0,
+      "scanned_count": 20,
+      "run_at": "2026-06-07T04:34:28.436Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Blanchisserie",
+      "creations_found": 3,
+      "scanned_count": 33,
+      "run_at": "2026-06-07T04:34:28.436Z"
     }
   ]
 }
