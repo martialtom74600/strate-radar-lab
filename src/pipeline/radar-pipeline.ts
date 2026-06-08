@@ -29,6 +29,7 @@ import {
   resolveProspectWebsitePresence,
   type WebsiteResolution,
 } from '../lib/website-resolver.js';
+import { assessGoogleOrganicProbeGate } from '../lib/website-resolver.js';
 import {
   assessMandatoryBookingPlatformExclusion,
   assessMandatoryBookingPlatformUrl,
@@ -569,8 +570,16 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     });
   }
 
-  /** Diamant création : aucune présence web + réputation Maps (seuils bas) — pas de matrice. */
+  /** Diamant création : aucune présence web + réputation Maps — sonde Google organique obligatoire. */
   if (qualifiesDiamantCreation(serp, resolution.status)) {
+    const googleOrganicGate = assessGoogleOrganicProbeGate(resolution);
+    if (!googleOrganicGate.allowed) {
+      radarVerbose(
+        config,
+        `${progressTag} ${truncateTitle(serp.title)} · ◇ ${truncateTitle(googleOrganicGate.reason, 100)}`,
+      );
+      return null;
+    }
     if (quotaState.creationsFound >= quotaState.targetCreation) {
       radarVerbose(
         config,

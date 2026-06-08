@@ -302,7 +302,32 @@ function mergeExtendedSearchResult(
     return;
   }
 
-  recordAttempt(attempts, layer, null, 'skipped', resolved.summaryNote ?? 'aucun lien');
+  recordAttempt(
+    attempts,
+    layer,
+    null,
+    'skipped',
+    resolved.summaryNote ? `probe_ok · ${resolved.summaryNote}` : 'probe_ok',
+  );
+}
+
+/** Diamant création autorisé seulement si la sonde Google organique a abouti. */
+export function assessGoogleOrganicProbeGate(resolution: WebsiteResolution): {
+  readonly allowed: boolean;
+  readonly reason: string;
+} {
+  const attempt = resolution.attempts.find((row) => row.layer === 'places_requery');
+  if (!attempt) {
+    return { allowed: false, reason: 'Google organique non exécuté' };
+  }
+  if (attempt.outcome === 'owner_site' || attempt.outcome === 'presence_only') {
+    return { allowed: true, reason: '' };
+  }
+  if (attempt.outcome === 'skipped' && (attempt.note?.includes('probe_ok') ?? false)) {
+    return { allowed: true, reason: '' };
+  }
+  const note = attempt.note?.trim() ?? 'échec';
+  return { allowed: false, reason: `Google organique non confirmé · ${note.slice(0, 100)}` };
 }
 
 /** Requête web sans guillemets (Brave renvoie bad_results avec phrase exacte). */
