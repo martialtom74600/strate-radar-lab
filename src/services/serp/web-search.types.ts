@@ -11,8 +11,17 @@ export type WebSearchError = {
   readonly message: string;
 };
 
+/** Résultat Brave filtré (host plateforme RDV) — alimente les attempts pour exclusion. */
+export type FilteredBravePresenceHit = {
+  readonly link: string;
+  readonly title: string;
+  readonly snippet?: string;
+  readonly platformLabel: string | null;
+};
+
 export type WebSearchResult = {
   readonly hits: readonly OrganicSerpHit[];
+  readonly filteredPresenceHits: readonly FilteredBravePresenceHit[];
   readonly error: WebSearchError | null;
 };
 
@@ -23,7 +32,7 @@ export type WebSearchClient = {
   ) => Promise<WebSearchResult>;
 };
 
-function isStaticWebSearchNoiseHost(hostname: string): boolean {
+export function isStaticWebSearchNoiseHost(hostname: string): boolean {
   const h = hostname.toLowerCase();
   const blocked = [
     'google.',

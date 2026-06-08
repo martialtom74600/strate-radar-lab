@@ -32,12 +32,21 @@ export type PresenceSkipPolicy = 'booking_platforms' | 'all_presence' | 'feudal_
 
 export const DEFAULT_PRESENCE_SKIP_POLICY: PresenceSkipPolicy = 'booking_platforms';
 
-const BOOKING_PAIN_FAMILIES: ReadonlySet<PresencePainFamily> = new Set([
+/**
+ * Exclusion non désactivable : Doctolib, Planity, Maiia, TheFork, Fresha…
+ * Ignorée par `RADAR_PRESENCE_SKIP_POLICY=off` — ces fiches ne produisent jamais de lead.
+ */
+export const MANDATORY_BOOKING_EXCLUSION_POLICY: PresenceSkipPolicy = 'booking_platforms';
+
+export const BOOKING_PAIN_FAMILIES: ReadonlySet<PresencePainFamily> = new Set([
   'health_booking',
   'beauty_booking',
   'restaurant_booking',
   'hospitality_booking',
 ]);
+
+/** Seuil owner « autoritaire » quand une plateforme RDV est aussi visible en SERP. */
+export const OWNER_OVERRIDE_BOOKING_MIN_CONFIDENCE = 0.9;
 
 const DIRECTORY_TRAITS: PresencePlatformTraits = {
   bookingGate: false,
@@ -121,16 +130,37 @@ const PRESENCE_PLATFORM_ROOTS: readonly PlatformRoot[] = [
   { root: 'doctolib.fr', label: 'Doctolib', painFamily: 'health_booking', traits: BOOKING_TRAITS },
   { root: 'doctolib.com', label: 'Doctolib', painFamily: 'health_booking', traits: BOOKING_TRAITS },
   { root: 'planity.com', label: 'Planity', painFamily: 'beauty_booking', traits: BOOKING_TRAITS },
+  { root: 'planity.fr', label: 'Planity', painFamily: 'beauty_booking', traits: BOOKING_TRAITS },
   { root: 'treatwell.fr', label: 'Treatwell', painFamily: 'beauty_booking', traits: BOOKING_TRAITS },
   { root: 'treatwell.com', label: 'Treatwell', painFamily: 'beauty_booking', traits: BOOKING_TRAITS },
   { root: 'maiia.com', label: 'Maiia', painFamily: 'health_booking', traits: BOOKING_TRAITS },
   { root: 'keldoc.com', label: 'Keldoc', painFamily: 'health_booking', traits: BOOKING_TRAITS },
+  { root: 'ordoclic.com', label: 'Ordoclic', painFamily: 'health_booking', traits: BOOKING_TRAITS },
+  { root: 'ordoclic.fr', label: 'Ordoclic', painFamily: 'health_booking', traits: BOOKING_TRAITS },
+  { root: 'qare.fr', label: 'Qare', painFamily: 'health_booking', traits: BOOKING_TRAITS },
+  { root: 'hellocare.com', label: 'Hellocare', painFamily: 'health_booking', traits: BOOKING_TRAITS },
+  { root: 'livi.fr', label: 'Livi', painFamily: 'health_booking', traits: BOOKING_TRAITS },
+  { root: 'mesdocteurs.com', label: 'MesDocteurs', painFamily: 'health_booking', traits: BOOKING_TRAITS },
+  { root: 'medecindirect.fr', label: 'MédecinDirect', painFamily: 'health_booking', traits: BOOKING_TRAITS },
+  { root: 'practo.com', label: 'Practo', painFamily: 'health_booking', traits: BOOKING_TRAITS },
+  { root: 'practo.fr', label: 'Practo', painFamily: 'health_booking', traits: BOOKING_TRAITS },
+  { root: 'resalib.fr', label: 'Resalib', painFamily: 'health_booking', traits: BOOKING_TRAITS },
+  { root: 'mon-rdv-dentiste.fr', label: 'Mon RDV Dentiste', painFamily: 'health_booking', traits: BOOKING_TRAITS },
+  { root: 'fresha.com', label: 'Fresha', painFamily: 'beauty_booking', traits: BOOKING_TRAITS },
+  { root: 'jup.co', label: 'Jup', painFamily: 'beauty_booking', traits: BOOKING_TRAITS },
   { root: 'lafourchette.com', label: 'TheFork', painFamily: 'restaurant_booking', traits: BOOKING_TRAITS },
   { root: 'thefork.com', label: 'TheFork', painFamily: 'restaurant_booking', traits: BOOKING_TRAITS },
   { root: 'thefork.fr', label: 'TheFork', painFamily: 'restaurant_booking', traits: BOOKING_TRAITS },
   { root: 'opentable.com', label: 'OpenTable', painFamily: 'restaurant_booking', traits: BOOKING_TRAITS },
   { root: 'opentable.fr', label: 'OpenTable', painFamily: 'restaurant_booking', traits: BOOKING_TRAITS },
   { root: 'resy.com', label: 'Resy', painFamily: 'restaurant_booking', traits: BOOKING_TRAITS },
+  { root: 'zenchef.com', label: 'Zenchef', painFamily: 'restaurant_booking', traits: BOOKING_TRAITS },
+  { root: 'guestonline.fr', label: 'Guestonline', painFamily: 'restaurant_booking', traits: BOOKING_TRAITS },
+  { root: 'guestonline.io', label: 'Guestonline', painFamily: 'restaurant_booking', traits: BOOKING_TRAITS },
+  { root: 'sunday.fr', label: 'Sunday', painFamily: 'restaurant_booking', traits: BOOKING_TRAITS },
+  { root: 'sundayapp.com', label: 'Sunday', painFamily: 'restaurant_booking', traits: BOOKING_TRAITS },
+  { root: 'quandoo.fr', label: 'Quandoo', painFamily: 'restaurant_booking', traits: BOOKING_TRAITS },
+  { root: 'quandoo.com', label: 'Quandoo', painFamily: 'restaurant_booking', traits: BOOKING_TRAITS },
   { root: 'maisonsmedicale.com', label: 'MaisonsMedicale.com', painFamily: 'health_booking', traits: BOOKING_TRAITS },
   { root: 'doctoranytime.fr', label: 'DoctorAnytime', painFamily: 'health_booking', traits: BOOKING_TRAITS },
   { root: 'doctoralia.fr', label: 'Doctoralia', painFamily: 'health_booking', traits: BOOKING_TRAITS },
@@ -142,6 +172,14 @@ const PRESENCE_PLATFORM_ROOTS: readonly PlatformRoot[] = [
   { root: 'deliveroo.fr', label: 'Deliveroo', painFamily: 'marketplace', traits: SOCIAL_TRAITS },
   { root: 'ubereats.com', label: 'Uber Eats', painFamily: 'marketplace', traits: SOCIAL_TRAITS },
   { root: 'just-eat.fr', label: 'Just Eat', painFamily: 'marketplace', traits: SOCIAL_TRAITS },
+  { root: 'viator.com', label: 'Viator', painFamily: 'hospitality_booking', traits: BOOKING_TRAITS },
+  { root: 'getyourguide.com', label: 'GetYourGuide', painFamily: 'hospitality_booking', traits: BOOKING_TRAITS },
+  { root: 'trustpilot.com', label: 'Trustpilot', painFamily: 'directory', traits: DIRECTORY_TRAITS },
+  { root: 'fr.trustpilot.com', label: 'Trustpilot', painFamily: 'directory', traits: DIRECTORY_TRAITS },
+  { root: 'avis-verifies.com', label: 'Avis Vérifiés', painFamily: 'directory', traits: DIRECTORY_TRAITS },
+  { root: 'justacote.com', label: 'Justacôté', painFamily: 'directory', traits: DIRECTORY_TRAITS },
+  { root: '118712.fr', label: '118712', painFamily: 'directory', traits: DIRECTORY_TRAITS },
+  { root: '118218.fr', label: '118218', painFamily: 'directory', traits: DIRECTORY_TRAITS },
 ];
 
 /** Annuaires locaux / agrégateurs — jamais site propriétaire. */
@@ -173,7 +211,45 @@ const DIRECTORY_HOST_MARKERS: readonly string[] = [
   'ledauphine.com',
   'lefigaro.fr',
   'annuaire-mairie.fr',
+  'sante.fr',
+  'ameli.fr',
+  'annuairesante',
+  'ordoclic.',
+  'qare.fr',
+  'mesdocteurs.',
+  'medecindirect.',
+  'practo.',
+  'resalib.',
+  'hellocare.',
+  'livi.fr',
+  'fresha.',
+  'zenchef.',
+  'guestonline.',
+  'sundayapp.',
+  'quandoo.',
+  'viamedis.',
+  'viamichelin.',
+  'linternaute.',
+  'trustpilot.',
+  'avis-verif',
+  'justacote.',
+  '118712.fr',
+  '118218.fr',
+  'psychologue.net',
+  'psychologue.fr',
+  'dentiste.fr',
+  'orthodontiste.fr',
+  'gouv.fr',
+  'wikipedia.org',
+  'wikidata.org',
+  'leboncoin.fr',
+  'paruvendu.fr',
+  'petitfute.com',
+  'lonelyplanet.',
+  'lafiche.fr',
+  'bizzen.fr',
   'annuaire.',
+  'annuaires.',
   'horaires.',
 ];
 
@@ -257,6 +333,53 @@ function presencePlatformForLabel(label: string | null | undefined): PlatformRoo
   );
 }
 
+const BOOKING_HOST_SNIPPETS: readonly string[] = PRESENCE_PLATFORM_ROOTS.filter((entry) =>
+  BOOKING_PAIN_FAMILIES.has(entry.painFamily),
+).map((entry) => entry.root);
+
+/** Marqueurs host pour ignorer les résultats organiques (dérivé du registre). */
+export function organicSearchSkipHostMarkers(): readonly string[] {
+  const roots = PRESENCE_PLATFORM_ROOTS.map((entry) => entry.root);
+  const directories = DIRECTORY_HOST_MARKERS.filter((marker) => !marker.endsWith('.'));
+  return [...new Set([...roots, ...directories])];
+}
+
+export function isBookingPresenceClassified(
+  classified: Pick<ClassifiedWebsiteUrl, 'urlClass' | 'painFamily'> | null | undefined,
+): boolean {
+  return (
+    classified?.urlClass === 'presence' &&
+    classified.painFamily !== null &&
+    classified.painFamily !== undefined &&
+    BOOKING_PAIN_FAMILIES.has(classified.painFamily)
+  );
+}
+
+/** Présence tierce (annuaire, réseau, plateforme…) — jamais site propriétaire. */
+export function isKnownPresenceHost(hostname: string): boolean {
+  const host = hostname.trim().toLowerCase().replace(/^www\./, '');
+  if (!host) return false;
+  return presencePlatformForHost(host) !== null || directoryLabelForHost(host) !== null;
+}
+
+/** Le HTML embarque un lien vers une plateforme de prise de RDV connue. */
+export function htmlEmbedsBookingPlatform(text: string): boolean {
+  const hay = text.toLowerCase();
+  return BOOKING_HOST_SNIPPETS.some((root) => hay.includes(root));
+}
+
+/** Priorise une plateforme RDV sur un simple annuaire quand plusieurs présences coexistent. */
+export function pickBestPresenceCandidate<T extends { readonly displayUrl: string }>(
+  candidates: readonly T[],
+): T | null {
+  if (candidates.length === 0) return null;
+  for (const candidate of candidates) {
+    const classified = classifyWebsiteUrl(candidate.displayUrl);
+    if (isBookingPresenceClassified(classified)) return candidate;
+  }
+  return candidates[0] ?? null;
+}
+
 function presenceMetaFromClassified(classified: ClassifiedWebsiteUrl): {
   readonly painFamily: PresencePainFamily | null;
   readonly traits: PresencePlatformTraits | null;
@@ -321,6 +444,48 @@ export type PresencePipelineSkipAssessment = {
   readonly reason: string | null;
 };
 
+export type ResolutionPresenceSkipInput = {
+  readonly status: WebsitePresenceStatus;
+  readonly url: string | null;
+  readonly displayUrl: string | null;
+  readonly presencePlatform: string | null;
+  readonly mapsListingWebsite?: string | null;
+  readonly attempts: readonly {
+    readonly url: string | null;
+    readonly outcome: WebsitePresenceStatus | 'skipped' | 'invalid';
+  }[];
+};
+
+/** True si le libellé correspond à une plateforme de prise de RDV (Doctolib, Planity…). */
+export function isBookingPlatformLabel(label: string | null | undefined): boolean {
+  if (!label?.trim()) return false;
+  return assessPresencePipelineSkip(
+    { platformLabel: label.trim() },
+    MANDATORY_BOOKING_EXCLUSION_POLICY,
+  ).skip;
+}
+
+/** Exclusion obligatoire d'une URL Maps ou résolue (plateforme RDV). */
+export function assessMandatoryBookingPlatformUrl(
+  rawUrl?: string | null,
+  platformLabel?: string | null,
+): PresencePipelineSkipAssessment {
+  return assessPresencePipelineSkip(
+    {
+      ...(rawUrl !== undefined ? { rawUrl } : {}),
+      ...(platformLabel !== undefined ? { platformLabel } : {}),
+    },
+    MANDATORY_BOOKING_EXCLUSION_POLICY,
+  );
+}
+
+/** Exclusion obligatoire après cascade web (toutes couches + site Maps). */
+export function assessMandatoryBookingPlatformExclusion(
+  resolution: ResolutionPresenceSkipInput,
+): PresencePipelineSkipAssessment {
+  return assessResolutionPresenceSkip(resolution, MANDATORY_BOOKING_EXCLUSION_POLICY);
+}
+
 /** Évalue si une URL ou un libellé de présence doit être exclu du pipeline. */
 export function assessPresencePipelineSkip(
   input: {
@@ -356,6 +521,49 @@ export function assessPresencePipelineSkip(
   return { skip: false, reason: null };
 }
 
+/**
+ * Évalue l'exclusion après résolution web complète.
+ * Si un site propriétaire réel est retenu, les plateformes RDV vues en cascade ne déclenchent pas l'exclusion.
+ * Sinon, toute couche ayant trouvé Doctolib / Planity / Maiia… suffit (pas seulement la présence « retenue »).
+ */
+export function assessResolutionPresenceSkip(
+  resolution: ResolutionPresenceSkipInput,
+  policy: PresenceSkipPolicy = DEFAULT_PRESENCE_SKIP_POLICY,
+): PresencePipelineSkipAssessment {
+  const urlsToScan = new Set<string>();
+
+  const resolvedUrl = resolution.url ?? resolution.displayUrl;
+  if (resolvedUrl?.trim()) urlsToScan.add(resolvedUrl.trim());
+
+  const mapsUrl = resolution.mapsListingWebsite?.trim();
+  if (mapsUrl) urlsToScan.add(mapsUrl);
+
+  for (const attempt of resolution.attempts) {
+    if (attempt.outcome !== 'presence_only' || !attempt.url?.trim()) continue;
+    urlsToScan.add(attempt.url.trim());
+  }
+
+  if (resolution.status === 'owner_site' && resolvedUrl) {
+    const classified = classifyWebsiteUrl(resolvedUrl);
+    if (classified?.urlClass === 'owner') {
+      return { skip: false, reason: null };
+    }
+  }
+
+  for (const url of urlsToScan) {
+    const hit = assessPresencePipelineSkip(
+      {
+        rawUrl: url,
+        platformLabel: url === resolvedUrl?.trim() ? resolution.presencePlatform : null,
+      },
+      policy,
+    );
+    if (hit.skip) return hit;
+  }
+
+  return { skip: false, reason: null };
+}
+
 /** Hosts de plateformes à ignorer en recherche web (dérivé du registre + politique). */
 export function isPipelineSkippedPresenceHost(
   hostname: string,
@@ -378,6 +586,68 @@ export function isPipelineSkippedPresenceHost(
     },
     policy,
   ).skip;
+}
+
+type SerpBookingTextSignal = {
+  readonly pattern: RegExp;
+  readonly label: string;
+  readonly painFamily: PresencePainFamily;
+};
+
+/** Signaux textuels titre/snippet SERP (secours quand l'URL est un annuaire générique). */
+const SERP_BOOKING_TEXT_SIGNALS: readonly SerpBookingTextSignal[] = [
+  { pattern: /\bdoctolib\b/i, label: 'Doctolib', painFamily: 'health_booking' },
+  { pattern: /\bplanity\b/i, label: 'Planity', painFamily: 'beauty_booking' },
+  { pattern: /\bmaiia\b/i, label: 'Maiia', painFamily: 'health_booking' },
+  { pattern: /\btreatwell\b/i, label: 'Treatwell', painFamily: 'beauty_booking' },
+  { pattern: /\bthe[\s-]*fork\b/i, label: 'TheFork', painFamily: 'restaurant_booking' },
+  { pattern: /\blafourchette\b/i, label: 'TheFork', painFamily: 'restaurant_booking' },
+];
+
+function detectBookingPlatformFromSerpText(text: string): SerpBookingTextSignal | null {
+  const hay = text.trim();
+  if (!hay) return null;
+  for (const signal of SERP_BOOKING_TEXT_SIGNALS) {
+    if (signal.pattern.test(hay)) return signal;
+  }
+  return null;
+}
+
+/** Host annuaire, réseau ou domaine inconnu — candidat au scan texte SERP. */
+export function isAmbiguousSerpHostForTextScan(
+  classified: Pick<ClassifiedWebsiteUrl, 'urlClass' | 'painFamily'> | null | undefined,
+): boolean {
+  if (!classified) return false;
+  if (isBookingPresenceClassified(classified)) return false;
+  return classified.urlClass === 'owner' || classified.urlClass === 'presence';
+}
+
+/**
+ * Classe un hit Google/Brave : URL + secours titre/snippet pour plateformes RDV.
+ */
+export function classifySearchResultHit(args: {
+  readonly link: string;
+  readonly title?: string;
+  readonly snippet?: string;
+}): ClassifiedWebsiteUrl | null {
+  const base = classifyWebsiteUrl(args.link);
+  if (!base) return null;
+  if (isBookingPresenceClassified(base)) return base;
+  if (!isAmbiguousSerpHostForTextScan(base)) return base;
+
+  const textHit = detectBookingPlatformFromSerpText(
+    [args.title ?? '', args.snippet ?? ''].join(' '),
+  );
+  if (!textHit) return base;
+
+  return {
+    urlClass: 'presence',
+    displayUrl: base.displayUrl,
+    normalizedUrl: base.normalizedUrl,
+    platformLabel: textHit.label,
+    painFamily: textHit.painFamily,
+    traits: BOOKING_TRAITS,
+  };
 }
 
 /** Classe une URL absolue : site propriétaire, présence tierce ou invalide. */

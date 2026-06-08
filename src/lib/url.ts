@@ -4,8 +4,18 @@ import {
 } from './website-presence-taxonomy.js';
 
 export {
+  assessMandatoryBookingPlatformExclusion,
+  assessMandatoryBookingPlatformUrl,
   assessPresencePipelineSkip,
+  assessResolutionPresenceSkip,
+  classifySearchResultHit,
   classifyWebsiteUrl,
+  isBookingPlatformLabel,
+  htmlEmbedsBookingPlatform,
+  isBookingPresenceClassified,
+  isKnownPresenceHost,
+  organicSearchSkipHostMarkers,
+  pickBestPresenceCandidate,
   parseOwnerWebsiteUrl,
   parsePresenceSkipPolicy,
   type ClassifiedWebsiteUrl,

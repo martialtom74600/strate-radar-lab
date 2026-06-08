@@ -2,8 +2,14 @@ import type { AppConfig } from '../../config/index.js';
 import type { OrganicSerpHit } from '../../lib/organic-match.js';
 import { withRetry } from '../../lib/retry.js';
 import {
+  classifyWebsiteUrl,
+  MANDATORY_BOOKING_EXCLUSION_POLICY,
+} from '../../lib/website-presence-taxonomy.js';
+import {
   formatWebSearchErrorNote,
+  isStaticWebSearchNoiseHost,
   shouldSkipWebSearchHost,
+  type FilteredBravePresenceHit,
   type WebSearchClient,
   type WebSearchError,
   type WebSearchResult,
@@ -13,18 +19,30 @@ const BRAVE_WEB_SEARCH_URL = 'https://api.search.brave.com/res/v1/web/search';
 
 export { formatWebSearchErrorNote };
 
+type MappedBraveWebResults = {
+  readonly hits: OrganicSerpHit[];
+  readonly filteredPresenceHits: FilteredBravePresenceHit[];
+};
+
 function mapBraveWebResults(
   json: unknown,
   presenceSkipPolicy: AppConfig['RADAR_PRESENCE_SKIP_POLICY'],
-): OrganicSerpHit[] {
-  if (!json || typeof json !== 'object') return [];
+): MappedBraveWebResults {
+  if (!json || typeof json !== 'object') {
+    return { hits: [], filteredPresenceHits: [] };
+  }
   const root = json as Record<string, unknown>;
   const web = root.web;
-  if (!web || typeof web !== 'object') return [];
+  if (!web || typeof web !== 'object') {
+    return { hits: [], filteredPresenceHits: [] };
+  }
   const results = (web as Record<string, unknown>).results;
-  if (!Array.isArray(results)) return [];
+  if (!Array.isArray(results)) {
+    return { hits: [], filteredPresenceHits: [] };
+  }
 
-  const out: OrganicSerpHit[] = [];
+  const hits: OrganicSerpHit[] = [];
+  const filteredPresenceHits: FilteredBravePresenceHit[] = [];
   for (const row of results) {
     if (!row || typeof row !== 'object') continue;
     const r = row as Record<string, unknown>;
@@ -36,7 +54,6 @@ function mapBraveWebResults(
     } catch {
       continue;
     }
-    if (shouldSkipWebSearchHost(hostname, presenceSkipPolicy)) continue;
     const title = typeof r.title === 'string' ? r.title : link;
     const snippet =
       typeof r.description === 'string'
@@ -44,14 +61,31 @@ function mapBraveWebResults(
         : typeof r.snippet === 'string'
           ? r.snippet
           : undefined;
-    out.push({
+
+    if (shouldSkipWebSearchHost(hostname, presenceSkipPolicy)) {
+      if (
+        !isStaticWebSearchNoiseHost(hostname) &&
+        shouldSkipWebSearchHost(hostname, MANDATORY_BOOKING_EXCLUSION_POLICY)
+      ) {
+        const classified = classifyWebsiteUrl(link);
+        filteredPresenceHits.push({
+          link,
+          title,
+          ...(snippet !== undefined ? { snippet } : {}),
+          platformLabel: classified?.platformLabel ?? null,
+        });
+      }
+      continue;
+    }
+
+    hits.push({
       title,
       link,
       ...(snippet !== undefined ? { snippet } : {}),
     });
-    if (out.length >= 4) break;
+    if (hits.length >= 6) break;
   }
-  return out;
+  return { hits, filteredPresenceHits };
 }
 
 function parseBraveSearchApiError(
@@ -115,7 +149,7 @@ async function fetchBraveWebSearch(
 ): Promise<{ readonly json: unknown; readonly ok: boolean; readonly status: number; readonly text: string }> {
   const params = new URLSearchParams({
     q: query,
-    count: '4',
+    count: '6',
     safesearch: 'moderate',
   });
   const country = resolveBraveCountry(opts?.gl);
@@ -186,7 +220,7 @@ export function createBraveSearchWebClient(config: AppConfig): WebSearchClient |
   return {
     async searchWeb(q, opts): Promise<WebSearchResult> {
       const query = q.trim();
-      if (!query) return { hits: [], error: null };
+      if (!query) return { hits: [], filteredPresenceHits: [], error: null };
 
       return withRetry(async () => {
         let activeQuery = query;
@@ -195,23 +229,24 @@ export function createBraveSearchWebClient(config: AppConfig): WebSearchClient |
         if (!response.ok) {
           return {
             hits: [],
+            filteredPresenceHits: [],
             error: parseBraveSearchApiError(response.json, response.status, response.text),
           };
         }
 
-        let hits = mapBraveWebResults(response.json, config.RADAR_PRESENCE_SKIP_POLICY);
-        if (hits.length === 0) {
+        let mapped = mapBraveWebResults(response.json, config.RADAR_PRESENCE_SKIP_POLICY);
+        if (mapped.hits.length === 0) {
           const fallbackQuery = extractBraveQueryFallback(response.json, activeQuery);
           if (fallbackQuery) {
             activeQuery = fallbackQuery;
             response = await fetchBraveWebSearch(apiKey, activeQuery, opts);
             if (response.ok) {
-              hits = mapBraveWebResults(response.json, config.RADAR_PRESENCE_SKIP_POLICY);
+              mapped = mapBraveWebResults(response.json, config.RADAR_PRESENCE_SKIP_POLICY);
             }
           }
         }
 
-        return { hits, error: null };
+        return { hits: mapped.hits, filteredPresenceHits: mapped.filteredPresenceHits, error: null };
       });
     },
   };

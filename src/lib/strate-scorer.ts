@@ -89,7 +89,7 @@ export function qualifiesDiamantCreation(
   return hasCreationReputation(serp);
 }
 
-/** Diamant présence tierce : Doctolib, annuaire, réseau social fort — pas un site propriétaire. */
+/** Diamant présence tierce : annuaire ou réseau social — pas de site propriétaire (hors plateformes RDV). */
 export function qualifiesDiamantPresence(
   serp: SerpLocalResult,
   websiteStatus: 'owner_site' | 'presence_only' | 'none',

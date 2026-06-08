@@ -1,3 +1,5 @@
+import { organicSearchSkipHostMarkers } from './website-presence-taxonomy.js';
+
 /** Normalisation légère pour comparaison nom d’entreprise / domaine / titre. */
 export function normalizeForMatch(text: string): string {
   const lowered = text
@@ -42,26 +44,11 @@ export type OrganicSerpHit = {
   readonly place_id?: string;
 };
 
-const SKIP_HOST_PARTS: readonly string[] = [
-  'facebook.',
-  'instagram.',
-  'linkedin.',
-  'google.',
-  'googl',
-  'tripadvisor.',
-  'yelp.',
-  'pagesjaunes',
-  'pagesjaunesfr',
-  'youtube.',
-  'tiktok.',
-  'twitter.',
-  'x.com',
-  'pinterest.',
-];
-
 function shouldSkipHost(hostname: string): boolean {
-  const h = hostname.toLowerCase();
-  return SKIP_HOST_PARTS.some((s) => h.includes(s));
+  const h = hostname.toLowerCase().replace(/^www\./, '');
+  return organicSearchSkipHostMarkers().some(
+    (marker) => h === marker || h.endsWith(`.${marker}`) || h.includes(marker),
+  );
 }
 
 /**

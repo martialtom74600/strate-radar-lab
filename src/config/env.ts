@@ -177,8 +177,9 @@ export type RawEnv = {
   /** Nombre de nuits consécutives à 0 création (toutes zones confondues) avant blocklist auto d'un secteur. */
   readonly RADAR_CREATION_HUNT_STAGNANT_SECTOR_NIGHTS: number;
   /**
-   * Politique d'exclusion des présences tierces (Doctolib, Planity…).
-   * Défaut `booking_platforms` : santé / beauté / restauration / hôtellerie sous clé de réservation.
+   * Exclusion additionnelle des présences tierces (annuaires, réseaux…).
+   * Doctolib / Planity / Maiia… sont toujours exclus (règle non désactivable).
+   * `all_presence` : exclut aussi PagesJaunes, Facebook, etc.
    */
   readonly RADAR_PRESENCE_SKIP_POLICY: PresenceSkipPolicy;
 };

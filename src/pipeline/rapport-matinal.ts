@@ -40,7 +40,7 @@ function painLabelFr(p: DiamondPainType): string {
     case 'diamant_creation':
       return 'Diamant création — pas de site propriétaire (réputation Maps), score symbolique / matrice non appliquée';
     case 'presence_intermediary':
-      return 'Diamant présence — intermédiaire tiers (Doctolib, annuaire…), pas de site propriétaire';
+      return 'Diamant présence — annuaire ou réseau social, pas de site propriétaire (hors plateformes RDV)';
     case 'strate_matrix':
       return `Diamant Strate — matrice ≥ ${STRATE_DIAMOND_THRESHOLD} pts`;
   }

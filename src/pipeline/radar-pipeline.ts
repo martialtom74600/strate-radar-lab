@@ -29,7 +29,12 @@ import {
   resolveProspectWebsitePresence,
   type WebsiteResolution,
 } from '../lib/website-resolver.js';
-import { assessPresencePipelineSkip } from '../lib/website-presence-taxonomy.js';
+import {
+  assessMandatoryBookingPlatformExclusion,
+  assessMandatoryBookingPlatformUrl,
+  assessResolutionPresenceSkip,
+  isBookingPlatformLabel,
+} from '../lib/website-presence-taxonomy.js';
 import { assessWebSearchDoubleCheckGate } from '../lib/web-search-verification.js';
 import { createBraveSearchWebClient, describeWebSearchBoot } from '../services/serp/brave-search.client.js';
 import type { WebSearchClient } from '../services/serp/web-search.types.js';
@@ -110,7 +115,7 @@ export type RadarSearchParams = {
   readonly gl?: string;
 };
 
-/** Succès pipeline : refonte, création (aucune présence), présence tierce (Doctolib…). */
+/** Succès pipeline : refonte, création (aucune présence), présence tierce annuaire/réseau (hors plateformes RDV). */
 export type ConversionBadge = 'DIAMANT_REFONTE' | 'DIAMANT_CREATION' | 'DIAMANT_PRESENCE';
 
 export type PipelineStrateScore = {
@@ -350,19 +355,16 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     return null;
   }
 
-  const mapsPresenceSkip = assessPresencePipelineSkip(
-    { rawUrl: serp.website ?? null },
-    config.RADAR_PRESENCE_SKIP_POLICY,
-  );
-  if (mapsPresenceSkip.skip) {
+  const mapsBookingSkip = assessMandatoryBookingPlatformUrl(serp.website ?? null);
+  if (mapsBookingSkip.skip) {
     await repo.recordPlaceOutcome(placeKey, 'disqualified');
     gatekeeperExclusions.push({
       name: serp.title,
-      reason: mapsPresenceSkip.reason ?? 'Présence réservation tierce',
+      reason: mapsBookingSkip.reason ?? 'Plateforme réservation',
     });
     radarVerbose(
       config,
-      `${progressTag} ${truncateTitle(serp.title)} · ⊘ Présence réservation · ${truncateTitle(mapsPresenceSkip.reason ?? '', 88)}`,
+      `${progressTag} ${truncateTitle(serp.title)} · ⊘ Plateforme RDV · ${truncateTitle(mapsBookingSkip.reason ?? '', 88)}`,
     );
     return null;
   }
@@ -394,16 +396,16 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     );
   }
 
-  const skipExtendedSearch = creationOnlyMode
+  const skipBraveSearch = creationOnlyMode
     ? Boolean(serp.website?.trim())
     : !needCreation && needRefonte && !serp.website?.trim();
-  if (skipExtendedSearch && config.RADAR_VERBOSE) {
+  if (skipBraveSearch && config.RADAR_VERBOSE) {
     radarVerbose(
       config,
       `${progressTag} ${truncateTitle(serp.title)} · ◇ ${
         creationOnlyMode
-          ? 'Site Maps — cascade web courte (mode chasse création)'
-          : 'Quota création atteint · requery Places désactivée (besoin refonte)'
+          ? 'Brave court-circuité (Google organique actif · mode chasse création)'
+          : 'Brave court-circuité (Google organique actif · quota refonte)'
       }`,
     );
   }
@@ -416,7 +418,7 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     hl: searchHl,
     gl: searchGl,
     opts: {
-      skipExtendedSearch,
+      skipBraveSearch,
       fetchTimeoutMs: config.RADAR_FETCH_TIMEOUT_MS,
     },
   });
@@ -457,7 +459,7 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
 
   const webSearchGate = assessWebSearchDoubleCheckGate({
     resolution,
-    skipExtendedSearch,
+    skipBraveSearch,
     webSearchConfigured: webSearchClient !== null,
   });
   if (!webSearchGate.allowed) {
@@ -513,27 +515,41 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     };
   }
 
-  const resolvedPresenceSkip = assessPresencePipelineSkip(
-    {
-      rawUrl: resolution.url ?? resolution.displayUrl,
-      platformLabel: resolution.presencePlatform,
-    },
-    config.RADAR_PRESENCE_SKIP_POLICY,
-  );
-  if (resolvedPresenceSkip.skip) {
+  const mandatoryBookingSkip = assessMandatoryBookingPlatformExclusion(resolution);
+  if (mandatoryBookingSkip.skip) {
     await repo.recordPlaceOutcome(placeKey, 'disqualified');
     gatekeeperExclusions.push({
       name: serp.title,
-      reason: resolvedPresenceSkip.reason ?? 'Présence réservation tierce',
+      reason: mandatoryBookingSkip.reason ?? 'Plateforme réservation',
     });
     radarVerbose(
       config,
-      `${progressTag} ${truncateTitle(serp.title)} · ⊘ Présence réservation · ${truncateTitle(resolvedPresenceSkip.reason ?? '', 88)}`,
+      `${progressTag} ${truncateTitle(serp.title)} · ⊘ Plateforme RDV · ${truncateTitle(mandatoryBookingSkip.reason ?? '', 88)}`,
     );
     return null;
   }
 
-  if (qualifiesDiamantPresence(serp, resolution.status)) {
+  const policy = config.RADAR_PRESENCE_SKIP_POLICY;
+  if (policy === 'all_presence' || policy === 'feudal_booking') {
+    const extraPresenceSkip = assessResolutionPresenceSkip(resolution, policy);
+    if (extraPresenceSkip.skip) {
+      await repo.recordPlaceOutcome(placeKey, 'disqualified');
+      gatekeeperExclusions.push({
+        name: serp.title,
+        reason: extraPresenceSkip.reason ?? 'Présence tierce',
+      });
+      radarVerbose(
+        config,
+        `${progressTag} ${truncateTitle(serp.title)} · ⊘ Présence tierce · ${truncateTitle(extraPresenceSkip.reason ?? '', 88)}`,
+      );
+      return null;
+    }
+  }
+
+  if (
+    qualifiesDiamantPresence(serp, resolution.status) &&
+    !isBookingPlatformLabel(resolution.presencePlatform)
+  ) {
     if (quotaState.creationsFound >= quotaState.targetCreation) {
       radarVerbose(
         config,

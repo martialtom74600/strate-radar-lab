@@ -20,12 +20,12 @@ function webSearchBudgetExhaustedOnAttempt(resolution: WebsiteResolution): boole
  */
 export function assessWebSearchDoubleCheckGate(args: {
   readonly resolution: WebsiteResolution;
-  readonly skipExtendedSearch: boolean;
+  readonly skipBraveSearch: boolean;
   readonly webSearchConfigured: boolean;
 }): { readonly allowed: boolean; readonly reason: string } {
-  const { resolution, skipExtendedSearch, webSearchConfigured } = args;
+  const { resolution, skipBraveSearch, webSearchConfigured } = args;
 
-  if (skipExtendedSearch || !webSearchConfigured) {
+  if (skipBraveSearch || !webSearchConfigured) {
     return { allowed: true, reason: '' };
   }
 
