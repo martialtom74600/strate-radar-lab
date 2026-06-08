@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "exportedAt": "2026-06-07T04:39:28.700Z",
+  "exportedAt": "2026-06-08T04:39:37.944Z",
   "zones": [
     {
       "zone": "Annecy, France",
       "priority": 200,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-06-07T04:34:28.436Z",
+      "last_run_at": "2026-06-08T04:35:16.653Z",
       "last_creations": 5,
-      "total_scanned": 2329,
+      "total_scanned": 2533,
       "consecutive_low_runs": 0,
-      "updated_at": "2026-06-07T04:34:28.436Z"
+      "updated_at": "2026-06-08T04:35:16.653Z"
     }
   ],
   "sectorRuns": [
@@ -301,6 +301,27 @@
       "creations_found": 3,
       "scanned_count": 33,
       "run_at": "2026-06-07T04:34:28.436Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Audioprothésiste",
+      "creations_found": 0,
+      "scanned_count": 39,
+      "run_at": "2026-06-08T04:35:16.653Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Orthophoniste",
+      "creations_found": 1,
+      "scanned_count": 120,
+      "run_at": "2026-06-08T04:35:16.653Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Podologue",
+      "creations_found": 4,
+      "scanned_count": 45,
+      "run_at": "2026-06-08T04:35:16.653Z"
     }
   ]
 }
