@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "exportedAt": "2026-06-08T04:39:37.944Z",
+  "exportedAt": "2026-06-09T04:30:52.038Z",
   "zones": [
     {
       "zone": "Annecy, France",
       "priority": 200,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-06-08T04:35:16.653Z",
+      "last_run_at": "2026-06-09T04:29:02.329Z",
       "last_creations": 5,
-      "total_scanned": 2533,
+      "total_scanned": 2678,
       "consecutive_low_runs": 0,
-      "updated_at": "2026-06-08T04:35:16.653Z"
+      "updated_at": "2026-06-09T04:29:02.329Z"
     }
   ],
   "sectorRuns": [
@@ -322,6 +322,20 @@
       "creations_found": 4,
       "scanned_count": 45,
       "run_at": "2026-06-08T04:35:16.653Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Carrossier",
+      "creations_found": 3,
+      "scanned_count": 120,
+      "run_at": "2026-06-09T04:29:02.329Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Décorateur",
+      "creations_found": 2,
+      "scanned_count": 25,
+      "run_at": "2026-06-09T04:29:02.329Z"
     }
   ]
 }
