@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "exportedAt": "2026-06-09T04:30:52.038Z",
+  "exportedAt": "2026-06-10T04:36:04.788Z",
   "zones": [
     {
       "zone": "Annecy, France",
       "priority": 200,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-06-09T04:29:02.329Z",
+      "last_run_at": "2026-06-10T04:33:29.428Z",
       "last_creations": 5,
-      "total_scanned": 2678,
+      "total_scanned": 2780,
       "consecutive_low_runs": 0,
-      "updated_at": "2026-06-09T04:29:02.329Z"
+      "updated_at": "2026-06-10T04:33:29.428Z"
     }
   ],
   "sectorRuns": [
@@ -336,6 +336,41 @@
       "creations_found": 2,
       "scanned_count": 25,
       "run_at": "2026-06-09T04:29:02.329Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Ferronnier",
+      "creations_found": 0,
+      "scanned_count": 17,
+      "run_at": "2026-06-10T04:33:29.428Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Vitrier",
+      "creations_found": 0,
+      "scanned_count": 17,
+      "run_at": "2026-06-10T04:33:29.428Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Ramoneur",
+      "creations_found": 1,
+      "scanned_count": 14,
+      "run_at": "2026-06-10T04:33:29.428Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Ébéniste",
+      "creations_found": 1,
+      "scanned_count": 43,
+      "run_at": "2026-06-10T04:33:29.428Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Antiquaire",
+      "creations_found": 3,
+      "scanned_count": 11,
+      "run_at": "2026-06-10T04:33:29.428Z"
     }
   ]
 }
