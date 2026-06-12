@@ -167,6 +167,8 @@ function websiteResolutionPayload(line: RadarPipelineLine) {
     source: wr.source,
     mapsListingWebsite: wr.mapsListingWebsite,
     presencePlatform: wr.presencePlatform,
+    classificationReason: wr.classificationReason,
+    classifierAudit: wr.classifierAudit,
   };
 }
 

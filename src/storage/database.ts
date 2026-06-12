@@ -235,6 +235,48 @@ export async function migrateRadarPlaceLastOutcome(db: sqlite3.Database): Promis
   );
 }
 
+export type DiamondWebsiteStatus = 'none' | 'presence_only';
+
+export type DiamondSnapshotUpsert = {
+  readonly placeKey: string;
+  readonly businessName: string;
+  readonly websiteStatus: DiamondWebsiteStatus;
+  readonly conversionBadge: 'DIAMANT_CREATION' | 'DIAMANT_PRESENCE';
+  readonly searchLocation: string | null;
+  readonly serpRow: SerpLocalResult;
+  readonly organicHitsJson?: string | null;
+};
+
+export type ScrubCandidateRow = {
+  readonly placeKey: string;
+  readonly businessName: string;
+  readonly websiteStatus: DiamondWebsiteStatus;
+  readonly conversionBadge: 'DIAMANT_CREATION' | 'DIAMANT_PRESENCE';
+  readonly searchLocation: string | null;
+  readonly serpRowJson: string;
+  readonly organicHitsJson: string | null;
+};
+
+/** Snapshots diamant création / présence pour re-scrub retroactif (SERP organique optionnelle). */
+export async function migrateRadarDiamondSnapshot(db: sqlite3.Database): Promise<void> {
+  await run(
+    db,
+    `
+    CREATE TABLE IF NOT EXISTS radar_diamond_snapshot (
+      place_key TEXT PRIMARY KEY,
+      business_name TEXT NOT NULL,
+      website_status TEXT NOT NULL CHECK(website_status IN ('none','presence_only')),
+      conversion_badge TEXT NOT NULL CHECK(conversion_badge IN ('DIAMANT_CREATION','DIAMANT_PRESENCE')),
+      search_location TEXT,
+      serp_row_json TEXT NOT NULL,
+      organic_hits_json TEXT,
+      recorded_at TEXT NOT NULL
+    )
+    `,
+    [],
+  );
+}
+
 /** @deprecated Préférer radar_place_last_outcome + fenêtre glissante. */
 export async function migrateRadarWeekPlaceOutcome(db: sqlite3.Database): Promise<void> {
   await run(
@@ -250,6 +292,55 @@ export async function migrateRadarWeekPlaceOutcome(db: sqlite3.Database): Promis
     `,
     [],
   );
+}
+
+export type ScrubClassifierLogRow = {
+  readonly id: number;
+  readonly auditId: string | null;
+  readonly slug: string | null;
+  readonly placeKey: string;
+  readonly businessName: string;
+  readonly dryRun: boolean;
+  readonly scrubAction: 'kept' | 'disqualified';
+  readonly websiteStatus: string;
+  readonly matchedUrl: string | null;
+  readonly classificationReason: string | null;
+  readonly resolutionJson: string;
+  readonly recordedAt: string;
+};
+
+/** Journal persisté des décisions classifieur SERP (scrub / export raisons). */
+export async function migrateRadarScrubClassifierLog(db: sqlite3.Database): Promise<void> {
+  await run(
+    db,
+    `
+    CREATE TABLE IF NOT EXISTS radar_scrub_classifier_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      audit_id TEXT,
+      slug TEXT,
+      place_key TEXT NOT NULL,
+      business_name TEXT NOT NULL,
+      dry_run INTEGER NOT NULL DEFAULT 0,
+      scrub_action TEXT NOT NULL CHECK(scrub_action IN ('kept','disqualified')),
+      website_status TEXT NOT NULL,
+      matched_url TEXT,
+      classification_reason TEXT,
+      resolution_json TEXT NOT NULL,
+      recorded_at TEXT NOT NULL
+    )
+    `,
+    [],
+  );
+  await run(
+    db,
+    `CREATE INDEX IF NOT EXISTS idx_scrub_classifier_log_audit ON radar_scrub_classifier_log(audit_id)`,
+    [],
+  ).catch(() => undefined);
+  await run(
+    db,
+    `CREATE INDEX IF NOT EXISTS idx_scrub_classifier_log_recorded ON radar_scrub_classifier_log(recorded_at)`,
+    [],
+  ).catch(() => undefined);
 }
 
 export async function migrateCampaignTables(db: sqlite3.Database): Promise<void> {
@@ -601,5 +692,244 @@ export class ProspectRepository {
        VALUES (?, ?, datetime('now'))`,
       [placeKey, outcome],
     );
+  }
+
+  async upsertDiamondSnapshot(snapshot: DiamondSnapshotUpsert): Promise<void> {
+    await run(
+      this.db,
+      `INSERT INTO radar_diamond_snapshot (
+         place_key, business_name, website_status, conversion_badge,
+         search_location, serp_row_json, organic_hits_json, recorded_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
+       ON CONFLICT(place_key) DO UPDATE SET
+         business_name = excluded.business_name,
+         website_status = excluded.website_status,
+         conversion_badge = excluded.conversion_badge,
+         search_location = excluded.search_location,
+         serp_row_json = excluded.serp_row_json,
+         organic_hits_json = COALESCE(excluded.organic_hits_json, radar_diamond_snapshot.organic_hits_json),
+         recorded_at = excluded.recorded_at`,
+      [
+        snapshot.placeKey,
+        snapshot.businessName,
+        snapshot.websiteStatus,
+        snapshot.conversionBadge,
+        snapshot.searchLocation,
+        JSON.stringify(snapshot.serpRow),
+        snapshot.organicHitsJson ?? null,
+      ],
+    );
+  }
+
+  async saveOrganicSerpCache(placeKey: string, organicHitsJson: string): Promise<void> {
+    await run(
+      this.db,
+      `UPDATE radar_diamond_snapshot SET organic_hits_json = ? WHERE place_key = ?`,
+      [organicHitsJson, placeKey],
+    );
+  }
+
+  /**
+   * Diamants création / présence encore actifs — jointure outcome SQLite.
+   */
+  async listScrubCandidates(): Promise<ScrubCandidateRow[]> {
+    return allRows<ScrubCandidateRow>(
+      this.db,
+      `SELECT
+         s.place_key AS placeKey,
+         s.business_name AS businessName,
+         s.website_status AS websiteStatus,
+         s.conversion_badge AS conversionBadge,
+         s.search_location AS searchLocation,
+         s.serp_row_json AS serpRowJson,
+         s.organic_hits_json AS organicHitsJson
+       FROM radar_diamond_snapshot s
+       INNER JOIN radar_place_last_outcome o ON o.place_key = s.place_key
+       WHERE o.outcome = 'diamond'
+         AND s.website_status IN ('none', 'presence_only')
+       ORDER BY s.recorded_at DESC`,
+      [],
+    );
+  }
+
+  async countActiveDiamondOutcomes(): Promise<number> {
+    const rows = await allRows<{ cnt: number }>(
+      this.db,
+      `SELECT COUNT(*) AS cnt FROM radar_place_last_outcome WHERE outcome = 'diamond'`,
+      [],
+    );
+    return rows[0]?.cnt ?? 0;
+  }
+
+  async countDiamondSnapshots(): Promise<number> {
+    const rows = await allRows<{ cnt: number }>(
+      this.db,
+      `SELECT COUNT(*) AS cnt FROM radar_diamond_snapshot`,
+      [],
+    );
+    return rows[0]?.cnt ?? 0;
+  }
+
+  async listOrphanDiamondPlaceKeys(): Promise<string[]> {
+    const rows = await allRows<{ place_key: string }>(
+      this.db,
+      `SELECT o.place_key
+       FROM radar_place_last_outcome o
+       LEFT JOIN radar_diamond_snapshot s ON s.place_key = o.place_key
+       WHERE o.outcome = 'diamond' AND s.place_key IS NULL
+       ORDER BY o.recorded_at DESC`,
+      [],
+    );
+    return rows.map((row) => row.place_key);
+  }
+
+  /** Compte les places marquées disqualified (garde SQLite du scrub). */
+  async countDisqualifiedOutcomes(): Promise<number> {
+    const rows = await allRows<{ cnt: number }>(
+      this.db,
+      `SELECT COUNT(*) AS cnt FROM radar_place_last_outcome WHERE outcome = 'disqualified'`,
+      [],
+    );
+    return rows[0]?.cnt ?? 0;
+  }
+
+  /** Aperçu revert scrub sans écriture. */
+  async previewRevertScrubDisqualifiedOutcomes(): Promise<{
+    readonly restoredToDiamond: number;
+    readonly clearedDisqualified: number;
+  }> {
+    const withSnapshot = await allRows<{ cnt: number }>(
+      this.db,
+      `SELECT COUNT(*) AS cnt
+       FROM radar_place_last_outcome
+       WHERE outcome = 'disqualified'
+         AND place_key IN (SELECT place_key FROM radar_diamond_snapshot)`,
+      [],
+    );
+    const orphans = await allRows<{ cnt: number }>(
+      this.db,
+      `SELECT COUNT(*) AS cnt
+       FROM radar_place_last_outcome
+       WHERE outcome = 'disqualified'
+         AND place_key NOT IN (SELECT place_key FROM radar_diamond_snapshot)`,
+      [],
+    );
+    return {
+      restoredToDiamond: withSnapshot[0]?.cnt ?? 0,
+      clearedDisqualified: orphans[0]?.cnt ?? 0,
+    };
+  }
+
+  /** Annule un scrub erroné : disqualified → diamond si snapshot actif, sinon suppression de la ligne. */
+  async revertScrubDisqualifiedOutcomes(): Promise<{
+    readonly restoredToDiamond: number;
+    readonly clearedDisqualified: number;
+  }> {
+    const withSnapshot = await allRows<{ cnt: number }>(
+      this.db,
+      `SELECT COUNT(*) AS cnt
+       FROM radar_place_last_outcome
+       WHERE outcome = 'disqualified'
+         AND place_key IN (SELECT place_key FROM radar_diamond_snapshot)`,
+      [],
+    );
+    const orphans = await allRows<{ cnt: number }>(
+      this.db,
+      `SELECT COUNT(*) AS cnt
+       FROM radar_place_last_outcome
+       WHERE outcome = 'disqualified'
+         AND place_key NOT IN (SELECT place_key FROM radar_diamond_snapshot)`,
+      [],
+    );
+
+    await run(
+      this.db,
+      `UPDATE radar_place_last_outcome
+       SET outcome = 'diamond', recorded_at = datetime('now')
+       WHERE outcome = 'disqualified'
+         AND place_key IN (SELECT place_key FROM radar_diamond_snapshot)`,
+      [],
+    );
+    await run(
+      this.db,
+      `DELETE FROM radar_place_last_outcome WHERE outcome = 'disqualified'`,
+      [],
+    );
+
+    return {
+      restoredToDiamond: withSnapshot[0]?.cnt ?? 0,
+      clearedDisqualified: orphans[0]?.cnt ?? 0,
+    };
+  }
+
+  async insertScrubClassifierLog(row: {
+    readonly auditId: string | null;
+    readonly slug: string | null;
+    readonly placeKey: string;
+    readonly businessName: string;
+    readonly dryRun: number;
+    readonly scrubAction: 'kept' | 'disqualified';
+    readonly websiteStatus: string;
+    readonly matchedUrl: string | null;
+    readonly classificationReason: string | null;
+    readonly resolutionJson: string;
+  }): Promise<void> {
+    await run(
+      this.db,
+      `INSERT INTO radar_scrub_classifier_log (
+         audit_id, slug, place_key, business_name, dry_run, scrub_action,
+         website_status, matched_url, classification_reason, resolution_json, recorded_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+      [
+        row.auditId,
+        row.slug,
+        row.placeKey,
+        row.businessName,
+        row.dryRun,
+        row.scrubAction,
+        row.websiteStatus,
+        row.matchedUrl,
+        row.classificationReason,
+        row.resolutionJson,
+      ],
+    );
+  }
+
+  async listScrubClassifierLogs(): Promise<readonly ScrubClassifierLogRow[]> {
+    const rows = await allRows<{
+      id: number;
+      audit_id: string | null;
+      slug: string | null;
+      place_key: string;
+      business_name: string;
+      dry_run: number;
+      scrub_action: 'kept' | 'disqualified';
+      website_status: string;
+      matched_url: string | null;
+      classification_reason: string | null;
+      resolution_json: string;
+      recorded_at: string;
+    }>(
+      this.db,
+      `SELECT id, audit_id, slug, place_key, business_name, dry_run, scrub_action,
+              website_status, matched_url, classification_reason, resolution_json, recorded_at
+       FROM radar_scrub_classifier_log
+       ORDER BY recorded_at DESC, id DESC`,
+      [],
+    );
+    return rows.map((row) => ({
+      id: row.id,
+      auditId: row.audit_id,
+      slug: row.slug,
+      placeKey: row.place_key,
+      businessName: row.business_name,
+      dryRun: row.dry_run === 1,
+      scrubAction: row.scrub_action,
+      websiteStatus: row.website_status,
+      matchedUrl: row.matched_url,
+      classificationReason: row.classification_reason,
+      resolutionJson: row.resolution_json,
+      recordedAt: row.recorded_at,
+    }));
   }
 }

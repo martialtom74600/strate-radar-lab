@@ -35,10 +35,25 @@ export type WebsiteResolutionPayload = {
     | 'place_details'
     | 'places_requery'
     | 'web_search'
-    | 'presence_taxonomy'
+    | 'serp_classifier'
     | null;
   readonly mapsListingWebsite: string | null;
   readonly presencePlatform: string | null;
+  readonly classificationReason?: string | null;
+  readonly classifierAudit?: {
+    readonly model: string;
+    readonly latencyMs: number;
+    readonly urlsSent: readonly string[];
+    readonly urlsDropped: readonly string[];
+    readonly matchedUrl: string | null;
+    readonly status: 'owner_site' | 'presence_only' | 'none';
+    readonly confidence: number;
+    readonly reason: string;
+    readonly rawResponse: string;
+    readonly promptTokens: number | null;
+    readonly completionTokens: number | null;
+    readonly totalTokens: number | null;
+  } | null;
 };
 
 export type RadarAuditLeadKind =

@@ -25,18 +25,20 @@ import { extractLighthouseScoresPercent } from '../lib/lighthouse.js';
 import { stablePlaceKey } from '../lib/place-key.js';
 import { extractCityLabelForReport } from '../lib/report-city.js';
 import { formatIsoWeekBucket } from '../lib/week.js';
+import { persistDiamondSnapshotForScrub } from '../lib/diamond-snapshot.js';
 import {
-  resolveProspectWebsitePresence,
-  type WebsiteResolution,
-} from '../lib/website-resolver.js';
-import { assessGoogleOrganicProbeGate } from '../lib/website-resolver.js';
+  evaluateDiamondWebsitePresence,
+  shouldRejectOwnerSiteForCreationHunt,
+} from '../lib/diamond-website-detection.js';
+import { persistClassifierDecision } from '../lib/scrub-classifier-persistence.js';
 import {
   assessMandatoryBookingPlatformExclusion,
-  assessMandatoryBookingPlatformUrl,
   assessResolutionPresenceSkip,
   isBookingPlatformLabel,
-} from '../lib/website-presence-taxonomy.js';
-import { assessWebSearchDoubleCheckGate } from '../lib/web-search-verification.js';
+} from '../lib/website-presence-types.js';
+import {
+  type WebsiteResolution,
+} from '../lib/website-resolver.js';
 import { createBraveSearchWebClient, describeWebSearchBoot } from '../services/serp/brave-search.client.js';
 import type { WebSearchClient } from '../services/serp/web-search.types.js';
 import { wrapWebSearchClientWithBudget, WEB_SEARCH_BUDGET_EXHAUSTED_REASON } from '../services/serp/web-search-budget.js';
@@ -71,6 +73,8 @@ import {
   migrateDiamondRescanGuard,
   migrateProspectsTable,
   migrateRadarPlaceLastOutcome,
+  migrateRadarDiamondSnapshot,
+  migrateRadarScrubClassifierLog,
   migrateRadarWeekPlaceOutcome,
   openDatabase,
   ProspectRepository,
@@ -229,8 +233,6 @@ export type RadarPipelineResult = {
   /** Refonte avec site mais score matrice sous le seuil (affichage plafonné). */
   readonly scoreNearMisses: readonly ScoreNearMiss[];
   readonly scoreNearMissesTotal: number;
-  /** Fiches non qualifiées faute de double vérif Brave (plafond run) — retry prochain run. */
-  readonly webSearchGateBlockedCount: number;
   /** Run en mode campagne autonome (matrice ville × métier). */
   readonly campaign?: { readonly city: string; readonly category: string };
   /** Chasse création : grainage artisan + expansion géo. */
@@ -291,9 +293,6 @@ type ProcessLocalContext = {
   readonly quotaState: LeadQuotaState;
   readonly forceRescan: boolean;
   readonly scoreNearMisses: ScoreNearMiss[];
-  readonly webSearchGateBlocked: { count: number };
-  /** Refonte désactivée — économise Places / Brave / PageSpeed sur les sites existants. */
-  readonly creationOnlyMode: boolean;
 };
 
 
@@ -319,8 +318,6 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     quotaState,
     forceRescan,
     scoreNearMisses,
-    webSearchGateBlocked,
-    creationOnlyMode,
   } = ctx;
 
   if (leadQuotasSatisfied(quotaState)) {
@@ -356,20 +353,6 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     return null;
   }
 
-  const mapsBookingSkip = assessMandatoryBookingPlatformUrl(serp.website ?? null);
-  if (mapsBookingSkip.skip) {
-    await repo.recordPlaceOutcome(placeKey, 'disqualified');
-    gatekeeperExclusions.push({
-      name: serp.title,
-      reason: mapsBookingSkip.reason ?? 'Plateforme réservation',
-    });
-    radarVerbose(
-      config,
-      `${progressTag} ${truncateTitle(serp.title)} · ⊘ Plateforme RDV · ${truncateTitle(mapsBookingSkip.reason ?? '', 88)}`,
-    );
-    return null;
-  }
-
   const preflight = await assessPreflightCommercialTarget(
     config,
     serp,
@@ -397,33 +380,33 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     );
   }
 
-  const skipBraveSearch = creationOnlyMode
-    ? Boolean(serp.website?.trim())
-    : !needCreation && needRefonte && !serp.website?.trim();
-  if (skipBraveSearch && config.RADAR_VERBOSE) {
-    radarVerbose(
-      config,
-      `${progressTag} ${truncateTitle(serp.title)} · ◇ ${
-        creationOnlyMode
-          ? 'Brave court-circuité (Google organique actif · mode chasse création)'
-          : 'Brave court-circuité (Google organique actif · quota refonte)'
-      }`,
-    );
-  }
-
-  const websiteOut = await resolveProspectWebsitePresence({
+  const websiteOut = await evaluateDiamondWebsitePresence({
+    config,
     serp,
     serpClient,
     webSearchClient,
     searchLocation,
-    hl: searchHl,
-    gl: searchGl,
-    opts: {
-      skipBraveSearch,
-      fetchTimeoutMs: config.RADAR_FETCH_TIMEOUT_MS,
-    },
+    fetchTimeoutMs: config.RADAR_FETCH_TIMEOUT_MS,
   });
   const { resolution, ownerSite: resolved } = websiteOut;
+
+  await persistClassifierDecision({
+    repo,
+    supabase: null,
+    input: {
+      auditId: null,
+      slug: null,
+      placeKey,
+      businessName: serp.title,
+      dryRun: false,
+      disqualified: shouldRejectOwnerSiteForCreationHunt({
+        resolution,
+        needCreation,
+        needRefonte,
+      }),
+      resolution,
+    },
+  });
 
   if (config.RADAR_VERBOSE) {
     const webAttempt = resolution.attempts.find((a) => a.layer === 'web_search');
@@ -449,25 +432,17 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     );
   }
 
-  if (creationOnlyMode && resolution.status === 'owner_site') {
+  if (
+    shouldRejectOwnerSiteForCreationHunt({
+      resolution,
+      needCreation,
+      needRefonte,
+    })
+  ) {
     await repo.recordPlaceOutcome(placeKey, 'disqualified');
     radarVerbose(
       config,
-      `${progressTag} ${truncateTitle(serp.title)} · ◇ Site propriétaire — ignoré (chasse création)`,
-    );
-    return null;
-  }
-
-  const webSearchGate = assessWebSearchDoubleCheckGate({
-    resolution,
-    skipBraveSearch,
-    webSearchConfigured: webSearchClient !== null,
-  });
-  if (!webSearchGate.allowed) {
-    webSearchGateBlocked.count += 1;
-    radarVerbose(
-      config,
-      `${progressTag} ${truncateTitle(serp.title)} · ◇ ${truncateTitle(webSearchGate.reason, 100)}`,
+      `${progressTag} ${truncateTitle(serp.title)} · ◇ Site propriétaire — ignoré (chasse création/présence)`,
     );
     return null;
   }
@@ -560,6 +535,13 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     }
     await repo.recordPlaceOutcome(placeKey, 'diamond');
     await repo.recordDiamondEncounter(placeKey);
+    await persistDiamondSnapshotForScrub(repo, {
+      placeKey,
+      serp,
+      searchLocation,
+      websiteStatus: 'presence_only',
+      conversionBadge: 'DIAMANT_PRESENCE',
+    });
     radarVerbose(
       config,
       `${progressTag} ${truncateTitle(serp.title)} · 💎 DIAMANT PRÉSENCE · ${resolution.presencePlatform ?? 'intermédiaire'}${seedCategory !== undefined ? ` · grain « ${seedCategory} »` : ''}`,
@@ -570,16 +552,8 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     });
   }
 
-  /** Diamant création : aucune présence web + réputation Maps — sonde Google organique obligatoire. */
+  /** Diamant création : classifieur IA → none + réputation Maps. */
   if (qualifiesDiamantCreation(serp, resolution.status)) {
-    const googleOrganicGate = assessGoogleOrganicProbeGate(resolution);
-    if (!googleOrganicGate.allowed) {
-      radarVerbose(
-        config,
-        `${progressTag} ${truncateTitle(serp.title)} · ◇ ${truncateTitle(googleOrganicGate.reason, 100)}`,
-      );
-      return null;
-    }
     if (quotaState.creationsFound >= quotaState.targetCreation) {
       radarVerbose(
         config,
@@ -589,6 +563,13 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     }
     await repo.recordPlaceOutcome(placeKey, 'diamond');
     await repo.recordDiamondEncounter(placeKey);
+    await persistDiamondSnapshotForScrub(repo, {
+      placeKey,
+      serp,
+      searchLocation,
+      websiteStatus: 'none',
+      conversionBadge: 'DIAMANT_CREATION',
+    });
     radarVerbose(
       config,
       `${progressTag} ${truncateTitle(serp.title)} · 💎 DIAMANT CRÉATION · ${STRATE_DIAMANT_CREATION_SCORE}/${STRATE_DIAMANT_CREATION_SCORE}${seedCategory !== undefined ? ` · grain « ${seedCategory} »` : ''}`,
@@ -867,6 +848,8 @@ export async function runRadarPipeline(
   await migrateProspectsTable(db);
   await migrateDiamondRescanGuard(db);
   await migrateRadarPlaceLastOutcome(db);
+  await migrateRadarDiamondSnapshot(db);
+  await migrateRadarScrubClassifierLog(db);
   await migrateRadarWeekPlaceOutcome(db);
 
   if (config.RADAR_CAMPAIGN_MODE && !targetedMode) {
@@ -974,7 +957,6 @@ export async function runRadarPipeline(
   const lines: RadarPipelineLine[] = [];
   const gatekeeperExclusions: GatekeeperExclusion[] = [];
   const scoreNearMisses: ScoreNearMiss[] = [];
-  const webSearchGateBlocked = { count: 0 };
   /** Compteur de fiches scannées par clé zone|secteur — pour calcul taux de conversion. */
   const huntSectorScannedCounts = new Map<string, number>();
   const quotaState: LeadQuotaState = {
@@ -1007,8 +989,6 @@ export async function runRadarPipeline(
   let serpBudgetExhausted = false;
   let placesStoppedEarly = false;
   let placesStopMessage: string | undefined;
-
-  const creationOnlyMode = targetRefonteCount === 0;
 
   huntExpandLoop: while (true) {
     runOuter: for (const job of searchJobs) {
@@ -1137,8 +1117,6 @@ export async function runRadarPipeline(
             quotaState,
             forceRescan,
             scoreNearMisses,
-            webSearchGateBlocked,
-            creationOnlyMode,
           });
 
           if (targetedMode) {
@@ -1361,7 +1339,6 @@ export async function runRadarPipeline(
     gatekeeperExclusions,
     scoreNearMisses: nearMissReport.shown,
     scoreNearMissesTotal: nearMissReport.total,
-    webSearchGateBlockedCount: webSearchGateBlocked.count,
     creationHuntMode,
     ...(creationHuntMode
       ? {

@@ -176,6 +176,17 @@ function normalizePlaceResourceId(placeId: string): string {
 }
 
 async function fetchPlaceWebsiteUriLive(apiKey: string, placeId: string): Promise<string | null> {
+  const serp = await fetchPlaceLocalResultLive(apiKey, placeId);
+  return serp?.website?.trim() || null;
+}
+
+const PLACE_DETAILS_FIELD_MASK =
+  'id,displayName,formattedAddress,rating,userRatingCount,websiteUri,priceLevel,primaryType,types,location';
+
+async function fetchPlaceLocalResultLive(
+  apiKey: string,
+  placeId: string,
+): Promise<SerpLocalResult | null> {
   const id = normalizePlaceResourceId(placeId);
   if (!id) return null;
 
@@ -184,7 +195,7 @@ async function fetchPlaceWebsiteUriLive(apiKey: string, placeId: string): Promis
       method: 'GET',
       headers: {
         'X-Goog-Api-Key': apiKey,
-        'X-Goog-FieldMask': 'websiteUri',
+        'X-Goog-FieldMask': PLACE_DETAILS_FIELD_MASK,
       },
     });
 
@@ -210,9 +221,7 @@ async function fetchPlaceWebsiteUriLive(apiKey: string, placeId: string): Promis
       );
     }
 
-    const body = json as { readonly websiteUri?: string };
-    const uri = body.websiteUri?.trim();
-    return uri && uri.length > 0 ? uri : null;
+    return mapPlaceToLocalResult(json as GooglePlaceRaw, 1, apiKey);
   });
 }
 
@@ -386,6 +395,9 @@ function createGooglePlacesSimulationClient(): SerpClient {
     async fetchPlaceWebsiteUri(_placeId: string): Promise<string | null> {
       return null;
     },
+    async fetchPlaceLocalResult(_placeId: string): Promise<SerpLocalResult | null> {
+      return null;
+    },
   };
 }
 
@@ -536,6 +548,9 @@ function createGooglePlacesLiveClient(config: AppConfig): SerpClient {
 
     async fetchPlaceWebsiteUri(placeId: string): Promise<string | null> {
       return fetchPlaceWebsiteUriLive(apiKey, placeId);
+    },
+    async fetchPlaceLocalResult(placeId: string): Promise<SerpLocalResult | null> {
+      return fetchPlaceLocalResultLive(apiKey, placeId);
     },
   };
 }

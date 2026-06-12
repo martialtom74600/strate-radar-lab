@@ -1,31 +1,3 @@
-import {
-  classifyWebsiteUrl,
-  parseOwnerWebsiteUrl,
-} from './website-presence-taxonomy.js';
-
-export {
-  assessMandatoryBookingPlatformExclusion,
-  assessMandatoryBookingPlatformUrl,
-  assessPresencePipelineSkip,
-  assessResolutionPresenceSkip,
-  classifySearchResultHit,
-  classifyWebsiteUrl,
-  isBookingPlatformLabel,
-  htmlEmbedsBookingPlatform,
-  isBookingPresenceClassified,
-  isKnownPresenceHost,
-  organicSearchSkipHostMarkers,
-  pickBestPresenceCandidate,
-  parseOwnerWebsiteUrl,
-  parsePresenceSkipPolicy,
-  type ClassifiedWebsiteUrl,
-  type PresencePainFamily,
-  type PresencePipelineSkipAssessment,
-  type PresenceSkipPolicy,
-  type WebsitePresenceStatus,
-  type WebsiteUrlClass,
-} from './website-presence-taxonomy.js';
-
 /**
  * Normalise une URL prospect pour la déduplication (hôte sans www, chemin sans slash final inutile, sans query/hash).
  */
@@ -60,14 +32,3 @@ export function toAbsoluteHttpUrl(raw: string): string | null {
     return null;
   }
 }
-
-/** @deprecated Préférer `classifyWebsiteUrl` — true si présence tierce (réseau, annuaire, plateforme). */
-export function urlIsThirdPartyPresenceOnly(raw: string): boolean {
-  const c = classifyWebsiteUrl(raw);
-  return c?.urlClass === 'presence';
-}
-
-export type OwnerWebsiteUrls = {
-  readonly displayUrl: string;
-  readonly normalizedUrl: string;
-};

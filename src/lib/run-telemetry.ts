@@ -164,11 +164,6 @@ function buildWarningsAndErrors(args: {
       `Plafond recherche web du run atteint (${result.webSearchRequestsUsed}/${result.webSearchRequestsMax}).`,
     );
   }
-  if (result.webSearchGateBlockedCount > 0) {
-    warnings.push(
-      `${result.webSearchGateBlockedCount} fiche(s) en attente double vérif Brave (plafond run) — retry prochain run.`,
-    );
-  }
   if (!result.targetedMode && result.creationsFound < result.targetCreationCount) {
     if (!result.creationHuntMode) {
       warnings.push(

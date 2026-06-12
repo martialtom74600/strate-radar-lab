@@ -12,7 +12,6 @@ export function wrapWebSearchClientWithBudget(
       if (budget.used >= budget.max) {
         return Promise.resolve({
           hits: [],
-          filteredPresenceHits: [],
           error: {
             httpStatus: 0,
             reason: WEB_SEARCH_BUDGET_EXHAUSTED_REASON,

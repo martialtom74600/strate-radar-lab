@@ -20,10 +20,6 @@ export function scoreProspectNameMatch(targetName: string, mapsTitle: string): n
 
 const MIN_TARGET_MATCH_RATIO = 0.45;
 
-export function prospectMatchesTarget(mapsTitle: string, targetName: string): boolean {
-  return scoreProspectNameMatch(targetName, mapsTitle) >= MIN_TARGET_MATCH_RATIO;
-}
-
 /** Meilleure fiche Maps pour un nom cible, ou null si aucun match suffisant. */
 export function pickBestPlacesMatch(
   targetName: string,

@@ -14,7 +14,7 @@ const defaultRetryOptions: RetryOptions = {
   jitterRatio: 0.25,
 };
 
-function sleep(ms: number): Promise<void> {
+export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 

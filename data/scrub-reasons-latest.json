@@ -1,0 +1,2672 @@
+{
+  "exportedAt": "2026-06-12T18:39:50.943Z",
+  "count": 53,
+  "rows": [
+    {
+      "index": 1,
+      "businessName": "Freak's tattoo",
+      "slug": "freak-s-tattoo-annecy-aa683d0e09",
+      "auditId": "b9cb0dda-fbea-470c-b558-57b0a994a7e5",
+      "placeKey": "pid:ChIJs5nqVPiPi0cRx7xo6_osGok",
+      "wouldDisqualify": false,
+      "classificationReason": "La décision finale est basée sur l'URL https://www.pagesjaunes.fr/pros/09499676, car même si le commerce Freak's tattoo a une présence en ligne sur plusieurs plateformes, il ne possède pas son propre nom de domaine indépendant. Toutes les URLs fournies sont des listes sur des annuaires, des réseaux sociaux ou des plateformes, ce qui correspond à la règle 'presence_only'.",
+      "matchedUrl": "https://www.pagesjaunes.fr/pros/09499676",
+      "websiteResolution": {
+        "status": "presence_only",
+        "confidence": 1,
+        "url": "https://www.pagesjaunes.fr/pros/09499676",
+        "displayUrl": "https://www.pagesjaunes.fr/pros/09499676",
+        "normalizedUrl": "pagesjaunes.fr/pros/09499676",
+        "source": "web_search",
+        "mapsListingWebsite": null,
+        "presencePlatform": "pagesjaunes.fr",
+        "classificationReason": "La décision finale est basée sur l'URL https://www.pagesjaunes.fr/pros/09499676, car même si le commerce Freak's tattoo a une présence en ligne sur plusieurs plateformes, il ne possède pas son propre nom de domaine indépendant. Toutes les URLs fournies sont des listes sur des annuaires, des réseaux sociaux ou des plateformes, ce qui correspond à la règle 'presence_only'.",
+        "classifierAudit": {
+          "model": "llama-3.3-70b-versatile",
+          "latencyMs": 864,
+          "urlsSent": [
+            "https://www.pagesjaunes.fr/pros/09499676",
+            "https://www.instagram.com/freaks_tattoo/",
+            "https://fr.mappy.com/poi/50b1005384ae84a268b5962f",
+            "https://www.le-site-de.com/freak-s-tattoo-annecy_48551.html",
+            "https://horaires.lefigaro.fr/74000/Annecy/Freak-S-Tattoo-Annecy-13-Rue-Royale,1143275.html",
+            "https://www.starofservice.com/professionnel/tatouage-au-henne/annecy/174434061/freaks-tattoo"
+          ],
+          "urlsDropped": [],
+          "matchedUrl": "https://www.pagesjaunes.fr/pros/09499676",
+          "status": "presence_only",
+          "confidence": 1,
+          "reason": "La décision finale est basée sur l'URL https://www.pagesjaunes.fr/pros/09499676, car même si le commerce Freak's tattoo a une présence en ligne sur plusieurs plateformes, il ne possède pas son propre nom de domaine indépendant. Toutes les URLs fournies sont des listes sur des annuaires, des réseaux sociaux ou des plateformes, ce qui correspond à la règle 'presence_only'.",
+          "rawResponse": "{\n  \"status\": \"presence_only\",\n   \"confidence\": 1.0,\n   \"reason\": \"La décision finale est basée sur l'URL https://www.pagesjaunes.fr/pros/09499676, car même si le commerce Freak's tattoo a une présence en ligne sur plusieurs plateformes, il ne possède pas son propre nom de domaine indépendant. Toutes les URLs fournies sont des listes sur des annuaires, des réseaux sociaux ou des plateformes, ce qui correspond à la règle 'presence_only'.\"\n}",
+          "promptTokens": 496,
+          "completionTokens": 125,
+          "totalTokens": 621
+        },
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": "https://www.pagesjaunes.fr/pros/09499676",
+            "outcome": "presence_only",
+            "note": "La décision finale est basée sur l'URL https://www.pagesjaunes.fr/pros/09499676, car même si le commerce Freak's tattoo a une présence en ligne sur plusieurs plateformes, il ne possède pas son propre nom de domaine indépendant. Toutes les URLs fournies sont des listes sur des annuaires, des réseaux sociaux ou des plateformes, ce qui correspond à la règle 'presence_only'."
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": "https://www.pagesjaunes.fr/pros/09499676",
+            "outcome": "presence_only",
+            "note": "La décision finale est basée sur l'URL https://www.pagesjaunes.fr/pros/09499676, car même si le commerce Freak's tattoo a une présence en ligne sur plusieurs plateformes, il ne possède pas son propre nom de domaine indépendant. Toutes les URLs fournies sont des listes sur des annuaires, des réseaux sociaux ou des plateformes, ce qui correspond à la règle 'presence_only'."
+          }
+        ]
+      }
+    },
+    {
+      "index": 2,
+      "businessName": "Eleven Tattoo Studio",
+      "slug": "eleven-tattoo-studio-annecy-ba0367f610",
+      "auditId": "a87345c3-8cbc-4a5d-87e5-b5a37e33551c",
+      "placeKey": "pid:ChIJ0dK56f6Pi0cRQtw66AJiTSU",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": "https://www.facebook.com/eleventattoo/",
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "maps_listing",
+            "url": "https://www.facebook.com/eleventattoo/",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "place_details",
+            "url": "https://www.facebook.com/eleventattoo/",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "1 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 3,
+      "businessName": "Jerem Ink Tattoo | Tatoueur à Annecy",
+      "slug": "jerem-ink-tattoo-tatoueur-a-annecy-annecy-b792a04d78",
+      "auditId": "0b7dca99-e859-4bcd-9b08-f3c9b6270a92",
+      "placeKey": "pid:ChIJS8SVvYSPi0cRqhDvSRojYvc",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": "https://www.facebook.com/Jerem-Ink-Tattoo-Tatouages-Annecy-530008657106459/",
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "maps_listing",
+            "url": "https://www.facebook.com/Jerem-Ink-Tattoo-Tatouages-Annecy-530008657106459/",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "place_details",
+            "url": "https://www.facebook.com/Jerem-Ink-Tattoo-Tatouages-Annecy-530008657106459/",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "1 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 4,
+      "businessName": "Le Paradis de Talie",
+      "slug": "le-paradis-de-talie-annecy-cd62e3c201",
+      "auditId": "10be5cbd-d78c-4557-a87a-ce62fefb5091",
+      "placeKey": "pid:ChIJF9rZG_qPi0cRxO59uN7fTzw",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 5,
+      "businessName": "Zag bijoux Annecy",
+      "slug": "zag-bijoux-annecy-annecy-62a52fba86",
+      "auditId": "f4124714-06d4-47d8-867d-fb2b032f98bc",
+      "placeKey": "pid:ChIJp-2zVO-Pi0cRZEJopzRvVes",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 6,
+      "businessName": "Cœur de Pierres",
+      "slug": "c-ur-de-pierres-annecy-2a089f5886",
+      "auditId": "a64867c4-f2f4-48c8-b4cb-d2926ae516ff",
+      "placeKey": "pid:ChIJb2y3CfqPi0cRl9s5gd7sHNE",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 7,
+      "businessName": "Saint Simond Antiquités",
+      "slug": "saint-simond-antiquites-annecy-0d9a34eb08",
+      "auditId": "0a9207cb-a9a0-4287-bcc2-9600b06cec9d",
+      "placeKey": "pid:ChIJR8IAc5qgi0cROQ4HULKOsRo",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 8,
+      "businessName": "Beauquis Philippe",
+      "slug": "beauquis-philippe-annecy-3b9adcaa3b",
+      "auditId": "ebf46f6c-22a9-4c4a-a5e0-0cafc4abd6ce",
+      "placeKey": "pid:ChIJyywp-_mPi0cRxPnyWGQlFr0",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 9,
+      "businessName": "Rare&Rude",
+      "slug": "rare-rude-annecy-94dba2b876",
+      "auditId": "0fec64ba-e872-4665-8a82-352710f22f43",
+      "placeKey": "pid:ChIJmyMeiLOPi0cR7-Q7ubQXNG0",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 10,
+      "businessName": "Phenix Custom Annecy – Detailing automobile & nettoyage intérieur",
+      "slug": "phenix-custom-annecy-detailing-automobile-nettoyage-interieur-annecy-4c6d73ec84",
+      "auditId": "b201351e-820f-482c-af57-4e98c6297563",
+      "placeKey": "pid:ChIJp5crr_6Fi0cRxLF2vjFvd44",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 11,
+      "businessName": "Garage Des Ateliers",
+      "slug": "garage-des-ateliers-annecy-d715712319",
+      "auditId": "a92bce2e-0150-4cb8-91d9-8fac56cebc70",
+      "placeKey": "pid:ChIJ4eIeYACQi0cR_P7OzTJEvkI",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 12,
+      "businessName": "Isabel-Maria Torres-Hureau",
+      "slug": "isabel-maria-torres-hureau-annecy-444962479c",
+      "auditId": "9131501c-3339-4d13-9f47-2703c4352878",
+      "placeKey": "pid:ChIJNVvq_0OQi0cRvA6S7ZnJhUg",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 13,
+      "businessName": "Lav'Matic",
+      "slug": "lav-matic-annecy-5feaf2319d",
+      "auditId": "c44000bf-c38b-4e32-a7b2-cb5afd87cc55",
+      "placeKey": "pid:ChIJr16m_Mybi0cRtomKSkEPLc4",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 14,
+      "businessName": "Point Photo",
+      "slug": "point-photo-annecy-3b810d8d74",
+      "auditId": "7041702a-5f3f-41e7-bae6-86479f228f82",
+      "placeKey": "pid:ChIJHeudEviPi0cRRPD9qCN88HU",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 15,
+      "businessName": "Restaur'auto",
+      "slug": "restaur-auto-annecy-af20bbfa41",
+      "auditId": "a307679a-38ef-469c-b696-054c35b82f03",
+      "placeKey": "pid:ChIJk0mibi-Pi0cRBKjBNOD_3tY",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": "https://www.facebook.com/profile.php?id=100076237652080",
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "maps_listing",
+            "url": "https://www.facebook.com/profile.php?id=100076237652080",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "place_details",
+            "url": "https://www.facebook.com/profile.php?id=100076237652080",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "1 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 16,
+      "businessName": "CARROSSERIE D'AMICO ET FILS",
+      "slug": "carrosserie-d-amico-et-fils-annecy-7497214343",
+      "auditId": "decc5e65-8211-4f88-ab2d-33218188bd01",
+      "placeKey": "pid:ChIJewFUVfaUi0cRaHikM8kOKRo",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 17,
+      "businessName": "Boucherie des Clarines",
+      "slug": "boucherie-des-clarines-annecy-57cba56055",
+      "auditId": "673839e8-512d-4a78-ac9c-8ec6681274d9",
+      "placeKey": "pid:ChIJnRSz2JOPi0cReVMuBHETnBA",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": "https://www.facebook.com/boucheriedesclarines/",
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "maps_listing",
+            "url": "https://www.facebook.com/boucheriedesclarines/",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "place_details",
+            "url": "https://www.facebook.com/boucheriedesclarines/",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "1 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 18,
+      "businessName": "SND Nettoyage",
+      "slug": "snd-nettoyage-annecy-571290c548",
+      "auditId": "b086aca4-fee1-4b01-aafa-0e00cacbfc79",
+      "placeKey": "pid:ChIJOeoyVRGpnmERi5GDm5UK7PI",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 19,
+      "businessName": "Optique Centrale",
+      "slug": "optique-centrale-annecy-656e536fab",
+      "auditId": "67b9177e-778e-4ac4-ba5f-0b291a2ef37e",
+      "placeKey": "pid:ChIJw6cUD_iPi0cRhUmf8IAm5Jc",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 20,
+      "businessName": "Marion Prévôt Chiropracteur D.C. / Birthkeeper - Doula Albertville",
+      "slug": "marion-prevot-chiropracteur-d-c-birthkeeper-doula-albertville-annecy-0a12bb5779",
+      "auditId": "d0eefdae-8c7d-4024-bce5-6cc1611ef7ec",
+      "placeKey": "pid:ChIJrQuHFkhzjEcR0_7d5zcfLKE",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 21,
+      "businessName": "Chabrand François",
+      "slug": "chabrand-francois-annecy-69b3a201cc",
+      "auditId": "dca03767-08bb-4b68-b2a7-d1cb8c9343a6",
+      "placeKey": "pid:ChIJdcOw7FiFi0cRBfoDwYKFmss",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 22,
+      "businessName": "Perrin Carrelages",
+      "slug": "perrin-carrelages-annecy-904908e2ad",
+      "auditId": "569de30e-174a-4a56-a897-e44c491d5aa0",
+      "placeKey": "pid:ChIJN6naymqFi0cRh8EEvdVD-MQ",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": "https://www.facebook.com/Perrincarrelages/",
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "maps_listing",
+            "url": "https://www.facebook.com/Perrincarrelages/",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "place_details",
+            "url": "https://www.facebook.com/Perrincarrelages/",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "1 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 23,
+      "businessName": "3sk carrelage",
+      "slug": "3sk-carrelage-annecy-19e04db106",
+      "auditId": "83037f78-3a7b-4fa6-aaf0-21927c99d91b",
+      "placeKey": "pid:ChIJjcawL_SPi0cRXan1mfZ1I08",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 24,
+      "businessName": "Denis Peinture Intérieur",
+      "slug": "denis-peinture-interieur-annecy-2c0f17a41f",
+      "auditId": "b75d3f7d-fa64-4e23-9405-d139038d80f2",
+      "placeKey": "pid:ChIJmXtxKDWFi0cRAZimbA5s2YA",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 25,
+      "businessName": "Gomes Peinture Annecy",
+      "slug": "gomes-peinture-annecy-annecy-d85f540ecc",
+      "auditId": "c500e9d1-d93d-4bf0-8004-e18e23a8b198",
+      "placeKey": "pid:ChIJKUYIfF2Fi0cR6XQb3JuvNeM",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 26,
+      "businessName": "CG FIXABOIS Quincaillerie pour la Charpente Bois",
+      "slug": "cg-fixabois-quincaillerie-pour-la-charpente-bois-annecy-28591018a8",
+      "auditId": "d0bff9aa-8420-492f-9327-4c5f5dd4fa53",
+      "placeKey": "pid:ChIJVWXZaBSFi0cRD_oEUD2cva8",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 27,
+      "businessName": "EXP Toiture : Couvreur, Zingueur, Démoussage à Argonay",
+      "slug": "exp-toiture-couvreur-zingueur-demoussage-a-argonay-annecy-a7857b2e2c",
+      "auditId": "c03460c4-aa67-4e6e-95b0-e62bc9101688",
+      "placeKey": "pid:ChIJq-UpgKmPi0cRSZ4uyy_YaOg",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 28,
+      "businessName": "Ummi mon amour",
+      "slug": "ummi-mon-amour-annecy-7e0074dbf6",
+      "auditId": "0dc985b1-0e60-4881-b9a3-b07c455f2966",
+      "placeKey": "pid:ChIJi5XrXwCPi0cRihlJN_hLyCo",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": "https://www.instagram.com/ummi.cafe?igsh=MWN2czl4N3AwbTB2dg==",
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "maps_listing",
+            "url": "https://www.instagram.com/ummi.cafe?igsh=MWN2czl4N3AwbTB2dg==",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "place_details",
+            "url": "https://www.instagram.com/ummi.cafe?igsh=MWN2czl4N3AwbTB2dg==",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "1 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 29,
+      "businessName": "Tête de Cochon",
+      "slug": "tete-de-cochon-annecy-c0dc2533d3",
+      "auditId": "be38a7c8-5690-46ae-942f-04b91c53d229",
+      "placeKey": "pid:ChIJd7SyX_mPi0cRz1CHBBHtvRU",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": "https://www.facebook.com/profile.php?id=100064920582214",
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "maps_listing",
+            "url": "https://www.facebook.com/profile.php?id=100064920582214",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "place_details",
+            "url": "https://www.facebook.com/profile.php?id=100064920582214",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "1 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 30,
+      "businessName": "YMenuiserie Annecy",
+      "slug": "ymenuiserie-annecy-annecy-328fddc349",
+      "auditId": "7102f0e8-d5e7-4b4b-bd86-cebb363126f3",
+      "placeKey": "pid:ChIJ_eVFREyFi0cRNPe7rKJ5i24",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 31,
+      "businessName": "Edouard FAVRE-FELIX - Paysagiste & Arboriste",
+      "slug": "edouard-favre-felix-paysagiste-arboriste-annecy-360ef7390b",
+      "auditId": "bc49e6d1-c17d-476c-b844-299bae46930d",
+      "placeKey": "pid:ChIJae-q3ViPi0cRyB_mgCQoly8",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 32,
+      "businessName": "Plombier Tom Sanit 💧",
+      "slug": "plombier-tom-sanit-annecy-ffb0c3d743",
+      "auditId": "d5ad01a9-173b-4f4e-b31a-d87a02a5140d",
+      "placeKey": "pid:ChIJgcetEWbXa4IR4kbVnL01JVk",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": "https://www.facebook.com/profile.php?id=100076461480518",
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "maps_listing",
+            "url": "https://www.facebook.com/profile.php?id=100076461480518",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "place_details",
+            "url": "https://www.facebook.com/profile.php?id=100076461480518",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "1 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 33,
+      "businessName": "Capron plomberie",
+      "slug": "capron-plomberie-annecy-5cb3bdaedd",
+      "auditId": "1e2f8260-c88e-4d42-901f-bea7c111c076",
+      "placeKey": "pid:ChIJIWdOCQWFi0cR8tD2MnT8Ps4",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 34,
+      "businessName": "Aqua Pro Renove - Plombier",
+      "slug": "aqua-pro-renove-plombier-annecy-64c1466d6a",
+      "auditId": "5ab03d90-df24-4ba7-8f66-921c2800a34d",
+      "placeKey": "pid:ChIJd3Vw9xqbi0cRujLccx0USws",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 35,
+      "businessName": "Sam Elec",
+      "slug": "sam-elec-annecy-00616f2895",
+      "auditId": "1e21b852-15cd-4216-84cf-65e9ff3503be",
+      "placeKey": "pid:ChIJK7kt2ecveWsRygtTznG5apI",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": "http://www.facebook.com/Sam-Elec-101038978594588",
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "maps_listing",
+            "url": "http://www.facebook.com/Sam-Elec-101038978594588",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "place_details",
+            "url": "http://www.facebook.com/Sam-Elec-101038978594588",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "1 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 36,
+      "businessName": "ÏÒ Coiffeur",
+      "slug": "io-coiffeur-annecy-ece1742e3c",
+      "auditId": "1996a51a-874f-4002-9e9d-608a27bb4b6c",
+      "placeKey": "pid:ChIJ9f4Y6_uPi0cRQRqvvMet2rA",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": "https://www.facebook.com/iocoiffeur/",
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "maps_listing",
+            "url": "https://www.facebook.com/iocoiffeur/",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "place_details",
+            "url": "https://www.facebook.com/iocoiffeur/",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "1 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 37,
+      "businessName": "AGC JFB automobiles",
+      "slug": "agc-jfb-automobiles-annecy-b86fdb482e",
+      "auditId": "6e2dbdb9-de6b-4e7a-9396-8d56a14b0338",
+      "placeKey": "pid:ChIJb2fFwzGFi0cRX5iit_jt4EM",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 38,
+      "businessName": "City Auto",
+      "slug": "city-auto-annecy-6136d2f79d",
+      "auditId": "d659d9fe-b2a7-42d3-99ef-9efc7955ebf8",
+      "placeKey": "pid:ChIJOfvqSACQi0cRAMLy-JB2_bk",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 39,
+      "businessName": "Les Canetons",
+      "slug": "les-canetons-annecy-5545a556fd",
+      "auditId": "fdf35d54-e7ab-4e69-99ab-6fbc0418e997",
+      "placeKey": "pid:ChIJHaQLhOSPi0cR2nmsdFprt04",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 40,
+      "businessName": "Dés Ateliers",
+      "slug": "des-ateliers-annecy-fcc40d83df",
+      "auditId": "d32862f9-fb68-4571-80aa-dee058cbe62d",
+      "placeKey": "pid:ChIJRywdblOFi0cRJpPj9KWyPI4",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": "https://www.facebook.com/desateliers/",
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "maps_listing",
+            "url": "https://www.facebook.com/desateliers/",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "place_details",
+            "url": "https://www.facebook.com/desateliers/",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "1 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 41,
+      "businessName": "Mes Mots Doux",
+      "slug": "mes-mots-doux-annecy-98d8396942",
+      "auditId": "34712771-c446-44ff-8709-ee3e8cc8a6d3",
+      "placeKey": "pid:ChIJsYy96emFi0cRqrEyVLPtTQI",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 42,
+      "businessName": "Ma chouette boutique",
+      "slug": "ma-chouette-boutique-annecy-f34c098954",
+      "auditId": "e8f7a6e1-184a-4108-965c-83367a1f0ced",
+      "placeKey": "pid:ChIJz3j9aTCPi0cRT7ljuNLZEKk",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": "https://www.instagram.com/ma_chouette_boutique_?igsh=MXZuZmcwZ3Z3NG1vdQ==",
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "maps_listing",
+            "url": "https://www.instagram.com/ma_chouette_boutique_?igsh=MXZuZmcwZ3Z3NG1vdQ==",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "place_details",
+            "url": "https://www.instagram.com/ma_chouette_boutique_?igsh=MXZuZmcwZ3Z3NG1vdQ==",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "1 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 43,
+      "businessName": "Chablais Dépannage",
+      "slug": "chablais-depannage-annecy-d27024faa1",
+      "auditId": "6ef40443-2dca-4290-a049-cf679a8b6751",
+      "placeKey": "pid:ChIJUwA-Vis8jEcRcUP_6dhffrg",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": "http://www.facebook.com/chablais.depannage",
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "maps_listing",
+            "url": "http://www.facebook.com/chablais.depannage",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "place_details",
+            "url": "http://www.facebook.com/chablais.depannage",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "1 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 44,
+      "businessName": "TOCHON DEPANNAGE",
+      "slug": "tochon-depannage-annecy-7ed18f2b43",
+      "auditId": "954c1943-2501-4ba6-a59e-4a67504c82e5",
+      "placeKey": "pid:ChIJs-FOZjaGi0cRnJpADOmoM3k",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 45,
+      "businessName": "Allegro Sas",
+      "slug": "allegro-sas-annecy-b98da436d6",
+      "auditId": "54f916ec-8e14-4059-89ed-a2e4155cd586",
+      "placeKey": "pid:ChIJoVS7pliFi0cRfFe31yAfN3A",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 46,
+      "businessName": "Les Caprices d’Émilie",
+      "slug": "les-caprices-d-emilie-annecy-6b61fa8487",
+      "auditId": "1192a975-d7f7-4455-a28a-9c09e0100cac",
+      "placeKey": "pid:ChIJ3z1O3vuPi0cRN0plffL4dks",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": "https://www.instagram.com/les_caprices_emilie_annecy/",
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "maps_listing",
+            "url": "https://www.instagram.com/les_caprices_emilie_annecy/",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "place_details",
+            "url": "https://www.instagram.com/les_caprices_emilie_annecy/",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "1 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 47,
+      "businessName": "Restaurant Sidi Bou annecy",
+      "slug": "restaurant-sidi-bou-annecy-annecy-cf5010b41b",
+      "auditId": "43e14361-fe31-4ea2-b4dd-10c0015deffc",
+      "placeKey": "pid:ChIJZyDIzUOFi0cR1iarfDAQeaU",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 48,
+      "businessName": "Wamy's Annecy",
+      "slug": "wamy-s-annecy-annecy-104d1505d9",
+      "auditId": "ec03827a-904d-4968-9261-8b6912f72664",
+      "placeKey": "pid:ChIJYStGuxSFi0cRQMTLFdtWsWE",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 49,
+      "businessName": "Le Pas Sage",
+      "slug": "le-pas-sage-annecy-8c00b1bff8",
+      "auditId": "487c55c2-9611-4243-bb14-98a0b1a59946",
+      "placeKey": "pid:ChIJDahgy_uPi0cRVvzSWb2GgwA",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": "https://www.facebook.com/profile.php?id=100085295809924",
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "maps_listing",
+            "url": "https://www.facebook.com/profile.php?id=100085295809924",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "place_details",
+            "url": "https://www.facebook.com/profile.php?id=100085295809924",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "1 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 50,
+      "businessName": "Le Bar Roux d'Heure",
+      "slug": "le-bar-roux-d-heure-annecy-4708a96aac",
+      "auditId": "9ede329b-67a6-4fb4-bf77-02badccc5775",
+      "placeKey": "pid:ChIJD-H08fiPi0cRQ9ReBbAIAz8",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": "https://www.facebook.com/lebarrouxdheure/",
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "maps_listing",
+            "url": "https://www.facebook.com/lebarrouxdheure/",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "place_details",
+            "url": "https://www.facebook.com/lebarrouxdheure/",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "1 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 51,
+      "businessName": "Le Vieil Annecy",
+      "slug": "le-vieil-annecy-annecy-9168fe2d8c",
+      "auditId": "e4268d17-cd60-404a-9d67-8425f0703d43",
+      "placeKey": "pid:ChIJqVexN3-Pi0cRV5bdXlFr0EE",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 52,
+      "businessName": "Starphone Annecy",
+      "slug": "starphone-annecy-annecy-a947d7a4f1",
+      "auditId": "5eb1c58b-8a85-4d0f-8642-20c196378f28",
+      "placeKey": "pid:ChIJqUnYYPiPi0cR7-Em6VmCEMY",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": "https://www.facebook.com/StarePhoneAnnecy/",
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "maps_listing",
+            "url": "https://www.facebook.com/StarePhoneAnnecy/",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "place_details",
+            "url": "https://www.facebook.com/StarePhoneAnnecy/",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur IA"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "1 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    },
+    {
+      "index": 53,
+      "businessName": "marielouloucookies",
+      "slug": "marielouloucookies-annecy-37b3ce0ec2",
+      "auditId": "87338bed-8fe0-48f9-a48f-1755e645e67f",
+      "placeKey": "pid:ChIJEbv8VdWPi0cRpOfQakc0CDU",
+      "wouldDisqualify": false,
+      "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+      "matchedUrl": null,
+      "websiteResolution": {
+        "status": "none",
+        "confidence": 0,
+        "url": null,
+        "displayUrl": null,
+        "normalizedUrl": null,
+        "source": null,
+        "mapsListingWebsite": null,
+        "presencePlatform": null,
+        "classificationReason": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Limit 100000, Used 99",
+        "classifierAudit": null,
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "places_requery",
+            "url": null,
+            "outcome": "none",
+            "note": "0 hit(s) organique(s) collecté(s)"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) Brave → classifieur IA"
+          },
+          {
+            "layer": "serp_classifier",
+            "url": null,
+            "outcome": "skipped",
+            "note": "Classifieur SERP : 429 {\"error\":{\"message\":\"Rate limit reached for model `llama-3.3-70b-versatile` in organization `org_01kpk1p49efhaabhn8r68pybje` service tier `on_demand` on tokens per day (TPD): Li"
+          }
+        ]
+      }
+    }
+  ]
+}

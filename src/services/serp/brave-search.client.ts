@@ -1,15 +1,9 @@
 import type { AppConfig } from '../../config/index.js';
-import type { OrganicSerpHit } from '../../lib/organic-match.js';
+import type { OrganicSerpHit } from '../../lib/organic-serp-hit.js';
 import { withRetry } from '../../lib/retry.js';
 import {
-  classifyWebsiteUrl,
-  MANDATORY_BOOKING_EXCLUSION_POLICY,
-} from '../../lib/website-presence-taxonomy.js';
-import {
   formatWebSearchErrorNote,
-  isStaticWebSearchNoiseHost,
   shouldSkipWebSearchHost,
-  type FilteredBravePresenceHit,
   type WebSearchClient,
   type WebSearchError,
   type WebSearchResult,
@@ -19,30 +13,21 @@ const BRAVE_WEB_SEARCH_URL = 'https://api.search.brave.com/res/v1/web/search';
 
 export { formatWebSearchErrorNote };
 
-type MappedBraveWebResults = {
-  readonly hits: OrganicSerpHit[];
-  readonly filteredPresenceHits: FilteredBravePresenceHit[];
-};
-
-function mapBraveWebResults(
-  json: unknown,
-  presenceSkipPolicy: AppConfig['RADAR_PRESENCE_SKIP_POLICY'],
-): MappedBraveWebResults {
+function mapBraveWebResults(json: unknown): OrganicSerpHit[] {
   if (!json || typeof json !== 'object') {
-    return { hits: [], filteredPresenceHits: [] };
+    return [];
   }
   const root = json as Record<string, unknown>;
   const web = root.web;
   if (!web || typeof web !== 'object') {
-    return { hits: [], filteredPresenceHits: [] };
+    return [];
   }
   const results = (web as Record<string, unknown>).results;
   if (!Array.isArray(results)) {
-    return { hits: [], filteredPresenceHits: [] };
+    return [];
   }
 
   const hits: OrganicSerpHit[] = [];
-  const filteredPresenceHits: FilteredBravePresenceHit[] = [];
   for (const row of results) {
     if (!row || typeof row !== 'object') continue;
     const r = row as Record<string, unknown>;
@@ -62,21 +47,7 @@ function mapBraveWebResults(
           ? r.snippet
           : undefined;
 
-    if (shouldSkipWebSearchHost(hostname, presenceSkipPolicy)) {
-      if (
-        !isStaticWebSearchNoiseHost(hostname) &&
-        shouldSkipWebSearchHost(hostname, MANDATORY_BOOKING_EXCLUSION_POLICY)
-      ) {
-        const classified = classifyWebsiteUrl(link);
-        filteredPresenceHits.push({
-          link,
-          title,
-          ...(snippet !== undefined ? { snippet } : {}),
-          platformLabel: classified?.platformLabel ?? null,
-        });
-      }
-      continue;
-    }
+    if (shouldSkipWebSearchHost(hostname)) continue;
 
     hits.push({
       title,
@@ -85,7 +56,7 @@ function mapBraveWebResults(
     });
     if (hits.length >= 6) break;
   }
-  return { hits, filteredPresenceHits };
+  return hits;
 }
 
 function parseBraveSearchApiError(
@@ -220,7 +191,7 @@ export function createBraveSearchWebClient(config: AppConfig): WebSearchClient |
   return {
     async searchWeb(q, opts): Promise<WebSearchResult> {
       const query = q.trim();
-      if (!query) return { hits: [], filteredPresenceHits: [], error: null };
+      if (!query) return { hits: [], error: null };
 
       return withRetry(async () => {
         let activeQuery = query;
@@ -229,24 +200,23 @@ export function createBraveSearchWebClient(config: AppConfig): WebSearchClient |
         if (!response.ok) {
           return {
             hits: [],
-            filteredPresenceHits: [],
             error: parseBraveSearchApiError(response.json, response.status, response.text),
           };
         }
 
-        let mapped = mapBraveWebResults(response.json, config.RADAR_PRESENCE_SKIP_POLICY);
-        if (mapped.hits.length === 0) {
+        let hits = mapBraveWebResults(response.json);
+        if (hits.length === 0) {
           const fallbackQuery = extractBraveQueryFallback(response.json, activeQuery);
           if (fallbackQuery) {
             activeQuery = fallbackQuery;
             response = await fetchBraveWebSearch(apiKey, activeQuery, opts);
             if (response.ok) {
-              mapped = mapBraveWebResults(response.json, config.RADAR_PRESENCE_SKIP_POLICY);
+              hits = mapBraveWebResults(response.json);
             }
           }
         }
 
-        return { hits: mapped.hits, filteredPresenceHits: mapped.filteredPresenceHits, error: null };
+        return { hits, error: null };
       });
     },
   };

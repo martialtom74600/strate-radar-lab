@@ -5,10 +5,21 @@ export {
   migrateDiamondRescanGuard,
   migrateRadarPlaceLastOutcome,
   migrateRadarWeekPlaceOutcome,
+  migrateRadarDiamondSnapshot,
+  migrateRadarScrubClassifierLog,
   resolveDbFilePath,
   ProspectRepository,
   type CachedProspectScan,
   type ProspectScanUpsert,
   type ProspectScanMode,
   type WebsiteSource,
+  type DiamondSnapshotUpsert,
+  type DiamondWebsiteStatus,
+  type ScrubCandidateRow,
+  type ScrubClassifierLogRow,
 } from './database.js';
+export {
+  createSupabaseScrubClient,
+  type SupabaseScrubCandidate,
+  type SupabaseScrubClient,
+} from './supabase-scrub.js';

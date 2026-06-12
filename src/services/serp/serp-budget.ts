@@ -34,5 +34,9 @@ export function wrapSerpClientWithBudget(
       consume();
       return client.fetchPlaceWebsiteUri(placeId);
     },
+    fetchPlaceLocalResult(placeId) {
+      consume();
+      return client.fetchPlaceLocalResult(placeId);
+    },
   };
 }

@@ -1,27 +1,33 @@
+import type { AppConfig } from '../config/index.js';
+import {
+  buildSerpClassifierAuditRecord,
+  logSerpClassifierAudit,
+  logSerpClassifierFailure,
+  type SerpClassifierAuditRecord,
+} from './ai/serp-classifier-audit-log.js';
+import {
+  classifySerpUrlsDetailed,
+  presencePlatformFromUrl,
+  type SerpClassifierDetailedResult,
+} from './ai/serp-classifier.js';
 import type { ResolvedWebsite } from './diamond.js';
-import { resolveStrictFromExtendedHits } from './extended-search-resolve.js';
-import type { OrganicSerpHit } from './organic-match.js';
+import type { OrganicSerpHit } from './organic-serp-hit.js';
+import { buildOwnerDiscoveryQuery, resolveProspectCity } from './search-location-hint.js';
 import {
   formatWebSearchErrorNote,
-  type FilteredBravePresenceHit,
   type WebSearchClient,
 } from '../services/serp/web-search.types.js';
 import type { SerpClient } from '../services/serp/search-client.types.js';
 import type { SerpLocalResult } from '../services/serp/schemas.js';
-import {
-  classifyWebsiteUrl,
-  isBookingPresenceClassified,
-  OWNER_OVERRIDE_BOOKING_MIN_CONFIDENCE,
-  pickBestPresenceCandidate,
-  type WebsitePresenceStatus,
-} from './website-presence-taxonomy.js';
+import { normalizeProspectUrl, toAbsoluteHttpUrl } from './url.js';
+import { parseOwnerWebsiteUrl, type WebsitePresenceStatus } from './website-presence-types.js';
 
 export type WebsiteResolutionSource =
   | 'maps_link'
   | 'place_details'
   | 'places_requery'
   | 'web_search'
-  | 'presence_taxonomy';
+  | 'serp_classifier';
 
 export type WebsiteResolutionAttempt = {
   readonly layer: string;
@@ -39,35 +45,32 @@ export type WebsiteResolution = {
   readonly source: WebsiteResolutionSource | null;
   readonly mapsListingWebsite: string | null;
   readonly presencePlatform: string | null;
+  readonly classificationReason: string | null;
+  readonly classifierAudit: SerpClassifierAuditRecord | null;
   readonly attempts: readonly WebsiteResolutionAttempt[];
 };
 
-export type WebsiteResolutionResult = {
+type WebsiteResolutionResult = {
   readonly resolution: WebsiteResolution;
   /** Site propriétaire exploitable (matrice / refonte) — null si presence_only ou none. */
   readonly ownerSite: ResolvedWebsite | null;
 };
 
-export type ResolveProspectWebsiteOptions = {
-  /** Désactive uniquement Brave (couche 4). Google organique tourne toujours. */
-  readonly skipBraveSearch?: boolean;
+type ResolveProspectWebsiteOptions = {
   readonly fetchTimeoutMs: number;
 };
 
-type CandidateOwner = {
-  readonly displayUrl: string;
-  readonly normalizedUrl: string;
-  readonly source: WebsiteResolutionSource;
-  readonly confidence: number;
-  readonly layer: string;
-};
-
-type CandidatePresence = {
-  readonly displayUrl: string;
-  readonly normalizedUrl: string;
-  readonly platformLabel: string | null;
-  readonly source: WebsiteResolutionSource;
-  readonly layer: string;
+type ResolveProspectWebsitePresenceArgs = {
+  readonly config: AppConfig;
+  readonly serp: SerpLocalResult;
+  readonly serpClient: SerpClient;
+  readonly webSearchClient: WebSearchClient | null;
+  readonly searchLocation: string | null;
+  readonly hl: string | undefined;
+  readonly gl: string | undefined;
+  readonly opts: ResolveProspectWebsiteOptions;
+  /** Préfixe des lignes `[serp-classifier]` (ex. `[SCRUB] `). */
+  readonly logPrefix?: string;
 };
 
 function recordAttempt(
@@ -80,53 +83,110 @@ function recordAttempt(
   attempts.push({ layer, url, outcome, ...(note !== undefined ? { note } : {}) });
 }
 
-function toOwnerResolved(c: CandidateOwner): ResolvedWebsite {
-  return {
-    displayUrl: c.displayUrl,
-    normalizedUrl: c.normalizedUrl,
-    source:
-      c.source === 'places_requery' || c.source === 'web_search'
-        ? 'organic_deep_search'
-        : 'maps_link',
-  };
+function pushUniqueUrl(bucket: string[], raw: string | null | undefined): void {
+  const trimmed = raw?.trim();
+  if (!trimmed || bucket.length >= 7) return;
+  if (bucket.some((existing) => existing.toLowerCase() === trimmed.toLowerCase())) return;
+  if (!toAbsoluteHttpUrl(trimmed)) return;
+  bucket.push(trimmed);
 }
 
-function buildResult(
-  status: WebsitePresenceStatus,
-  owner: CandidateOwner | null,
-  presence: CandidatePresence | null,
-  mapsListingWebsite: string | null,
-  attempts: WebsiteResolutionAttempt[],
-): WebsiteResolutionResult {
-  if (status === 'owner_site' && owner) {
+function organicHitsFromSerpRows(
+  rows: readonly { readonly title: string; readonly link: string; readonly snippet?: string }[],
+): OrganicSerpHit[] {
+  return rows.map((row) => ({
+    title: row.title,
+    link: row.link,
+    ...(row.snippet !== undefined ? { snippet: row.snippet } : {}),
+  }));
+}
+
+function buildResultFromClassification(args: {
+  readonly classification: SerpClassifierDetailedResult['result'];
+  readonly classifierAudit: SerpClassifierAuditRecord | null;
+  readonly mapsListingWebsite: string | null;
+  readonly attempts: WebsiteResolutionAttempt[];
+  readonly source: WebsiteResolutionSource;
+}): WebsiteResolutionResult {
+  const { classification, classifierAudit, mapsListingWebsite, attempts, source } = args;
+  const matched = classification.matchedUrl;
+  const parsed = matched ? parseOwnerWebsiteUrl(matched) : null;
+
+  if (classification.status === 'owner_site' && parsed) {
     return {
-      ownerSite: toOwnerResolved(owner),
+      ownerSite: {
+        displayUrl: parsed.displayUrl,
+        normalizedUrl: parsed.normalizedUrl,
+        source: source === 'places_requery' || source === 'web_search' ? 'organic_deep_search' : 'maps_link',
+      },
       resolution: {
         status: 'owner_site',
-        confidence: owner.confidence,
-        url: owner.displayUrl,
-        displayUrl: owner.displayUrl,
-        normalizedUrl: owner.normalizedUrl,
-        source: owner.source,
+        confidence: classification.confidence,
+        url: parsed.displayUrl,
+        displayUrl: parsed.displayUrl,
+        normalizedUrl: parsed.normalizedUrl,
+        source,
         mapsListingWebsite,
         presencePlatform: null,
+        classificationReason: classification.reason,
+        classifierAudit,
         attempts,
       },
     };
   }
 
-  if (status === 'presence_only' && presence) {
+  if (classification.status === 'presence_only' && parsed) {
     return {
       ownerSite: null,
       resolution: {
         status: 'presence_only',
-        confidence: 0.78,
-        url: presence.displayUrl,
-        displayUrl: presence.displayUrl,
-        normalizedUrl: presence.normalizedUrl,
-        source: presence.source,
+        confidence: classification.confidence,
+        url: parsed.displayUrl,
+        displayUrl: parsed.displayUrl,
+        normalizedUrl: parsed.normalizedUrl,
+        source,
         mapsListingWebsite,
-        presencePlatform: presence.platformLabel,
+        presencePlatform: presencePlatformFromUrl(parsed.displayUrl),
+        classificationReason: classification.reason,
+        classifierAudit,
+        attempts,
+      },
+    };
+  }
+
+  if (classification.status === 'presence_only') {
+    return {
+      ownerSite: null,
+      resolution: {
+        status: 'presence_only',
+        confidence: classification.confidence,
+        url: null,
+        displayUrl: null,
+        normalizedUrl: null,
+        source,
+        mapsListingWebsite,
+        presencePlatform: null,
+        classificationReason: classification.reason,
+        classifierAudit,
+        attempts,
+      },
+    };
+  }
+
+  if (classification.status === 'owner_site') {
+    return {
+      ownerSite: null,
+      resolution: {
+        status: 'owner_site',
+        confidence: classification.confidence,
+        url: null,
+        displayUrl: null,
+        normalizedUrl: null,
+        source,
+        mapsListingWebsite,
+        presencePlatform: null,
+        classificationReason: classification.reason,
+        classifierAudit,
         attempts,
       },
     };
@@ -136,254 +196,74 @@ function buildResult(
     ownerSite: null,
     resolution: {
       status: 'none',
-      confidence: 0,
+      confidence: classification.confidence,
       url: null,
       displayUrl: null,
       normalizedUrl: null,
       source: null,
       mapsListingWebsite,
       presencePlatform: null,
+      classificationReason: classification.reason,
+      classifierAudit,
       attempts,
     },
   };
 }
 
-function ingestClassifiedUrl(
-  raw: string,
-  layer: string,
-  source: WebsiteResolutionSource,
-  attempts: WebsiteResolutionAttempt[],
-  ownerCandidates: CandidateOwner[],
-  presenceCandidates: CandidatePresence[],
-  ownerConfidence: number,
-): void {
-  const classified = classifyWebsiteUrl(raw);
-  if (!classified) {
-    recordAttempt(attempts, layer, raw, 'invalid');
-    return;
-  }
-  if (classified.urlClass === 'owner') {
-    ownerCandidates.push({
-      displayUrl: classified.displayUrl,
-      normalizedUrl: classified.normalizedUrl,
-      source,
-      confidence: ownerConfidence,
-      layer,
-    });
-    recordAttempt(attempts, layer, classified.displayUrl, 'owner_site');
-    return;
-  }
-  presenceCandidates.push({
-    displayUrl: classified.displayUrl,
-    normalizedUrl: classified.normalizedUrl,
-    platformLabel: classified.platformLabel,
-    source: source === 'maps_link' ? 'presence_taxonomy' : source,
-    layer,
+function summarizeCascadeForAudit(attempts: readonly WebsiteResolutionAttempt[]): string {
+  return attempts
+    .filter((row) => row.layer !== 'serp_classifier')
+    .map((row) => `${row.layer}=${row.outcome}${row.note ? `(${row.note.slice(0, 40)})` : ''}`)
+    .join(' · ');
+}
+
+function emitClassifierAuditLog(args: {
+  readonly config: AppConfig;
+  readonly businessName: string;
+  readonly city: string | null;
+  readonly audit: SerpClassifierAuditRecord;
+  readonly logTag: string;
+  readonly attempts: readonly WebsiteResolutionAttempt[];
+}): void {
+  if (!args.config.RADAR_VERBOSE) return;
+  logSerpClassifierAudit({
+    logPrefix: args.logTag,
+    businessName: args.businessName,
+    city: args.city,
+    audit: args.audit,
+    cascadeNote: summarizeCascadeForAudit(args.attempts),
   });
-  recordAttempt(attempts, layer, classified.displayUrl, 'presence_only');
 }
 
-function ingestBookingPresenceHits(
-  hits: readonly {
-    readonly displayUrl: string;
-    readonly normalizedUrl: string;
-    readonly platformLabel: string | null;
-  }[],
-  layer: string,
-  source: WebsiteResolutionSource,
-  attempts: WebsiteResolutionAttempt[],
-  presenceCandidates: CandidatePresence[],
-  notePrefix: string,
-): void {
-  const seen = new Set(presenceCandidates.map((candidate) => candidate.normalizedUrl));
-  for (const hit of hits) {
-    if (seen.has(hit.normalizedUrl)) continue;
-    seen.add(hit.normalizedUrl);
-    presenceCandidates.push({
-      displayUrl: hit.displayUrl,
-      normalizedUrl: hit.normalizedUrl,
-      platformLabel: hit.platformLabel,
-      source,
-      layer,
-    });
-    recordAttempt(
-      attempts,
-      layer,
-      hit.displayUrl,
-      'presence_only',
-      `${notePrefix} · ${hit.platformLabel ?? 'plateforme RDV'}`,
-    );
-  }
-}
-
-function ingestBraveFilteredPresenceHits(
-  filtered: readonly FilteredBravePresenceHit[],
-  attempts: WebsiteResolutionAttempt[],
-  presenceCandidates: CandidatePresence[],
-): void {
-  const seen = new Set(presenceCandidates.map((candidate) => candidate.normalizedUrl));
-  for (const row of filtered) {
-    const classified = classifyWebsiteUrl(row.link);
-    if (!classified) continue;
-    if (seen.has(classified.normalizedUrl)) continue;
-    seen.add(classified.normalizedUrl);
-    presenceCandidates.push({
-      displayUrl: classified.displayUrl,
-      normalizedUrl: classified.normalizedUrl,
-      platformLabel: classified.platformLabel,
-      source: 'web_search',
-      layer: 'web_search',
-    });
-    recordAttempt(
-      attempts,
-      'web_search',
-      classified.displayUrl,
-      'presence_only',
-      `Brave · host filtré · ${classified.platformLabel ?? row.platformLabel ?? 'plateforme RDV'}`,
-    );
-  }
-}
-
-function mergeExtendedSearchResult(
-  resolved: Awaited<ReturnType<typeof resolveStrictFromExtendedHits>>,
-  layer: string,
-  source: WebsiteResolutionSource,
-  attempts: WebsiteResolutionAttempt[],
-  ownerCandidates: CandidateOwner[],
-  presenceCandidates: CandidatePresence[],
-): void {
-  ingestBookingPresenceHits(
-    resolved.bookingPresenceHits,
-    layer,
-    source,
-    attempts,
-    presenceCandidates,
-    'plateforme RDV SERP',
-  );
-
-  if (resolved.owner) {
-    ownerCandidates.push({
-      displayUrl: resolved.owner.displayUrl,
-      normalizedUrl: resolved.owner.normalizedUrl,
-      source,
-      confidence: resolved.owner.confidence,
-      layer,
-    });
-    recordAttempt(
-      attempts,
-      layer,
-      resolved.owner.displayUrl,
-      'owner_site',
-      resolved.summaryNote ?? undefined,
-    );
-    return;
-  }
-
-  if (resolved.presence) {
-    const alreadyTracked = presenceCandidates.some(
-      (candidate) => candidate.normalizedUrl === resolved.presence?.normalizedUrl,
-    );
-    if (!alreadyTracked) {
-      presenceCandidates.push({
-        displayUrl: resolved.presence.displayUrl,
-        normalizedUrl: resolved.presence.normalizedUrl,
-        platformLabel: resolved.presence.platformLabel,
-        source,
-        layer,
-      });
-      recordAttempt(
-        attempts,
-        layer,
-        resolved.presence.displayUrl,
-        'presence_only',
-        resolved.summaryNote ?? undefined,
-      );
-    }
-    return;
-  }
-
-  recordAttempt(
-    attempts,
-    layer,
-    null,
-    'skipped',
-    resolved.summaryNote ? `probe_ok · ${resolved.summaryNote}` : 'probe_ok',
-  );
-}
-
-/** Diamant création autorisé seulement si la sonde Google organique a abouti. */
-export function assessGoogleOrganicProbeGate(resolution: WebsiteResolution): {
-  readonly allowed: boolean;
-  readonly reason: string;
-} {
-  const attempt = resolution.attempts.find((row) => row.layer === 'places_requery');
-  if (!attempt) {
-    return { allowed: false, reason: 'Google organique non exécuté' };
-  }
-  if (attempt.outcome === 'owner_site' || attempt.outcome === 'presence_only') {
-    return { allowed: true, reason: '' };
-  }
-  if (attempt.outcome === 'skipped' && (attempt.note?.includes('probe_ok') ?? false)) {
-    return { allowed: true, reason: '' };
-  }
-  const note = attempt.note?.trim() ?? 'échec';
-  return { allowed: false, reason: `Google organique non confirmé · ${note.slice(0, 100)}` };
-}
-
-/** Requête web sans guillemets (Brave renvoie bad_results avec phrase exacte). */
 function buildWebSearchQuery(businessName: string, searchLocation: string | null): string {
-  const name = businessName.trim();
-  if (!name) return '';
-  const loc = searchLocation?.trim() ?? '';
-  const city = loc.split(',')[0]?.trim() ?? loc;
-  return [name, city].filter((part) => part.length > 0).join(' ').trim();
+  return buildOwnerDiscoveryQuery(businessName, searchLocation, '');
 }
 
 /**
- * Cascade de résolution web : Maps → Place Details → Google organique → Brave Search.
- * Couche 3 (Google) : toujours active. Couches 3–4 : top 6 résultats.
+ * Cascade de résolution web : collecte URLs (Maps, Details, Google, Brave) → classifieur IA.
  */
-export async function resolveProspectWebsitePresence(args: {
-  readonly serp: SerpLocalResult;
-  readonly serpClient: SerpClient;
-  readonly webSearchClient: WebSearchClient | null;
-  readonly searchLocation: string | null;
-  readonly hl: string | undefined;
-  readonly gl: string | undefined;
-  readonly opts: ResolveProspectWebsiteOptions;
-}): Promise<WebsiteResolutionResult> {
-  const { serp, serpClient, webSearchClient, searchLocation, hl, gl, opts } = args;
+export async function resolveProspectWebsitePresence(
+  args: ResolveProspectWebsitePresenceArgs,
+): Promise<WebsiteResolutionResult> {
+  const { config, serp, serpClient, webSearchClient, searchLocation, hl, gl, opts } = args;
+  const logTag = args.logPrefix ?? '[radar] ';
   const attempts: WebsiteResolutionAttempt[] = [];
-  const ownerCandidates: CandidateOwner[] = [];
-  const presenceCandidates: CandidatePresence[] = [];
+  const urlBucket: string[] = [];
   const mapsListingWebsite = serp.website?.trim() || null;
   const placeId = serp.place_id?.trim() || null;
+  const prospectCity = resolveProspectCity(serp, searchLocation);
 
+  pushUniqueUrl(urlBucket, mapsListingWebsite);
   if (mapsListingWebsite) {
-    ingestClassifiedUrl(
-      mapsListingWebsite,
-      'maps_listing',
-      'maps_link',
-      attempts,
-      ownerCandidates,
-      presenceCandidates,
-      0.85,
-    );
+    recordAttempt(attempts, 'maps_listing', mapsListingWebsite, 'skipped', 'URL transmise au classifieur IA');
   }
 
   if (placeId) {
     try {
       const detailsUri = await serpClient.fetchPlaceWebsiteUri(placeId);
       if (detailsUri) {
-        ingestClassifiedUrl(
-          detailsUri,
-          'place_details',
-          'place_details',
-          attempts,
-          ownerCandidates,
-          presenceCandidates,
-          0.88,
-        );
+        pushUniqueUrl(urlBucket, detailsUri);
+        recordAttempt(attempts, 'place_details', detailsUri, 'skipped', 'URL transmise au classifieur IA');
       } else {
         recordAttempt(attempts, 'place_details', null, 'skipped', 'websiteUri absent');
       }
@@ -409,6 +289,9 @@ export async function resolveProspectWebsitePresence(args: {
         }
       : {};
 
+  let classifierSource: WebsiteResolutionSource = 'serp_classifier';
+  let organicProbeIndex = -1;
+
   if (deepQuery) {
     try {
       const organic = await serpClient.searchGoogleOrganic({
@@ -417,30 +300,18 @@ export async function resolveProspectWebsitePresence(args: {
         ...(gl !== undefined ? { gl } : {}),
         ...organicBias,
       });
-      const hits: OrganicSerpHit[] = (organic.organic_results ?? []).map((h) => ({
-        title: h.title,
-        link: h.link,
-        ...(h.snippet !== undefined ? { snippet: h.snippet } : {}),
-        ...(h.place_id !== undefined ? { place_id: h.place_id } : {}),
-      }));
-
-      const requeryOut = await resolveStrictFromExtendedHits({
-        hits,
-        businessName: serp.title,
-        cityHint: searchLocation,
-        placeId,
-        source: 'places_requery',
-        layer: 'places_requery',
-        fetchTimeoutMs: opts.fetchTimeoutMs,
-      });
-      mergeExtendedSearchResult(
-        requeryOut,
-        'places_requery',
-        'places_requery',
+      const hits = organicHitsFromSerpRows(organic.organic_results ?? []);
+      for (const hit of hits) {
+        pushUniqueUrl(urlBucket, hit.link);
+      }
+      recordAttempt(
         attempts,
-        ownerCandidates,
-        presenceCandidates,
+        'places_requery',
+        null,
+        'none',
+        `${hits.length} hit(s) organique(s) collecté(s)`,
       );
+      organicProbeIndex = attempts.length - 1;
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       recordAttempt(attempts, 'places_requery', null, 'skipped', msg.slice(0, 120));
@@ -449,7 +320,7 @@ export async function resolveProspectWebsitePresence(args: {
     recordAttempt(attempts, 'places_requery', null, 'skipped', 'requête vide');
   }
 
-  if (!opts.skipBraveSearch && webSearchClient && deepQuery) {
+  if (webSearchClient && deepQuery) {
     try {
       const webQuery = buildWebSearchQuery(serp.title, searchLocation);
       if (!webQuery) {
@@ -459,11 +330,6 @@ export async function resolveProspectWebsitePresence(args: {
           ...(hl !== undefined ? { hl } : {}),
           ...(gl !== undefined ? { gl } : {}),
         });
-        ingestBraveFilteredPresenceHits(
-          webResult.filteredPresenceHits,
-          attempts,
-          presenceCandidates,
-        );
         if (webResult.error) {
           recordAttempt(
             attempts,
@@ -473,22 +339,16 @@ export async function resolveProspectWebsitePresence(args: {
             formatWebSearchErrorNote(webResult.error),
           );
         } else {
-          const webOut = await resolveStrictFromExtendedHits({
-            hits: webResult.hits,
-            businessName: serp.title,
-            cityHint: searchLocation,
-            placeId,
-            source: 'web_search',
-            layer: 'web_search',
-            fetchTimeoutMs: opts.fetchTimeoutMs,
-          });
-          mergeExtendedSearchResult(
-            webOut,
-            'web_search',
-            'web_search',
+          for (const hit of webResult.hits) {
+            pushUniqueUrl(urlBucket, hit.link);
+          }
+          classifierSource = 'web_search';
+          recordAttempt(
             attempts,
-            ownerCandidates,
-            presenceCandidates,
+            'web_search',
+            null,
+            'skipped',
+            `${webResult.hits.length} hit(s) Brave → classifieur IA`,
           );
         }
       }
@@ -496,8 +356,6 @@ export async function resolveProspectWebsitePresence(args: {
       const msg = e instanceof Error ? e.message : String(e);
       recordAttempt(attempts, 'web_search', null, 'skipped', msg.slice(0, 240));
     }
-  } else if (opts.skipBraveSearch) {
-    recordAttempt(attempts, 'web_search', null, 'skipped', 'Brave désactivé pour cette fiche');
   } else if (!webSearchClient) {
     recordAttempt(
       attempts,
@@ -508,29 +366,118 @@ export async function resolveProspectWebsitePresence(args: {
     );
   }
 
-  const bestOwner = ownerCandidates.sort((a, b) => b.confidence - a.confidence)[0] ?? null;
-  const bestPresence = pickBestPresenceCandidate(presenceCandidates);
-  const hasBookingPresence = presenceCandidates.some((candidate) =>
-    isBookingPresenceClassified(classifyWebsiteUrl(candidate.displayUrl)),
+  const urlsForClassifier = urlBucket.slice(0, 7);
+  const urlsDropped = urlBucket.slice(7);
+
+  if (urlsForClassifier.length === 0) {
+    recordAttempt(attempts, 'serp_classifier', null, 'none', 'Aucune URL collectée');
+    if (config.RADAR_VERBOSE) {
+      logSerpClassifierFailure({
+        logPrefix: logTag,
+        businessName: serp.title,
+        city: prospectCity,
+        urlsSent: [],
+        error: 'Aucune URL collectée pour ce commerce.',
+      });
+    }
+    return buildResultFromClassification({
+      classification: {
+        status: 'none',
+        confidence: 0,
+        reason: 'Aucune URL collectée pour ce commerce.',
+        matchedUrl: null,
+      },
+      classifierAudit: null,
+      mapsListingWebsite,
+      attempts,
+      source: classifierSource,
+    });
+  }
+
+  let detailed: SerpClassifierDetailedResult;
+  try {
+    detailed = await classifySerpUrlsDetailed({
+      config,
+      companyName: serp.title,
+      city: prospectCity,
+      urls: urlsForClassifier,
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    recordAttempt(attempts, 'serp_classifier', null, 'skipped', msg.slice(0, 200));
+    if (config.RADAR_VERBOSE) {
+      logSerpClassifierFailure({
+        logPrefix: logTag,
+        businessName: serp.title,
+        city: prospectCity,
+        urlsSent: urlsForClassifier,
+        error: msg,
+      });
+    }
+    return buildResultFromClassification({
+      classification: {
+        status: 'none',
+        confidence: 0,
+        reason: msg.slice(0, 240),
+        matchedUrl: null,
+      },
+      classifierAudit: null,
+      mapsListingWebsite,
+      attempts,
+      source: classifierSource,
+    });
+  }
+
+  const classification = detailed.result;
+  const classifierAudit: SerpClassifierAuditRecord = {
+    ...buildSerpClassifierAuditRecord(detailed),
+    urlsDropped: urlsDropped.length > 0 ? urlsDropped : [...detailed.trace.urlsDropped],
+  };
+
+  recordAttempt(
+    attempts,
+    'serp_classifier',
+    classification.matchedUrl,
+    classification.status,
+    classification.reason,
   );
 
-  if (bestOwner) {
-    const authoritative =
-      bestOwner.source === 'maps_link' || bestOwner.source === 'place_details';
-    if (
-      !authoritative &&
-      hasBookingPresence &&
-      bestOwner.confidence < OWNER_OVERRIDE_BOOKING_MIN_CONFIDENCE &&
-      bestPresence
-    ) {
-      return buildResult('presence_only', null, bestPresence, mapsListingWebsite, attempts);
-    }
-    return buildResult('owner_site', bestOwner, null, mapsListingWebsite, attempts);
+  emitClassifierAuditLog({
+    config,
+    businessName: serp.title,
+    city: prospectCity,
+    audit: classifierAudit,
+    logTag,
+    attempts,
+  });
+
+  if (organicProbeIndex >= 0) {
+    attempts[organicProbeIndex] = {
+      layer: 'places_requery',
+      url: classification.matchedUrl,
+      outcome: classification.status,
+      note: classification.reason,
+    };
   }
 
-  if (bestPresence) {
-    return buildResult('presence_only', null, bestPresence, mapsListingWebsite, attempts);
-  }
+  const source =
+    classification.status === 'owner_site' && mapsListingWebsite &&
+    classification.matchedUrl &&
+    normalizeProspectUrl(classification.matchedUrl) === normalizeProspectUrl(mapsListingWebsite)
+      ? 'maps_link'
+      : classifierSource === 'web_search'
+        ? 'web_search'
+        : organicProbeIndex >= 0
+          ? 'places_requery'
+          : mapsListingWebsite
+            ? 'maps_link'
+            : 'serp_classifier';
 
-  return buildResult('none', null, null, mapsListingWebsite, attempts);
+  return buildResultFromClassification({
+    classification,
+    classifierAudit,
+    mapsListingWebsite,
+    attempts,
+    source,
+  });
 }

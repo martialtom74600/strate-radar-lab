@@ -92,7 +92,7 @@ function radarStudioOriginFromEnv(value: unknown): string {
 import {
   parsePresenceSkipPolicy,
   type PresenceSkipPolicy,
-} from '../lib/website-presence-taxonomy.js';
+} from '../lib/website-presence-types.js';
 
 function radarAuditPayloadVersionFromEnv(value: unknown): string | undefined {
   const t = optionalTrimmedNonEmpty(value);
@@ -115,6 +115,8 @@ export type RawEnv = {
   readonly GROQ_PREFLIGHT_MODEL: string;
   readonly GROQ_PREFLIGHT_TIMEOUT_MS: number;
   readonly STRATE_RADAR_DB_PATH: string;
+  /** Supabase / Postgres vitrine — source principale du scrub retroactif si renseignée. */
+  readonly DATABASE_URL: string | undefined;
   readonly RADAR_SEARCH_Q: string;
   readonly RADAR_SEARCH_LOCATION: string;
   readonly RADAR_REPORT_PATH: string;
@@ -209,6 +211,7 @@ function parseRawEnv(env: NodeJS.ProcessEnv): RawEnv {
     GROQ_PREFLIGHT_MODEL: groqPreflightModelFromEnv(env.GROQ_PREFLIGHT_MODEL),
     GROQ_PREFLIGHT_TIMEOUT_MS: coerceIntInRange(env.GROQ_PREFLIGHT_TIMEOUT_MS, 8_000, 2_000, 30_000),
     STRATE_RADAR_DB_PATH: nonEmptyString(env.STRATE_RADAR_DB_PATH, 'data/strate-radar.sqlite'),
+    DATABASE_URL: optString(env.DATABASE_URL),
     RADAR_SEARCH_Q: nonEmptyString(env.RADAR_SEARCH_Q, 'boulangerie artisanale'),
     RADAR_SEARCH_LOCATION: radarSearchLocationFromEnv(env.RADAR_SEARCH_LOCATION),
     RADAR_REPORT_PATH: nonEmptyString(env.RADAR_REPORT_PATH, 'rapport_matinal.md'),
@@ -358,6 +361,40 @@ function validateKeysForLiveMode(raw: RawEnv): void {
       `Mode réel : renseigner dans .env : ${missing.join(', ')} (ou activer STRATE_RADAR_SIMULATION=true)`,
     );
   }
+}
+
+/** Scrub retroactif : Places uniquement (pas Groq / PageSpeed). Dry-run OK sans clé si cache SERP en base. */
+function validateKeysForScrubMode(raw: RawEnv, opts?: { readonly dryRun?: boolean }): void {
+  if (raw.STRATE_RADAR_SIMULATION) return;
+  if (opts?.dryRun && !raw.GOOGLE_PLACES_API_KEY?.trim()) return;
+  if (!raw.GOOGLE_PLACES_API_KEY?.trim()) {
+    throw new Error(
+      'Scrub : renseigner GOOGLE_PLACES_API_KEY (copier strate-radar-lab/.env.example → .env, ou secret GitHub GOOGLE_PLACES_API_KEY). Sans clé : npm run scrub -- --dry-run',
+    );
+  }
+}
+
+export type LoadScrubConfigOptions = {
+  readonly dryRun?: boolean;
+};
+
+export function loadScrubConfig(
+  env: NodeJS.ProcessEnv = process.env,
+  opts?: LoadScrubConfigOptions,
+): AppConfig {
+  const raw = parseRawEnv(normalizePlacesBudgetEnv(env));
+  validateKeysForScrubMode(raw, opts);
+  const quotas = resolveLeadQuotaTargets(raw, env);
+  const simulation =
+    raw.STRATE_RADAR_SIMULATION ||
+    (opts?.dryRun === true && !raw.GOOGLE_PLACES_API_KEY?.trim());
+  return {
+    ...raw,
+    RADAR_TARGET_CREATION_COUNT:
+      quotas.RADAR_TARGET_CREATION_COUNT > 0 ? quotas.RADAR_TARGET_CREATION_COUNT : 1,
+    RADAR_TARGET_REFONTE_COUNT: quotas.RADAR_TARGET_REFONTE_COUNT,
+    simulation,
+  };
 }
 
 /** Compat : ancien nom `RADAR_MAX_SERPAPI_REQUESTS` → `RADAR_MAX_PLACES_REQUESTS_PER_RUN`. */

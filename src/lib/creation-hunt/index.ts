@@ -1,4 +1,4 @@
-export { CREATION_HUNT_SECTORS, isCreationHuntSectorBlocked } from './sectors.js';
+export { CREATION_HUNT_SECTORS } from './sectors.js';
 export {
   CreationHuntRepository,
   migrateCreationHuntTables,

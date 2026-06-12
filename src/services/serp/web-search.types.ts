@@ -1,9 +1,4 @@
-import type { OrganicSerpHit } from '../../lib/organic-match.js';
-import {
-  DEFAULT_PRESENCE_SKIP_POLICY,
-  isPipelineSkippedPresenceHost,
-  type PresenceSkipPolicy,
-} from '../../lib/website-presence-taxonomy.js';
+import type { OrganicSerpHit } from '../../lib/organic-serp-hit.js';
 
 export type WebSearchError = {
   readonly httpStatus: number;
@@ -11,17 +6,8 @@ export type WebSearchError = {
   readonly message: string;
 };
 
-/** Résultat Brave filtré (host plateforme RDV) — alimente les attempts pour exclusion. */
-export type FilteredBravePresenceHit = {
-  readonly link: string;
-  readonly title: string;
-  readonly snippet?: string;
-  readonly platformLabel: string | null;
-};
-
 export type WebSearchResult = {
   readonly hits: readonly OrganicSerpHit[];
-  readonly filteredPresenceHits: readonly FilteredBravePresenceHit[];
   readonly error: WebSearchError | null;
 };
 
@@ -46,12 +32,8 @@ export function isStaticWebSearchNoiseHost(hostname: string): boolean {
   return blocked.some((b) => h.includes(b));
 }
 
-export function shouldSkipWebSearchHost(
-  hostname: string,
-  presenceSkipPolicy: PresenceSkipPolicy = DEFAULT_PRESENCE_SKIP_POLICY,
-): boolean {
-  if (isStaticWebSearchNoiseHost(hostname)) return true;
-  return isPipelineSkippedPresenceHost(hostname, presenceSkipPolicy);
+export function shouldSkipWebSearchHost(hostname: string): boolean {
+  return isStaticWebSearchNoiseHost(hostname);
 }
 
 /** Note lisible pour `websiteResolution.attempts` (couche web_search). */

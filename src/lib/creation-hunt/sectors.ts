@@ -52,12 +52,3 @@ export const CREATION_HUNT_SECTORS: readonly string[] = DIAMOND_SEED_CATEGORIES.
   }
   return true;
 });
-
-export function isCreationHuntSectorBlocked(sector: string): boolean {
-  const key = normalizeSectorKey(sector);
-  if (CREATION_HUNT_SECTOR_BLOCKLIST.has(key)) return true;
-  for (const blocked of CREATION_HUNT_SECTOR_BLOCKLIST) {
-    if (key.includes(blocked)) return true;
-  }
-  return false;
-}

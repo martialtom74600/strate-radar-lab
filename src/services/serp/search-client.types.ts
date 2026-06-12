@@ -46,4 +46,6 @@ export type SerpClient = {
   ) => Promise<readonly SerpLocalResult[]>;
   /** Place Details (New) — `websiteUri` lorsque absent du Text Search. */
   readonly fetchPlaceWebsiteUri: (placeId: string) => Promise<string | null>;
+  /** Place Details (New) — fiche Maps complète pour backfill scrub. */
+  readonly fetchPlaceLocalResult: (placeId: string) => Promise<SerpLocalResult | null>;
 };

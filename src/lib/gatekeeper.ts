@@ -7,14 +7,6 @@ import Groq, { RateLimitError } from 'groq-sdk';
 import type { AppConfig } from '../config/index.js';
 import type { SerpLocalResult } from '../services/serp/schemas.js';
 import { StrateRadarError } from './errors.js';
-import { withRetry } from './retry.js';
-
-export type CommercialGateAssessment = {
-  readonly isCommercial: boolean;
-  readonly reason: string;
-  /** True si la validation vient du price_level Google (sans appel IA). */
-  readonly priceBypass: boolean;
-};
 
 export type PreflightGateAssessment = {
   readonly isCommercialTarget: boolean;
@@ -28,29 +20,6 @@ function extractJsonText(raw: string): string {
   const fence = /^```(?:json)?\s*([\s\S]*?)```$/im.exec(trimmed);
   if (fence?.[1]) return fence[1].trim();
   return trimmed;
-}
-
-function parseGatekeeperJson(raw: string): { readonly is_commercial: boolean; readonly reason: string } {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(extractJsonText(raw));
-  } catch (e) {
-    throw new StrateRadarError('GROQ_JSON', 'Réponse Gatekeeper non JSON', { cause: e });
-  }
-  if (!parsed || typeof parsed !== 'object') {
-    throw new StrateRadarError('GROQ_GATEKEEPER_PARSE', 'JSON Gatekeeper invalide : objet attendu.');
-  }
-  const o = parsed as Record<string, unknown>;
-  if (typeof o.is_commercial !== 'boolean') {
-    throw new StrateRadarError(
-      'GROQ_GATEKEEPER_PARSE',
-      'JSON Gatekeeper invalide : is_commercial boolean attendu.',
-    );
-  }
-  if (typeof o.reason !== 'string') {
-    throw new StrateRadarError('GROQ_GATEKEEPER_PARSE', 'JSON Gatekeeper invalide : reason string attendu.');
-  }
-  return { is_commercial: o.is_commercial, reason: o.reason };
 }
 
 function parsePreflightGateJson(raw: string): {
@@ -326,58 +295,6 @@ export function hasPriceLevelCommercialSignal(serp: SerpLocalResult): boolean {
   return Boolean(serp.price?.trim());
 }
 
-function buildGatekeeperSystemPrompt(): string {
-  return [
-    'Tu es un filtre commercial pour une agence web B2B.',
-    'Tu distingues une entreprise privée qui cherche des clients d’une entité publique, associative pure, ou infrastructure sans modèle de vente directe.',
-    'Réponds uniquement par un objet JSON avec les clés exactes is_commercial (boolean) et reason (string, une courte phrase en français).',
-  ].join('\n');
-}
-
-function buildGatekeeperUserContent(name: string, typesLabel: string): string {
-  return [
-    `Analyse cette entité : ${name} (Types Google: ${typesLabel}).`,
-    'Est-ce une entreprise privée unitaire cherchant activement des clients (Artisan, Garage, Cabinet, Restaurant, etc.)',
-    'ou une entité à exclure : publique/institutionnelle (Hôpital, Mairie, École…), marché public, foire, regroupement d\'artisans collectif, événement temporaire, parking, multinationale ?',
-    'Réponds par un JSON : { "is_commercial": boolean, "reason": string }.',
-  ].join(' ');
-}
-
-async function assessWithGroq(
-  config: AppConfig,
-  name: string,
-  typesList: string[],
-): Promise<Omit<CommercialGateAssessment, 'priceBypass'>> {
-  const apiKey = config.GROQ_API_KEY?.trim();
-  if (!apiKey) {
-    throw new StrateRadarError('CONFIG', 'GROQ_API_KEY manquant en mode réel');
-  }
-  const typesLabel = typesList.length > 0 ? typesList.join(', ') : '(aucun type Google listé)';
-  const groq = new Groq({ apiKey });
-  const model = config.GROQ_MODEL;
-
-  return withRetry(async () => {
-    const completion = await groq.chat.completions.create({
-      model,
-      temperature: 0.15,
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: buildGatekeeperSystemPrompt() },
-        { role: 'user', content: buildGatekeeperUserContent(name, typesLabel) },
-      ],
-    });
-    const content = completion.choices[0]?.message?.content;
-    if (!content) {
-      throw new StrateRadarError('GROQ_EMPTY', 'Réponse Gatekeeper vide');
-    }
-    const parsed = parseGatekeeperJson(content);
-    return {
-      isCommercial: parsed.is_commercial,
-      reason: parsed.reason.trim() || '(aucune raison fournie)',
-    };
-  });
-}
-
 function primaryLocalityLabel(locationHint: string): string {
   const first = locationHint.split(',')[0]?.trim() ?? locationHint.trim();
   return first.length > 0 ? first : 'la zone cible';
@@ -571,59 +488,6 @@ export async function assessPreflightCommercialTarget(
   }
 }
 
-/**
- * Évalue si l’entité est un prospect commercial (avec bypass `price` Maps si présent).
- * En simulation : pas d’appel Groq, toujours commercial.
- */
-export async function assessCommercialProspect(
-  config: AppConfig,
-  serp: SerpLocalResult,
-  types: readonly string[],
-  nameForPrompt?: string,
-): Promise<CommercialGateAssessment> {
-  if (isParkingInfrastructureSerp(serp)) {
-    return {
-      isCommercial: false,
-      reason: 'Parking / stationnement (nom ou catégorie Maps) — hors cible commerciale.',
-      priceBypass: false,
-    };
-  }
-
-  if (hasPriceLevelCommercialSignal(serp)) {
-    return {
-      isCommercial: true,
-      reason: 'Signal Google price_level (€ / gamme) — prospect traité comme commercial sans IA.',
-      priceBypass: true,
-    };
-  }
-
-  if (config.simulation) {
-    return {
-      isCommercial: true,
-      reason: 'Mode simulation — Gatekeeper Groq non exécuté.',
-      priceBypass: false,
-    };
-  }
-
-  const name =
-    (nameForPrompt !== undefined && nameForPrompt.trim() !== ''
-      ? nameForPrompt.trim()
-      : serp.title.trim()) || 'Établissement';
-  const list = [...types].map((t) => t.trim()).filter((t) => t.length > 0);
-
-  try {
-    const r = await assessWithGroq(config, name, list);
-    return { ...r, priceBypass: false };
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    return {
-      isCommercial: true,
-      reason: `Erreur Gatekeeper (${msg.slice(0, 120)}) — inclus par prudence.`,
-      priceBypass: false,
-    };
-  }
-}
-
 /** Types Google secondaires + primaryType pour le prompt Gatekeeper. */
 export function collectGatekeeperTypes(serp: SerpLocalResult): string[] {
   const out = new Set<string>();
@@ -633,15 +497,4 @@ export function collectGatekeeperTypes(serp: SerpLocalResult): string[] {
   }
   if (serp.type?.trim()) out.add(serp.type.trim());
   return [...out];
-}
-
-/** Variante API explicite (nom + types) — le bypass prix lit toujours `serp.price`. */
-export async function isCommercialProspect(
-  name: string,
-  types: string[],
-  config: AppConfig,
-  serp: SerpLocalResult,
-): Promise<boolean> {
-  const assessment = await assessCommercialProspect(config, serp, types, name);
-  return assessment.isCommercial;
 }
