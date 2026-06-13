@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "exportedAt": "2026-06-12T04:34:31.752Z",
+  "exportedAt": "2026-06-13T04:34:11.287Z",
   "zones": [
     {
       "zone": "Annecy, France",
       "priority": 200,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-06-12T04:34:13.292Z",
+      "last_run_at": "2026-06-13T04:33:43.154Z",
       "last_creations": 5,
-      "total_scanned": 2833,
+      "total_scanned": 2867,
       "consecutive_low_runs": 0,
-      "updated_at": "2026-06-12T04:34:13.292Z"
+      "updated_at": "2026-06-13T04:33:43.154Z"
     }
   ],
   "sectorRuns": [
@@ -385,6 +385,20 @@
       "creations_found": 5,
       "scanned_count": 13,
       "run_at": "2026-06-12T04:34:13.292Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Toilettage",
+      "creations_found": 4,
+      "scanned_count": 23,
+      "run_at": "2026-06-13T04:33:43.154Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Audit",
+      "creations_found": 1,
+      "scanned_count": 11,
+      "run_at": "2026-06-13T04:33:43.154Z"
     }
   ]
 }
