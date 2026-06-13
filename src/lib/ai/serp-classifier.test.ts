@@ -5,33 +5,111 @@ import '../../config/index.js';
 import type { AppConfig } from '../../config/index.js';
 import { serpClassificationSchema } from './serp-classification-schema.js';
 import {
+  assessSerpClassificationCoherence,
   buildSerpClassifierUserPrompt,
   classifySerpUrls,
   DEFAULT_SERP_CLASSIFIER_MODEL,
   extractMatchedUrl,
   parseGroqRetryAfterDelayMs,
+  parseGroqRateLimitKind,
+  SERP_CLASSIFIER_SYSTEM_PROMPT,
 } from './serp-classifier.js';
 import { RateLimitError } from 'groq-sdk';
 
 describe('serpClassificationSchema', () => {
-  it('accepte un objet valide', () => {
+  it('accepte un objet valide (ordre CoT)', () => {
     const parsed = serpClassificationSchema.parse({
-      status: 'owner_site',
-      confidence: 0.92,
       reason: 'lamy-joaillerie.com est le domaine exclusif de la bijouterie LAMY.',
+      confidence: 0.92,
+      status: 'owner_site',
     });
     assert.equal(parsed.status, 'owner_site');
     assert.equal(parsed.confidence, 0.92);
   });
 
+  it('accepte corporate_parent', () => {
+    const parsed = serpClassificationSchema.parse({
+      reason: 'agences.fiducial.fr/annecy est une page succursale sur le domaine fiducial.fr.',
+      confidence: 0.88,
+      status: 'corporate_parent',
+    });
+    assert.equal(parsed.status, 'corporate_parent');
+  });
+
   it('rejette un status inconnu', () => {
     assert.throws(() =>
       serpClassificationSchema.parse({
-        status: 'directory',
-        confidence: 0.5,
         reason: 'test',
+        confidence: 0.5,
+        status: 'directory',
       }),
     );
+  });
+});
+
+describe('SERP_CLASSIFIER_SYSTEM_PROMPT', () => {
+  it('exige le CoT et le format JSON sans markdown', () => {
+    assert.match(SERP_CLASSIFIER_SYSTEM_PROMPT, /reason.*en premier/i);
+    assert.match(SERP_CLASSIFIER_SYSTEM_PROMPT, /\{"reason":".*", "confidence":1\.0, "status":"\.\.\."\}/);
+    assert.match(SERP_CLASSIFIER_SYSTEM_PROMPT, /sans aucun bloc de code markdown/i);
+  });
+});
+
+describe('assessSerpClassificationCoherence', () => {
+  it('détecte owner_site avec confidence=0 et raison presence_only (Ma chouette boutique)', () => {
+    const coherence = assessSerpClassificationCoherence({
+      reason:
+        "Aucune URL ne correspond à owner_site. La règle 'presence_only' est la plus proche car https://www.instagram.com/ma_chouette_boutique_/ est un réseau social.",
+      confidence: 0,
+      status: 'owner_site',
+    });
+    assert.equal(coherence.coherent, false);
+    assert.equal(coherence.fallback?.status, 'presence_only');
+  });
+
+  it('détecte owner_site contredit par annuaires/réseaux sociaux (Le Pas Sage)', () => {
+    const coherence = assessSerpClassificationCoherence({
+      reason:
+        "Aucune URL pertinente pour confirmer owner_site. Présence sur des annuaires neutres ou réseaux sociaux (https://www.facebook.com/profile.php?id=100085295809924, https://www.pagesjaunes.fr/pros/58427535).",
+      confidence: 0,
+      status: 'owner_site',
+    });
+    assert.equal(coherence.coherent, false);
+    assert.ok(
+      coherence.fallback?.status === 'presence_only' || coherence.fallback?.status === 'none',
+    );
+  });
+
+  it('laisse passer une classification cohérente', () => {
+    const coherence = assessSerpClassificationCoherence({
+      reason:
+        "L'URL https://www.pagesjaunes.fr/pros/53558464 montre une présence sur annuaire neutre, correspond à presence_only.",
+      confidence: 1,
+      status: 'presence_only',
+    });
+    assert.equal(coherence.coherent, true);
+    assert.equal(coherence.fallback, null);
+  });
+
+  it('ignore corporate_parent mentionné en exclusion (Funny dog)', () => {
+    const coherence = assessSerpClassificationCoherence({
+      reason:
+        "L'URL https://www.pagesjaunes.fr/pros/00823321 montre une présence sur annuaire neutre. Aucune URL ne suggère corporate_parent ni owner_site.",
+      confidence: 1,
+      status: 'presence_only',
+    });
+    assert.equal(coherence.coherent, true);
+  });
+
+  it('corrige none quand la raison décrit une présence tierce (Le Paradis de Talie)', () => {
+    const coherence = assessSerpClassificationCoherence({
+      reason:
+        'Le commerce est listé sur https://www.pagesjaunes.fr/pros/52690542 et facebook.com. Aucune URL ne correspond à un site web propriétaire indépendant.',
+      confidence: 1,
+      status: 'none',
+    });
+    assert.equal(coherence.coherent, false);
+    assert.equal(coherence.fallback?.status, 'presence_only');
   });
 });
 
@@ -82,6 +160,20 @@ describe('parseGroqRetryAfterDelayMs', () => {
 
   it('retourne null si header absent', () => {
     assert.equal(parseGroqRetryAfterDelayMs(new Error('429')), null);
+  });
+});
+
+describe('parseGroqRateLimitKind', () => {
+  it('détecte le quota journalier TPD', () => {
+    const err = new Error(
+      '429 {"error":{"message":"Rate limit reached for model `llama-3.3-70b-versatile` on tokens per day (TPD): Limit 100000, Used 99900"}}',
+    );
+    assert.equal(parseGroqRateLimitKind(err), 'tpd');
+  });
+
+  it('détecte le quota minute TPM', () => {
+    const err = new Error('429 rate limit on tokens per minute (TPM)');
+    assert.equal(parseGroqRateLimitKind(err), 'tpm');
   });
 });
 

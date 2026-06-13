@@ -7,6 +7,7 @@ import {
 } from './ai/serp-classifier-audit-log.js';
 import {
   classifySerpUrlsDetailed,
+  SERP_CLASSIFIER_MAX_URLS,
   presencePlatformFromUrl,
   type SerpClassifierDetailedResult,
 } from './ai/serp-classifier.js';
@@ -154,11 +155,49 @@ function buildResultFromClassification(args: {
     };
   }
 
+  if (classification.status === 'corporate_parent' && parsed) {
+    return {
+      ownerSite: null,
+      resolution: {
+        status: 'corporate_parent',
+        confidence: classification.confidence,
+        url: parsed.displayUrl,
+        displayUrl: parsed.displayUrl,
+        normalizedUrl: parsed.normalizedUrl,
+        source,
+        mapsListingWebsite,
+        presencePlatform: presencePlatformFromUrl(parsed.displayUrl),
+        classificationReason: classification.reason,
+        classifierAudit,
+        attempts,
+      },
+    };
+  }
+
   if (classification.status === 'presence_only') {
     return {
       ownerSite: null,
       resolution: {
         status: 'presence_only',
+        confidence: classification.confidence,
+        url: null,
+        displayUrl: null,
+        normalizedUrl: null,
+        source,
+        mapsListingWebsite,
+        presencePlatform: null,
+        classificationReason: classification.reason,
+        classifierAudit,
+        attempts,
+      },
+    };
+  }
+
+  if (classification.status === 'corporate_parent') {
+    return {
+      ownerSite: null,
+      resolution: {
+        status: 'corporate_parent',
         confidence: classification.confidence,
         url: null,
         displayUrl: null,
@@ -366,8 +405,8 @@ export async function resolveProspectWebsitePresence(
     );
   }
 
-  const urlsForClassifier = urlBucket.slice(0, 7);
-  const urlsDropped = urlBucket.slice(7);
+  const urlsForClassifier = urlBucket.slice(0, SERP_CLASSIFIER_MAX_URLS);
+  const urlsDropped = urlBucket.slice(SERP_CLASSIFIER_MAX_URLS);
 
   if (urlsForClassifier.length === 0) {
     recordAttempt(attempts, 'serp_classifier', null, 'none', 'Aucune URL collectée');

@@ -10,6 +10,7 @@ import type { WebSearchClient } from '../services/serp/web-search.types.js';
 import { resolveProspectCity } from './search-location-hint.js';
 import {
   evaluateDiamondWebsitePresence,
+  shouldDisqualifyWebsitePresenceForScrub,
 } from './diamond-website-detection.js';
 import {
   persistClassifierDecision,
@@ -129,7 +130,7 @@ export async function evaluateScrubCandidateWithWebsiteResolver(args: {
   });
 
   return {
-    shouldDisqualify: websiteOut.resolution.status === 'owner_site',
+    shouldDisqualify: shouldDisqualifyWebsitePresenceForScrub(websiteOut.resolution),
     resolution: websiteOut.resolution,
     ownerSite: websiteOut.ownerSite,
   };
@@ -154,6 +155,13 @@ function formatScrubResolutionLog(
         ? ` · ${resolution.classifierAudit.latencyMs}ms`
         : '';
     return `${title} · owner_site · ${resolution.url ?? '—'} (${source}${conf}${latency})${reason}`;
+  }
+  if (resolution.status === 'corporate_parent') {
+    const latency =
+      resolution.classifierAudit?.latencyMs !== undefined
+        ? ` · ${resolution.classifierAudit.latencyMs}ms`
+        : '';
+    return `${title} · corporate_parent · rejeté${resolution.presencePlatform ? ` (${resolution.presencePlatform})` : ''}${latency}${reason}`;
   }
   if (resolution.status === 'presence_only') {
     const latency =
@@ -295,6 +303,11 @@ async function analyzeScrubCandidates(args: {
     }
 
     const slugHint = candidate.slug ? ` · ${candidate.slug}` : '';
+    if (evaluated.resolution.status === 'corporate_parent') {
+      console.log(
+        `[SCRUB] Rejeté : Appartient à un réseau/site parent (corporate_parent) · ${serp.title}${slugHint}`,
+      );
+    }
     console.log(`[SCRUB] Disqualifié : ${serp.title}${slugHint}`);
     if (!args.dryRun) {
       if (candidate.auditId && args.supabase) {

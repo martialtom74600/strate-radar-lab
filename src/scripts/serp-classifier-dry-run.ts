@@ -21,7 +21,7 @@ type CeoDryRunCase = {
   readonly label: string;
   readonly companyName: string;
   readonly city: string;
-  readonly expected: 'owner_site' | 'presence_only' | 'none';
+  readonly expected: 'owner_site' | 'presence_only' | 'corporate_parent' | 'none';
   /** URLs simulant la cascade Maps + Google organique + Brave (ordre de collecte). */
   readonly urlsCollected: readonly string[];
   readonly notes?: string;

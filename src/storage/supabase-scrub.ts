@@ -1,5 +1,6 @@
 import postgres, { type JSONValue } from 'postgres';
 
+import { withRetry } from '../lib/retry.js';
 import { googleMapsRawToSerp } from '../lib/diamond-snapshot.js';
 import { cityHintFromSearchLocation } from '../lib/search-location-hint.js';
 import { stablePlaceKey } from '../lib/place-key.js';
@@ -231,12 +232,17 @@ export function createSupabaseScrubClient(databaseUrl: string): SupabaseScrubCli
     },
 
     async restorePublishedAudit(auditId: string): Promise<void> {
-      await sql`
-        UPDATE audits
-        SET status = 'published', updated_at = NOW()
-        WHERE id = ${auditId}::uuid
-          AND status = 'revoked'
-      `;
+      await withRetry(
+        async () => {
+          await sql`
+            UPDATE audits
+            SET status = 'published', updated_at = NOW()
+            WHERE id = ${auditId}::uuid
+              AND status = 'revoked'
+          `;
+        },
+        { maxAttempts: 4, baseDelayMs: 500, maxDelayMs: 8_000 },
+      );
     },
 
     async patchAuditWebsiteResolution(
@@ -244,21 +250,31 @@ export function createSupabaseScrubClient(databaseUrl: string): SupabaseScrubCli
       websiteResolution: Record<string, unknown>,
     ): Promise<void> {
       const patch: JSONValue = { websiteResolution: websiteResolution as JSONValue };
-      await sql`
-        UPDATE audits
-        SET
-          payload = COALESCE(payload, '{}'::jsonb) || ${sql.json(patch)}::jsonb,
-          updated_at = NOW()
-        WHERE id = ${auditId}::uuid
-      `;
+      await withRetry(
+        async () => {
+          await sql`
+            UPDATE audits
+            SET
+              payload = COALESCE(payload, '{}'::jsonb) || ${sql.json(patch)}::jsonb,
+              updated_at = NOW()
+            WHERE id = ${auditId}::uuid
+          `;
+        },
+        { maxAttempts: 4, baseDelayMs: 500, maxDelayMs: 8_000 },
+      );
     },
 
     async revokeAudit(auditId: string): Promise<void> {
-      await sql`
-        UPDATE audits
-        SET status = 'revoked', updated_at = NOW()
-        WHERE id = ${auditId}::uuid
-      `;
+      await withRetry(
+        async () => {
+          await sql`
+            UPDATE audits
+            SET status = 'revoked', updated_at = NOW()
+            WHERE id = ${auditId}::uuid
+          `;
+        },
+        { maxAttempts: 4, baseDelayMs: 500, maxDelayMs: 8_000 },
+      );
     },
 
     async close(): Promise<void> {

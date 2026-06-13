@@ -28,6 +28,7 @@ import { formatIsoWeekBucket } from '../lib/week.js';
 import { persistDiamondSnapshotForScrub } from '../lib/diamond-snapshot.js';
 import {
   evaluateDiamondWebsitePresence,
+  shouldRejectCorporateParentForCreationHunt,
   shouldRejectOwnerSiteForCreationHunt,
 } from '../lib/diamond-website-detection.js';
 import { persistClassifierDecision } from '../lib/scrub-classifier-persistence.js';
@@ -399,11 +400,17 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
       placeKey,
       businessName: serp.title,
       dryRun: false,
-      disqualified: shouldRejectOwnerSiteForCreationHunt({
-        resolution,
-        needCreation,
-        needRefonte,
-      }),
+      disqualified:
+        shouldRejectOwnerSiteForCreationHunt({
+          resolution,
+          needCreation,
+          needRefonte,
+        }) ||
+        shouldRejectCorporateParentForCreationHunt({
+          resolution,
+          needCreation,
+          needRefonte,
+        }),
       resolution,
     },
   });
@@ -443,6 +450,24 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
     radarVerbose(
       config,
       `${progressTag} ${truncateTitle(serp.title)} · ◇ Site propriétaire — ignoré (chasse création/présence)`,
+    );
+    return null;
+  }
+
+  if (
+    shouldRejectCorporateParentForCreationHunt({
+      resolution,
+      needCreation,
+      needRefonte,
+    })
+  ) {
+    await repo.recordPlaceOutcome(placeKey, 'disqualified');
+    console.log(
+      `[SCRUB] Rejeté : Appartient à un réseau/site parent (corporate_parent) · ${truncateTitle(serp.title)}`,
+    );
+    radarVerbose(
+      config,
+      `${progressTag} ${truncateTitle(serp.title)} · ◇ Réseau/site parent — ignoré (chasse création/présence)`,
     );
     return null;
   }

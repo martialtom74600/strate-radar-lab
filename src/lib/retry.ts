@@ -82,7 +82,11 @@ function classifyRetryable(err: unknown): RetryableResult {
     return { ok: true };
   }
   const msg = err instanceof Error ? err.message : String(err);
-  if (/ECONNRESET|ETIMEDOUT|EAI_AGENOTFOUND|socket/i.test(msg)) {
+  const code =
+    err && typeof err === 'object' && 'code' in err && typeof err.code === 'string'
+      ? err.code
+      : '';
+  if (/ECONNRESET|ETIMEDOUT|EAI_AGAIN|ENOTFOUND|socket/i.test(`${code} ${msg}`)) {
     return { ok: true };
   }
   return { ok: false };

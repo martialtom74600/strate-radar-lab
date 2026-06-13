@@ -1,5 +1,5 @@
 /**
- * Agent Qualificateur IA — classification owner_site / presence_only / none
+ * Agent Qualificateur IA — classification owner_site / presence_only / corporate_parent / none
  * à partir des URLs organiques (sans listes d'annuaires en dur).
  */
 
@@ -49,16 +49,38 @@ export const DEFAULT_SERP_CLASSIFIER_MODEL = 'llama-3.3-70b-versatile';
 export const SERP_CLASSIFIER_SYSTEM_PROMPT = `Tu es un expert en data B2B local. Tu dois analyser les URLs organiques trouvées pour un commerce.
 RÈGLES ABSOLUES :
 - 'owner_site' : Le commerce possède son propre nom de domaine indépendant (ex: lamy-joaillerie.com, anaisdurykine.fr).
-- 'presence_only' : Le commerce est listé sur un annuaire, une plateforme ou un réseau social. MÊME SI la page lui est entièrement dédiée, cela RESTE un 'presence_only' car il ne possède pas le domaine. Exemples stricts de presence_only : pagesjaunes.fr, societe.com, facebook.com, instagram.com, tripadvisor.fr, resalib.fr, travaux.com, pappers.fr, villepratique.fr, allogarage.fr.
+- 'presence_only' : Le commerce est listé sur un annuaire NEUTRE ou un réseau social (pagesjaunes.fr, societe.com, facebook.com...).
+- 'corporate_parent' : Le commerce est une succursale, une franchise ou appartient à un réseau national/marque mère (ex: fiducial.fr, axa.fr, century21.fr, mcdonalds.fr). La page est hébergée sur le site de la maison-mère. C'est un critère d'exclusion.
 - 'none' : Aucune URL pertinente.
 
-Dans ton explication (\`reason\`), tu DOIS obligatoirement citer l'URL exacte qui a motivé ta décision finale et expliquer brièvement pourquoi selon ces règles. Réponds UNIQUEMENT avec un JSON valide : {"status":"...","confidence":0.0,"reason":"..."}`;
+Dans ton explication (\`reason\`), cite UNE SEULE URL décisive (la plus pertinente) et explique brièvement pourquoi — maximum 3 phrases, sans lister toutes les URLs.
+
+IMPORTANT : Tu dois OBLIGATOIREMENT rédiger le champ \`reason\` en premier pour analyser la situation. Le champ \`status\` doit être la conclusion logique de ton raisonnement. Retourne UNIQUEMENT un objet JSON brut sans aucun bloc de code markdown. Exemple exact attendu : {"reason":"...", "confidence":1.0, "status":"..."}`;
 
 const SYSTEM_PROMPT = SERP_CLASSIFIER_SYSTEM_PROMPT;
 
+/** Nombre max d'URLs organiques envoyées au classifieur Groq. */
+export const SERP_CLASSIFIER_MAX_URLS = 5;
+const GROQ_CLASSIFIER_MAX_TOKENS = 512;
 const GROQ_CLASSIFIER_MAX_ATTEMPTS = 3;
+/**
+ * Pause entre appels Groq — calibrée pour llama-3.3-70b-versatile (plan dev) :
+ * 12K TPM · ~600 tok/requête → max ~20 req/min · 4s ≈ 15 req/min (~9K TPM).
+ */
+export const GROQ_CLASSIFIER_INTER_REQUEST_DELAY_MS = 4_000;
 const GROQ_RETRY_AFTER_MARGIN_MS = 2_000;
 const GROQ_RATE_LIMIT_BACKOFF_MS = [5_000, 10_000, 20_000];
+
+let lastGroqClassifierRequestAt = 0;
+
+async function awaitGroqClassifierThrottle(): Promise<void> {
+  const now = Date.now();
+  const elapsed = now - lastGroqClassifierRequestAt;
+  if (lastGroqClassifierRequestAt > 0 && elapsed < GROQ_CLASSIFIER_INTER_REQUEST_DELAY_MS) {
+    await sleep(GROQ_CLASSIFIER_INTER_REQUEST_DELAY_MS - elapsed);
+  }
+  lastGroqClassifierRequestAt = Date.now();
+}
 
 function resolveSerpClassifierModel(config: AppConfig): string {
   const fromEnv = config.GROQ_MODEL?.trim();
@@ -91,6 +113,193 @@ function parseClassifierJson(raw: string): SerpClassification {
     );
   }
   return result.data;
+}
+
+export type SerpClassificationCoherence = {
+  readonly coherent: boolean;
+  readonly note: string;
+  readonly fallback: SerpClassification | null;
+};
+
+const PRESENCE_ONLY_SIGNAL =
+  /\b(pagesjaunes|societe\.com|facebook\.com|instagram\.com|tripadvisor|mappy\.com|annuaire|réseau social|reseau social|presence_only)\b/i;
+
+const OWNER_SITE_NEGATION =
+  /\b(owner_site.*(n'?est pas|pas remplie|non remplie|ne correspond pas|exclu|exclut)|aucune url ne correspond.*owner_site|la règle ['"]owner_site['"] n'?est pas)\b/i;
+
+const PRESENCE_AS_CONCLUSION =
+  /\b((statut (est|sera) )?['"]presence_only['"]|correspond à la règle ['"]presence_only['"]|conclusion.*presence_only|presence_only.*(plus proche|la plus adaptée))\b/i;
+
+const CORPORATE_EXCLUSION =
+  /\b(exclu(t)? (le )?(statut )?['"]?corporate_parent|aucune (des )?urls? ne suggère.*corporate_parent|ne suggère pas.*corporate_parent|pas de corporate_parent|exclut le statut ['"]corporate_parent)\b/i;
+
+const CORPORATE_AFFIRMATIVE =
+  /\b((statut (est|sera) )?['"]corporate_parent['"]|correspond à la règle ['"]corporate_parent['"]|conclusion.*corporate_parent|classé en corporate_parent|donc ['"]?corporate_parent)\b/i;
+
+const NONE_BUT_PRESENCE_SIGNAL =
+  /\b(listé sur|présent sur|présence sur|pas de site web indépendant|n'?a pas de site web|aucune.*site web propriétaire)\b/i;
+
+function reasonConcludesCorporateParent(reason: string): boolean {
+  const lower = reason.toLowerCase();
+  if (CORPORATE_EXCLUSION.test(lower)) return false;
+  if (CORPORATE_AFFIRMATIVE.test(lower)) return true;
+  return (
+    /\b(succursale|franchise)\b/i.test(lower) &&
+    /\b(maison[- ]mère|site (de la )?maison-mère|réseau national|marque mère)\b/i.test(lower) &&
+    !/\b(aucune|pas de|ne correspond pas)\b/i.test(lower)
+  );
+}
+
+function reasonConcludesPresenceOnly(reason: string): boolean {
+  const lower = reason.toLowerCase();
+  return (
+    PRESENCE_AS_CONCLUSION.test(lower) ||
+    /\b(statut (est|sera) ['"]presence_only['"]|conclusion.*presence_only)\b/i.test(lower)
+  );
+}
+
+function inferConcludedStatusFromReason(
+  reason: string,
+): SerpClassification['status'] | null {
+  const lower = reason.toLowerCase();
+  if (reasonConcludesPresenceOnly(reason)) {
+    return 'presence_only';
+  }
+  if (
+    /correspond à la règle ['"]owner_site['"]/i.test(lower) &&
+    !/n'?est pas remplie|ne correspond pas/i.test(lower)
+  ) {
+    return 'owner_site';
+  }
+  if (reasonConcludesCorporateParent(reason)) {
+    return 'corporate_parent';
+  }
+  if (/aucune url pertinente|statut ['"]none['"]/i.test(lower)) {
+    return 'none';
+  }
+  return null;
+}
+
+function inferSafeFallbackFromReason(
+  classification: SerpClassification,
+): SerpClassification {
+  const concluded = inferConcludedStatusFromReason(classification.reason);
+  if (concluded) {
+    return {
+      ...classification,
+      status: concluded,
+      confidence: concluded === 'none' ? 0 : Math.max(0.5, classification.confidence || 0.6),
+      reason: `${classification.reason} [fallback: contradiction corrigée → ${concluded}]`,
+    };
+  }
+  if (classification.status === 'owner_site' || classification.status === 'corporate_parent') {
+    if (PRESENCE_ONLY_SIGNAL.test(classification.reason)) {
+      return {
+        ...classification,
+        status: 'presence_only',
+        confidence: 0.6,
+        reason: `${classification.reason} [fallback: ${classification.status} contredit → presence_only]`,
+      };
+    }
+    return {
+      ...classification,
+      status: 'none',
+      confidence: 0,
+      reason: `${classification.reason} [fallback: contradiction → none par sécurité]`,
+    };
+  }
+  return classification;
+}
+
+/** Garde-fou déterministe : détecte confidence=0 ou contradiction status/raison. */
+export function assessSerpClassificationCoherence(
+  classification: SerpClassification,
+): SerpClassificationCoherence {
+  const { status, confidence, reason } = classification;
+  const reasonLower = reason.toLowerCase();
+
+  if (confidence === 0 && status !== 'none') {
+    return {
+      coherent: false,
+      note: `confidence=0 avec status=${status}`,
+      fallback: inferSafeFallbackFromReason(classification),
+    };
+  }
+
+  if (status === 'owner_site') {
+    if (OWNER_SITE_NEGATION.test(reasonLower) || PRESENCE_AS_CONCLUSION.test(reasonLower)) {
+      return {
+        coherent: false,
+        note: 'owner_site contredit par la raison',
+        fallback: inferSafeFallbackFromReason(classification),
+      };
+    }
+    if (
+      PRESENCE_ONLY_SIGNAL.test(reasonLower) &&
+      /\b(pas de nom de domaine|aucun nom de domaine|ne possède pas|n'?a pas de site)\b/i.test(
+        reasonLower,
+      )
+    ) {
+      return {
+        coherent: false,
+        note: 'owner_site mais raison décrit une présence tierce',
+        fallback: inferSafeFallbackFromReason(classification),
+      };
+    }
+  }
+
+  if (
+    status === 'corporate_parent' &&
+    reasonConcludesPresenceOnly(reason) &&
+    !reasonConcludesCorporateParent(reason)
+  ) {
+    return {
+      coherent: false,
+      note: 'corporate_parent contredit par presence_only dans la raison',
+      fallback: inferSafeFallbackFromReason(classification),
+    };
+  }
+
+  if (
+    status === 'none' &&
+    PRESENCE_ONLY_SIGNAL.test(reasonLower) &&
+    NONE_BUT_PRESENCE_SIGNAL.test(reasonLower)
+  ) {
+    return {
+      coherent: false,
+      note: 'none mais raison décrit une présence tierce',
+      fallback: {
+        ...classification,
+        status: 'presence_only',
+        confidence: Math.max(0.6, confidence || 0.6),
+        reason: `${reason} [fallback: none contredit → presence_only]`,
+      },
+    };
+  }
+
+  const concludedStatus = inferConcludedStatusFromReason(reason);
+  if (concludedStatus && concludedStatus !== status) {
+    return {
+      coherent: false,
+      note: `status=${status} mais raison conclut ${concludedStatus}`,
+      fallback: inferSafeFallbackFromReason(classification),
+    };
+  }
+
+  return { coherent: true, note: '', fallback: null };
+}
+
+function resolveClassificationAfterCoherenceCheck(
+  classification: SerpClassification,
+): SerpClassification {
+  const coherence = assessSerpClassificationCoherence(classification);
+  if (coherence.coherent) {
+    return classification;
+  }
+
+  const detail = `status=${classification.status} · conf=${classification.confidence} · ${coherence.note}`;
+  console.warn(`[SCRUB] Contradiction IA détectée · fallback immédiat · ${detail}`);
+  return coherence.fallback ?? inferSafeFallbackFromReason(classification);
 }
 
 export function buildSerpClassifierUserPrompt(args: {
@@ -189,6 +398,17 @@ export function parseGroqRetryAfterDelayMs(err: unknown): number | null {
   return null;
 }
 
+export type GroqRateLimitKind = 'tpd' | 'tpm' | 'rpm' | 'unknown';
+
+/** Distingue quota journalier (TPD) vs minute (TPM/RPM) dans les 429 Groq. */
+export function parseGroqRateLimitKind(err: unknown): GroqRateLimitKind {
+  const msg = err instanceof Error ? err.message : String(err);
+  if (/tokens per day|\bTPD\b/i.test(msg)) return 'tpd';
+  if (/tokens per minute|\bTPM\b/i.test(msg)) return 'tpm';
+  if (/requests per minute|\bRPM\b/i.test(msg)) return 'rpm';
+  return 'unknown';
+}
+
 function groqRateLimitPauseMs(retryIndex: number, err: unknown): number {
   const fromHeader = parseGroqRetryAfterDelayMs(err);
   if (fromHeader !== null) {
@@ -211,8 +431,15 @@ function buildRateLimitExhaustedResult(args: {
   readonly model: string;
   readonly timeoutMs: number;
   readonly startedAt: number;
+  readonly limitKind?: GroqRateLimitKind;
 }): SerpClassifierDetailedResult {
-  const reason = `Groq rate limit (429) après ${GROQ_CLASSIFIER_MAX_ATTEMPTS} tentatives — prospect conservé par sécurité.`;
+  const quotaHint =
+    args.limitKind === 'tpd'
+      ? 'Quota journalier Groq épuisé (100K tok/jour sur llama-3.3-70b) — reprendre demain ou changer de modèle.'
+      : args.limitKind === 'tpm'
+        ? 'Quota minute Groq épuisé (12K TPM sur llama-3.3-70b).'
+        : 'Rate limit Groq (429)';
+  const reason = `${quotaHint} après ${GROQ_CLASSIFIER_MAX_ATTEMPTS} tentatives — prospect conservé par sécurité.`;
   return {
     result: {
       status: 'none',
@@ -249,7 +476,7 @@ async function createGroqClassifierCompletion(args: {
     args.groq.chat.completions.create({
       model: resolveSerpClassifierModel(args.config),
       temperature: 0,
-      max_tokens: 256,
+      max_tokens: GROQ_CLASSIFIER_MAX_TOKENS,
       response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
@@ -276,7 +503,7 @@ function prepareClassifierUrls(urls: readonly string[]): {
   readonly urlsDropped: readonly string[];
   readonly maxUrls: number;
 } {
-  const maxUrls = 7;
+  const maxUrls = SERP_CLASSIFIER_MAX_URLS;
   const cleaned = urls.map((url) => url.trim()).filter(Boolean);
   return {
     urlsSent: cleaned.slice(0, maxUrls),
@@ -355,6 +582,7 @@ export async function classifySerpUrlsDetailed(args: {
 
   for (let attempt = 1; attempt <= GROQ_CLASSIFIER_MAX_ATTEMPTS; attempt += 1) {
     try {
+      await awaitGroqClassifierThrottle();
       const completion = await createGroqClassifierCompletion({
         groq,
         config: args.config,
@@ -367,7 +595,9 @@ export async function classifySerpUrlsDetailed(args: {
         throw new StrateRadarError('GROQ_SERP_CLASSIFIER', 'Réponse classifieur SERP vide.');
       }
 
-      const result = attachMatchedUrl(parseClassifierJson(rawResponse), urlsSent);
+      const parsed = parseClassifierJson(rawResponse);
+      const reconciled = resolveClassificationAfterCoherenceCheck(parsed);
+      const result = attachMatchedUrl(reconciled, urlsSent);
       return {
         result,
         trace: {
@@ -393,11 +623,33 @@ export async function classifySerpUrlsDetailed(args: {
       };
     } catch (e) {
       if (isGroqRateLimitError(e)) {
+        const limitKind = parseGroqRateLimitKind(e);
+
+        if (limitKind === 'tpd') {
+          console.error(
+            `[radar] [serp-classifier] Quota journalier Groq épuisé (TPD 100K/jour · llama-3.3-70b) — arrêt des retries. Reprendre le scrub demain ou passer sur un autre modèle.`,
+          );
+          return buildRateLimitExhaustedResult({
+            companyName: args.companyName,
+            city: args.city,
+            urlsInput,
+            urlsSent,
+            urlsDropped,
+            maxUrls,
+            userPrompt,
+            model,
+            timeoutMs,
+            startedAt,
+            limitKind,
+          });
+        }
+
         if (attempt < GROQ_CLASSIFIER_MAX_ATTEMPTS) {
           const pauseMs = groqRateLimitPauseMs(attempt - 1, e);
           const pauseSec = Math.ceil(pauseMs / 1000);
+          const kindLabel = limitKind === 'tpm' ? 'TPM 12K/min' : limitKind === 'rpm' ? 'RPM 30/min' : '429';
           console.log(
-            `[radar] [serp-classifier] Rate limit Groq atteint (429). Pause de ${pauseSec} secondes avant retry (Tentative ${attempt}/${GROQ_CLASSIFIER_MAX_ATTEMPTS})...`,
+            `[radar] [serp-classifier] Rate limit Groq (${kindLabel}). Pause de ${pauseSec} secondes avant retry (Tentative ${attempt}/${GROQ_CLASSIFIER_MAX_ATTEMPTS})...`,
           );
           await sleep(pauseMs);
           continue;
@@ -418,6 +670,7 @@ export async function classifySerpUrlsDetailed(args: {
           model,
           timeoutMs,
           startedAt,
+          limitKind,
         });
       }
 

@@ -4,6 +4,7 @@ import {
   hasCreationReputation,
   type ResolvedWebsite,
 } from './diamond.js';
+import type { WebsitePresenceStatus } from './website-presence-types.js';
 import type { SerpLocalResult } from '../services/serp/schemas.js';
 import type { PageSpeedInsightsV5 } from '../services/pagespeed/schemas.js';
 
@@ -83,7 +84,7 @@ export async function fetchHtmlWithTimeout(
 /** Chemin « Diamant création » : aucune présence web résolue + réputation Maps (seuils création). */
 export function qualifiesDiamantCreation(
   serp: SerpLocalResult,
-  websiteStatus: 'owner_site' | 'presence_only' | 'none',
+  websiteStatus: WebsitePresenceStatus,
 ): boolean {
   if (websiteStatus !== 'none') return false;
   return hasCreationReputation(serp);
@@ -92,7 +93,7 @@ export function qualifiesDiamantCreation(
 /** Diamant présence tierce : annuaire ou réseau social — pas de site propriétaire (hors plateformes RDV). */
 export function qualifiesDiamantPresence(
   serp: SerpLocalResult,
-  websiteStatus: 'owner_site' | 'presence_only' | 'none',
+  websiteStatus: WebsitePresenceStatus,
 ): boolean {
   if (websiteStatus !== 'presence_only') return false;
   return hasCreationReputation(serp);

@@ -46,14 +46,41 @@ export async function evaluateDiamondWebsitePresence(args: {
   };
 }
 
+function shouldRejectWebsitePresenceForCreationHunt(args: {
+  readonly resolution: Pick<WebsiteResolution, 'status'>;
+  readonly needCreation: boolean;
+  readonly needRefonte: boolean;
+  readonly status: WebsiteResolution['status'];
+}): boolean {
+  if (args.resolution.status !== args.status) return false;
+  if (!args.needCreation) return false;
+  if (args.needRefonte) return false;
+  return true;
+}
+
 /** Rejet chasse création/présence : site propriétaire détecté (aligné scrub). */
 export function shouldRejectOwnerSiteForCreationHunt(args: {
   readonly resolution: Pick<WebsiteResolution, 'status'>;
   readonly needCreation: boolean;
   readonly needRefonte: boolean;
 }): boolean {
-  if (args.resolution.status !== 'owner_site') return false;
-  if (!args.needCreation) return false;
-  if (args.needRefonte) return false;
-  return true;
+  return shouldRejectWebsitePresenceForCreationHunt({ ...args, status: 'owner_site' });
+}
+
+/** Rejet chasse création/présence : succursale / franchise sur site parent (aligné scrub). */
+export function shouldRejectCorporateParentForCreationHunt(args: {
+  readonly resolution: Pick<WebsiteResolution, 'status'>;
+  readonly needCreation: boolean;
+  readonly needRefonte: boolean;
+}): boolean {
+  return shouldRejectWebsitePresenceForCreationHunt({ ...args, status: 'corporate_parent' });
+}
+
+/** Rejet scrub rétroactif : site propriétaire ou réseau national détecté. */
+export function shouldDisqualifyWebsitePresenceForScrub(
+  resolution: Pick<WebsiteResolution, 'status'>,
+): boolean {
+  return (
+    resolution.status === 'owner_site' || resolution.status === 'corporate_parent'
+  );
 }

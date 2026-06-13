@@ -24,8 +24,10 @@ export type GoogleMapsRaw = {
   readonly mapsListingWebsite?: string | null;
 };
 
+import type { WebsitePresenceStatus } from '../website-presence-types.js';
+
 export type WebsiteResolutionPayload = {
-  readonly status: 'owner_site' | 'presence_only' | 'none';
+  readonly status: WebsitePresenceStatus;
   readonly confidence: number;
   readonly url: string | null;
   readonly displayUrl: string | null;
@@ -46,7 +48,7 @@ export type WebsiteResolutionPayload = {
     readonly urlsSent: readonly string[];
     readonly urlsDropped: readonly string[];
     readonly matchedUrl: string | null;
-    readonly status: 'owner_site' | 'presence_only' | 'none';
+    readonly status: WebsitePresenceStatus;
     readonly confidence: number;
     readonly reason: string;
     readonly rawResponse: string;
@@ -86,7 +88,7 @@ export type StrateRadarAuditMetrics = {
   readonly lcpMs: number | null;
   readonly cls: number | null;
   readonly websiteSource: 'maps_link' | 'organic_deep_search' | null;
-  readonly websitePresenceStatus?: 'owner_site' | 'presence_only' | 'none' | null;
+  readonly websitePresenceStatus?: WebsitePresenceStatus | null;
 };
 
 export type StrateRadarAuditFinding = {

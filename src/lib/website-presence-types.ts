@@ -1,6 +1,10 @@
 import { normalizeProspectUrl, toAbsoluteHttpUrl } from './url.js';
 
-export type WebsitePresenceStatus = 'owner_site' | 'presence_only' | 'none';
+export type WebsitePresenceStatus =
+  | 'owner_site'
+  | 'presence_only'
+  | 'corporate_parent'
+  | 'none';
 
 export type PresenceSkipPolicy =
   | 'booking_platforms'
