@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "exportedAt": "2026-06-13T04:34:11.287Z",
+  "exportedAt": "2026-06-14T04:37:50.698Z",
   "zones": [
     {
       "zone": "Annecy, France",
       "priority": 200,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-06-13T04:33:43.154Z",
+      "last_run_at": "2026-06-14T04:35:07.790Z",
       "last_creations": 5,
-      "total_scanned": 2867,
+      "total_scanned": 3003,
       "consecutive_low_runs": 0,
-      "updated_at": "2026-06-13T04:33:43.154Z"
+      "updated_at": "2026-06-14T04:35:07.790Z"
     }
   ],
   "sectorRuns": [
@@ -399,6 +399,34 @@
       "creations_found": 1,
       "scanned_count": 11,
       "run_at": "2026-06-13T04:33:43.154Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Conseil",
+      "creations_found": 0,
+      "scanned_count": 32,
+      "run_at": "2026-06-14T04:35:07.790Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Gardiennage",
+      "creations_found": 0,
+      "scanned_count": 19,
+      "run_at": "2026-06-14T04:35:07.790Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Pressing",
+      "creations_found": 1,
+      "scanned_count": 62,
+      "run_at": "2026-06-14T04:35:07.790Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Lavage",
+      "creations_found": 4,
+      "scanned_count": 23,
+      "run_at": "2026-06-14T04:35:07.790Z"
     }
   ]
 }
