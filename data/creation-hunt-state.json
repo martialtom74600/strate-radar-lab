@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "exportedAt": "2026-06-15T04:39:15.585Z",
+  "exportedAt": "2026-06-16T04:39:22.638Z",
   "zones": [
     {
       "zone": "Annecy, France",
       "priority": 200,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-06-15T04:36:27.879Z",
+      "last_run_at": "2026-06-16T04:38:05.641Z",
       "last_creations": 5,
-      "total_scanned": 3111,
+      "total_scanned": 3147,
       "consecutive_low_runs": 0,
-      "updated_at": "2026-06-15T04:36:27.879Z"
+      "updated_at": "2026-06-16T04:38:05.641Z"
     }
   ],
   "sectorRuns": [
@@ -455,6 +455,13 @@
       "creations_found": 3,
       "scanned_count": 23,
       "run_at": "2026-06-15T04:36:27.879Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Pépinière",
+      "creations_found": 5,
+      "scanned_count": 36,
+      "run_at": "2026-06-16T04:38:05.641Z"
     }
   ]
 }
