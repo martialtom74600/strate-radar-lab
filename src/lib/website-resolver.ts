@@ -279,7 +279,7 @@ function buildWebSearchQuery(businessName: string, searchLocation: string | null
 }
 
 /**
- * Cascade de résolution web : collecte URLs (Maps, Details, Google, Brave) → classifieur IA.
+ * Cascade de résolution web : collecte URLs (Maps, Details, SERP) → routage structurel puis Groq si domaine dédié.
  */
 export async function resolveProspectWebsitePresence(
   args: ResolveProspectWebsitePresenceArgs,
@@ -294,7 +294,7 @@ export async function resolveProspectWebsitePresence(
 
   pushUniqueUrl(urlBucket, mapsListingWebsite);
   if (mapsListingWebsite) {
-    recordAttempt(attempts, 'maps_listing', mapsListingWebsite, 'skipped', 'URL transmise au classifieur IA');
+    recordAttempt(attempts, 'maps_listing', mapsListingWebsite, 'skipped', 'URL transmise au classifieur');
   }
 
   if (placeId) {
@@ -302,7 +302,7 @@ export async function resolveProspectWebsitePresence(
       const detailsUri = await serpClient.fetchPlaceWebsiteUri(placeId);
       if (detailsUri) {
         pushUniqueUrl(urlBucket, detailsUri);
-        recordAttempt(attempts, 'place_details', detailsUri, 'skipped', 'URL transmise au classifieur IA');
+        recordAttempt(attempts, 'place_details', detailsUri, 'skipped', 'URL transmise au classifieur');
       } else {
         recordAttempt(attempts, 'place_details', null, 'skipped', 'websiteUri absent');
       }
@@ -388,7 +388,7 @@ export async function resolveProspectWebsitePresence(
             'web_search',
             null,
             'skipped',
-            `${webResult.hits.length} hit(s) Brave → classifieur IA`,
+            `${webResult.hits.length} hit(s) SERP → classifieur`,
           );
         }
       }
@@ -440,7 +440,7 @@ export async function resolveProspectWebsitePresence(
       config,
       companyName: serp.title,
       city: prospectCity,
-      urls: urlsForClassifier,
+      urls: urlBucket,
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);

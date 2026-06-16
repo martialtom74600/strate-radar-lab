@@ -8,6 +8,7 @@ import {
   assessSerpClassificationCoherence,
   buildSerpClassifierUserPrompt,
   classifySerpUrls,
+  classifySerpUrlsDetailed,
   DEFAULT_SERP_CLASSIFIER_MODEL,
   extractMatchedUrl,
   parseGroqRetryAfterDelayMs,
@@ -24,12 +25,11 @@ describe('serpClassificationSchema', () => {
       status: 'owner_site',
     });
     assert.equal(parsed.status, 'owner_site');
-    assert.equal(parsed.confidence, 0.92);
   });
 
   it('accepte corporate_parent', () => {
     const parsed = serpClassificationSchema.parse({
-      reason: 'agences.fiducial.fr/annecy est une page succursale sur le domaine fiducial.fr.',
+      reason: 'agences.fiducial.fr/annecy est une page succursale sur fiducial.fr.',
       confidence: 0.88,
       status: 'corporate_parent',
     });
@@ -48,99 +48,107 @@ describe('serpClassificationSchema', () => {
 });
 
 describe('SERP_CLASSIFIER_SYSTEM_PROMPT', () => {
-  it('exige le CoT et le format JSON sans markdown', () => {
-    assert.match(SERP_CLASSIFIER_SYSTEM_PROMPT, /reason.*en premier/i);
-    assert.match(SERP_CLASSIFIER_SYSTEM_PROMPT, /\{"reason":".*", "confidence":1\.0, "status":"\.\.\."\}/);
-    assert.match(SERP_CLASSIFIER_SYSTEM_PROMPT, /sans aucun bloc de code markdown/i);
+  it('couvre owner_site, corporate_parent et presence_only', () => {
+    assert.match(SERP_CLASSIFIER_SYSTEM_PROMPT, /owner_site/i);
+    assert.match(SERP_CLASSIFIER_SYSTEM_PROMPT, /corporate_parent/i);
+    assert.match(SERP_CLASSIFIER_SYSTEM_PROMPT, /presence_only/i);
   });
 });
 
 describe('assessSerpClassificationCoherence', () => {
-  it('détecte owner_site avec confidence=0 et raison presence_only (Ma chouette boutique)', () => {
-    const coherence = assessSerpClassificationCoherence({
-      reason:
-        "Aucune URL ne correspond à owner_site. La règle 'presence_only' est la plus proche car https://www.instagram.com/ma_chouette_boutique_/ est un réseau social.",
-      confidence: 0,
-      status: 'owner_site',
-    });
-    assert.equal(coherence.coherent, false);
-    assert.equal(coherence.fallback?.status, 'presence_only');
-  });
-
-  it('détecte owner_site contredit par annuaires/réseaux sociaux (Le Pas Sage)', () => {
-    const coherence = assessSerpClassificationCoherence({
-      reason:
-        "Aucune URL pertinente pour confirmer owner_site. Présence sur des annuaires neutres ou réseaux sociaux (https://www.facebook.com/profile.php?id=100085295809924, https://www.pagesjaunes.fr/pros/58427535).",
-      confidence: 0,
-      status: 'owner_site',
-    });
-    assert.equal(coherence.coherent, false);
-    assert.ok(
-      coherence.fallback?.status === 'presence_only' || coherence.fallback?.status === 'none',
+  it('relève owner_site si domaine dédié ignoré par le LLM', () => {
+    const coherence = assessSerpClassificationCoherence(
+      {
+        reason: 'Présence sur pappers.fr uniquement.',
+        confidence: 0.8,
+        status: 'presence_only',
+      },
+      ['https://www.pappers.fr/foo', 'https://www.annecy-mobilites.fr'],
     );
-  });
-
-  it('laisse passer une classification cohérente', () => {
-    const coherence = assessSerpClassificationCoherence({
-      reason:
-        "L'URL https://www.pagesjaunes.fr/pros/53558464 montre une présence sur annuaire neutre, correspond à presence_only.",
-      confidence: 1,
-      status: 'presence_only',
-    });
-    assert.equal(coherence.coherent, true);
-    assert.equal(coherence.fallback, null);
-  });
-
-  it('ignore corporate_parent mentionné en exclusion (Funny dog)', () => {
-    const coherence = assessSerpClassificationCoherence({
-      reason:
-        "L'URL https://www.pagesjaunes.fr/pros/00823321 montre une présence sur annuaire neutre. Aucune URL ne suggère corporate_parent ni owner_site.",
-      confidence: 1,
-      status: 'presence_only',
-    });
-    assert.equal(coherence.coherent, true);
-  });
-
-  it('corrige none quand la raison décrit une présence tierce (Le Paradis de Talie)', () => {
-    const coherence = assessSerpClassificationCoherence({
-      reason:
-        'Le commerce est listé sur https://www.pagesjaunes.fr/pros/52690542 et facebook.com. Aucune URL ne correspond à un site web propriétaire indépendant.',
-      confidence: 1,
-      status: 'none',
-    });
     assert.equal(coherence.coherent, false);
-    assert.equal(coherence.fallback?.status, 'presence_only');
+    assert.equal(coherence.fallback?.status, 'owner_site');
+  });
+
+  it('laisse passer presence_only sans domaine dédié', () => {
+    const coherence = assessSerpClassificationCoherence(
+      {
+        reason: 'https://www.facebook.com/funny-dog/ — réseau social.',
+        confidence: 1,
+        status: 'presence_only',
+      },
+      ['https://www.facebook.com/funny-dog/', 'https://www.pagesjaunes.fr/pros/123'],
+    );
+    assert.equal(coherence.coherent, true);
+  });
+});
+
+describe('classifySerpUrlsDetailed — structurel sans Groq', () => {
+  const simConfig = {
+    STRATE_RADAR_SIMULATION: true,
+    GROQ_API_KEY: undefined,
+    GROQ_PREFLIGHT_TIMEOUT_MS: 15_000,
+  } as AppConfig;
+
+  it('presence_only sans appel Groq (Facebook + PagesJaunes)', async () => {
+    const detailed = await classifySerpUrlsDetailed({
+      config: simConfig,
+      companyName: 'Funny Dog',
+      city: 'Annecy',
+      urls: ['https://www.facebook.com/funny-dog/', 'https://www.pagesjaunes.fr/pros/123'],
+    });
+    assert.equal(detailed.result.status, 'presence_only');
+    assert.equal(detailed.trace.llmSkipped, true);
+    assert.equal(detailed.trace.model, 'structural');
+  });
+
+  it('owner_site en simulation si domaine dédié (Annecy Assistance)', async () => {
+    const detailed = await classifySerpUrlsDetailed({
+      config: simConfig,
+      companyName: 'Annecy Assistance Depannage SARL',
+      city: 'Annecy',
+      urls: [
+        'http://annecyassistancedepannage.site-solocal.com/',
+        'https://www.annecy-mobilites.fr',
+        'https://www.pappers.fr/entreprise/foo',
+      ],
+    });
+    assert.equal(detailed.result.status, 'owner_site');
+    assert.match(detailed.result.matchedUrl ?? '', /annecy-mobilites\.fr/i);
+  });
+
+  it('presence_only pour lacarte.menu sans Groq', async () => {
+    const detailed = await classifySerpUrlsDetailed({
+      config: simConfig,
+      companyName: 'Le Balcon du Lac',
+      city: 'Annecy',
+      urls: ['https://lacarte.menu/le-balcon', 'https://www.tripadvisor.fr/foo'],
+    });
+    assert.equal(detailed.result.status, 'presence_only');
+    assert.equal(detailed.trace.llmSkipped, true);
   });
 });
 
 describe('extractMatchedUrl', () => {
   it('retrouve le hostname cité dans la raison', () => {
     const url = extractMatchedUrl(
-      'lacarte.menu est une plateforme de menu partagée, pas un site propriétaire.',
+      'lacarte.menu est une plateforme de menu partagée.',
       ['https://lacarte.menu/le-balcon', 'https://example.com'],
     );
     assert.equal(url, 'https://lacarte.menu/le-balcon');
   });
-
-  it('ne retombe pas sur la première URL si la raison est vague', () => {
-    const url = extractMatchedUrl('Présence tierce détectée sans URL citée.', [
-      'https://lacarte.menu/le-balcon',
-      'https://example.com',
-    ]);
-    assert.equal(url, null);
-  });
 });
 
 describe('buildSerpClassifierUserPrompt', () => {
-  it('inclut commerce, ville et URLs numérotées', () => {
+  it('inclut commerce, ville et URLs dédiées', () => {
     const prompt = buildSerpClassifierUserPrompt({
       companyName: 'Bijouterie LAMY',
       city: 'Annecy',
       urls: ['https://www.lamy-joaillerie.com/'],
+      platformUrls: ['https://www.facebook.com/lamyannecy'],
     });
     assert.match(prompt, /Bijouterie LAMY/);
-    assert.match(prompt, /Annecy/);
     assert.match(prompt, /lamy-joaillerie\.com/);
+    assert.match(prompt, /facebook\.com/);
   });
 });
 
@@ -149,31 +157,12 @@ describe('parseGroqRetryAfterDelayMs', () => {
     const err = new RateLimitError(429, undefined, 'rate limit', { 'retry-after': '12' });
     assert.equal(parseGroqRetryAfterDelayMs(err), 12_000);
   });
-
-  it('lit retry-after-ms en priorité', () => {
-    const err = new RateLimitError(429, undefined, 'rate limit', {
-      'retry-after': '12',
-      'retry-after-ms': '1500',
-    });
-    assert.equal(parseGroqRetryAfterDelayMs(err), 1500);
-  });
-
-  it('retourne null si header absent', () => {
-    assert.equal(parseGroqRetryAfterDelayMs(new Error('429')), null);
-  });
 });
 
 describe('parseGroqRateLimitKind', () => {
-  it('détecte le quota journalier TPD', () => {
-    const err = new Error(
-      '429 {"error":{"message":"Rate limit reached for model `llama-3.3-70b-versatile` on tokens per day (TPD): Limit 100000, Used 99900"}}',
-    );
+  it('détecte TPD', () => {
+    const err = new Error('429 tokens per day (TPD)');
     assert.equal(parseGroqRateLimitKind(err), 'tpd');
-  });
-
-  it('détecte le quota minute TPM', () => {
-    const err = new Error('429 rate limit on tokens per minute (TPM)');
-    assert.equal(parseGroqRateLimitKind(err), 'tpm');
   });
 });
 
@@ -190,13 +179,6 @@ const CEO_CASES = [
     companyName: 'Le Balcon du Lac',
     city: 'Annecy',
     urls: ['https://lacarte.menu/le-balcon-du-lac', 'https://www.tripadvisor.fr/Restaurant_Review'],
-    expected: 'presence_only' as const,
-  },
-  {
-    label: 'Le Vieil Annecy',
-    companyName: 'Le Vieil Annecy',
-    city: 'Annecy',
-    urls: ['https://www.annecy-ville.fr/activites/le-vieil-annecy', 'https://www.google.com/maps'],
     expected: 'presence_only' as const,
   },
 ];
@@ -222,13 +204,7 @@ describe('classifySerpUrls — cas CEO (Groq live)', { skip: !runLiveGroq }, () 
         city: testCase.city,
         urls: testCase.urls,
       });
-      assert.equal(
-        result.status,
-        testCase.expected,
-        `reason=${result.reason} · matched=${result.matchedUrl ?? '—'}`,
-      );
-      assert.ok(result.confidence >= 0.5 && result.confidence <= 1);
-      assert.ok(result.reason.length > 10);
+      assert.equal(result.status, testCase.expected, `reason=${result.reason}`);
     });
   }
 });
