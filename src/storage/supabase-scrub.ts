@@ -167,6 +167,9 @@ export type SupabaseScrubClient = {
     websiteResolution: Record<string, unknown>,
   ) => Promise<void>;
   readonly revokeAudit: (auditId: string) => Promise<void>;
+  /** Suppression définitive des audits diamant révoqués (scrub faux positifs). */
+  readonly purgeRevokedDiamondAudit: (auditId: string) => Promise<boolean>;
+  readonly purgeRevokedDiamondAudits: () => Promise<number>;
   readonly close: () => Promise<void>;
 };
 
@@ -275,6 +278,41 @@ export function createSupabaseScrubClient(databaseUrl: string): SupabaseScrubCli
         },
         { maxAttempts: 4, baseDelayMs: 500, maxDelayMs: 8_000 },
       );
+    },
+
+    async purgeRevokedDiamondAudit(auditId: string): Promise<boolean> {
+      const deleted = await withRetry(
+        async () =>
+          sql<{ id: string }[]>`
+            DELETE FROM audits
+            WHERE id = ${auditId}::uuid
+              AND status = 'revoked'
+              AND (
+                payload->>'leadKind' IN ('DIAMANT_CREATION', 'DIAMANT_PRESENCE')
+                OR payload->>'lead_kind' IN ('DIAMANT_CREATION', 'DIAMANT_PRESENCE')
+              )
+            RETURNING id
+          `,
+        { maxAttempts: 4, baseDelayMs: 500, maxDelayMs: 8_000 },
+      );
+      return deleted.length > 0;
+    },
+
+    async purgeRevokedDiamondAudits(): Promise<number> {
+      const deleted = await withRetry(
+        async () =>
+          sql<{ id: string }[]>`
+            DELETE FROM audits
+            WHERE status = 'revoked'
+              AND (
+                payload->>'leadKind' IN ('DIAMANT_CREATION', 'DIAMANT_PRESENCE')
+                OR payload->>'lead_kind' IN ('DIAMANT_CREATION', 'DIAMANT_PRESENCE')
+              )
+            RETURNING id
+          `,
+        { maxAttempts: 4, baseDelayMs: 500, maxDelayMs: 8_000 },
+      );
+      return deleted.length;
     },
 
     async close(): Promise<void> {

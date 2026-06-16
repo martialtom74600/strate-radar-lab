@@ -15,6 +15,7 @@
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test 'src/**/*.test.ts' 'src/lib/**/*.test.ts' 'src/lib/ai/**/*.test.ts'",
     "scrub": "tsx src/scripts/retroactive-scrub.ts",
+    "purge-revoked-scrub": "tsx src/scripts/purge-revoked-scrub.ts",
     "revert-scrub": "tsx src/scripts/revert-scrub.ts",
     "serp-classifier:dry-run": "tsx src/scripts/serp-classifier-dry-run.ts",
     "scrub:export-reasons": "tsx src/scripts/export-scrub-reasons.ts",
