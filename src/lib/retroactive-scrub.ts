@@ -22,6 +22,7 @@ import {
   type SupabaseScrubCandidate,
   type SupabaseScrubClient,
 } from '../storage/supabase-scrub.js';
+import { isSerpQuotasExhaustedError } from '../services/serp/serp-manager.js';
 import { googleMapsRawToSerp } from './diamond-snapshot.js';
 
 function parseSerpRow(json: string): SerpLocalResult | null {
@@ -257,11 +258,19 @@ async function analyzeScrubCandidates(args: {
   readonly webSearchClient: WebSearchClient | null;
   readonly supabase: SupabaseScrubClient | null;
   readonly dryRun: boolean;
-}): Promise<{ readonly disqualified: number; readonly organicFetched: number }> {
+}): Promise<{
+  readonly disqualified: number;
+  readonly organicFetched: number;
+  readonly serpQuotasExhausted: boolean;
+  readonly serpStopMessage?: string;
+}> {
   let disqualified = 0;
   let organicFetched = 0;
+  let serpQuotasExhausted = false;
+  let serpStopMessage: string | undefined;
 
   for (const candidate of args.candidates) {
+    if (serpQuotasExhausted) break;
     const serp = candidate.serp;
 
     if (args.config.simulation) {
@@ -272,14 +281,27 @@ async function analyzeScrubCandidates(args: {
     console.log(
       `[SCRUB] Analyse · ${serp.title} · ville ${resolveProspectCity(serp, candidate.searchLocation) ?? '—'} · resolveProspectWebsitePresence…`,
     );
-    const evaluated = await evaluateScrubCandidateWithWebsiteResolver({
-      config: args.config,
-      serp,
-      serpClient: args.serpClient,
-      webSearchClient: args.webSearchClient,
-      searchLocation: candidate.searchLocation,
-      fetchTimeoutMs: args.config.RADAR_FETCH_TIMEOUT_MS,
-    });
+    let evaluated;
+    try {
+      evaluated = await evaluateScrubCandidateWithWebsiteResolver({
+        config: args.config,
+        serp,
+        serpClient: args.serpClient,
+        webSearchClient: args.webSearchClient,
+        searchLocation: candidate.searchLocation,
+        fetchTimeoutMs: args.config.RADAR_FETCH_TIMEOUT_MS,
+      });
+    } catch (e) {
+      if (isSerpQuotasExhaustedError(e)) {
+        serpQuotasExhausted = true;
+        serpStopMessage = e.message;
+        console.error(
+          '[SCRUB] FATAL: Quotas SERP (Serper + Brave) épuisés — arrêt scrub pour éviter les coûts API inutiles.',
+        );
+        break;
+      }
+      throw e;
+    }
     organicFetched += 1;
 
     console.log(`[SCRUB] ${formatScrubResolutionLog(serp.title, evaluated.resolution)}`);
@@ -318,7 +340,12 @@ async function analyzeScrubCandidates(args: {
     disqualified += 1;
   }
 
-  return { disqualified, organicFetched };
+  return {
+    disqualified,
+    organicFetched,
+    serpQuotasExhausted,
+    ...(serpStopMessage !== undefined ? { serpStopMessage } : {}),
+  };
 }
 export type RunRetroactiveScrubOptions = {
   readonly config: AppConfig;
@@ -342,6 +369,8 @@ export type RetroactiveScrubResult = {
   readonly orphansFailed: number;
   readonly supabasePublished: number;
   readonly dataSource: 'supabase' | 'sqlite';
+  readonly serpQuotasExhausted: boolean;
+  readonly serpStopMessage?: string;
 };
 
 async function backfillOrphanDiamondSnapshots(args: {
@@ -476,7 +505,8 @@ export async function runRetroactiveScrub(
 
   console.log(`[SCRUB] ${candidates.length} dossier(s) éligible(s) (création / présence)`);
 
-  const { disqualified, organicFetched } = await analyzeScrubCandidates({
+  const { disqualified, organicFetched, serpQuotasExhausted, serpStopMessage } =
+    await analyzeScrubCandidates({
     candidates,
     config,
     repo,
@@ -498,5 +528,7 @@ export async function runRetroactiveScrub(
     orphansFailed: backfill.failed,
     supabasePublished,
     dataSource: useSupabase ? 'supabase' : 'sqlite',
+    serpQuotasExhausted,
+    ...(serpStopMessage !== undefined ? { serpStopMessage } : {}),
   };
 }

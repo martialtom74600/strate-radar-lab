@@ -17,7 +17,7 @@ import {
   loadScrubCandidates,
 } from '../lib/retroactive-scrub.js';
 import { websiteResolutionForPersistence } from '../lib/scrub-classifier-persistence.js';
-import { createBraveSearchWebClient } from '../services/serp/brave-search.client.js';
+import { createSerpManagerWebClient, isSerpQuotasExhaustedError } from '../services/serp/serp-manager.js';
 import {
   closeDatabase,
   migrateRadarDiamondSnapshot,
@@ -57,7 +57,7 @@ async function main(): Promise<void> {
   await migrateRadarScrubClassifierLog(db);
   const repo = new ProspectRepository(db);
   const serpClient = createRadarSearchClient(config);
-  const webSearchClient = createBraveSearchWebClient(config);
+  const webSearchClient = createSerpManagerWebClient(config);
 
   const exportRows: Record<string, unknown>[] = [];
 
@@ -72,14 +72,25 @@ async function main(): Promise<void> {
 
     for (let i = 0; i < candidates.length; i += 1) {
       const candidate = candidates[i]!;
-      const evaluated = await evaluateScrubCandidateWithWebsiteResolver({
-        config,
-        serp: candidate.serp,
-        serpClient,
-        webSearchClient,
-        searchLocation: candidate.searchLocation,
-        fetchTimeoutMs: config.RADAR_FETCH_TIMEOUT_MS,
-      });
+      let evaluated;
+      try {
+        evaluated = await evaluateScrubCandidateWithWebsiteResolver({
+          config,
+          serp: candidate.serp,
+          serpClient,
+          webSearchClient,
+          searchLocation: candidate.searchLocation,
+          fetchTimeoutMs: config.RADAR_FETCH_TIMEOUT_MS,
+        });
+      } catch (e) {
+        if (isSerpQuotasExhaustedError(e)) {
+          console.error(
+            '[REASONS] FATAL: Quotas SERP (Serper + Brave) épuisés — export interrompu.',
+          );
+          break;
+        }
+        throw e;
+      }
 
       const websiteResolution = websiteResolutionForPersistence(evaluated.resolution);
       if (candidate.auditId) {

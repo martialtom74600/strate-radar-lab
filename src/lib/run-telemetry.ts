@@ -55,6 +55,8 @@ export type RunTelemetryPayload = {
   readonly placesStoppedEarly: boolean;
   readonly placesStopMessage: string | null;
   readonly placesBudgetExhausted: boolean;
+  readonly serpQuotasExhausted: boolean;
+  readonly serpStopMessage: string | null;
   readonly searchLocation: string | null;
   readonly searchQuery: string;
   readonly weekBucket: string;
@@ -154,6 +156,11 @@ function buildWarningsAndErrors(args: {
   if (result.placesBudgetExhausted) {
     warnings.push(
       `Plafond requêtes Places du run atteint (${result.placesRequestsUsed}/${result.placesRequestsMax}).`,
+    );
+  }
+  if (result.serpQuotasExhausted) {
+    warnings.push(
+      `Quotas SERP épuisés (Serper + Brave)${result.serpStopMessage ? ` : ${result.serpStopMessage}` : ''}`,
     );
   }
   if (
@@ -295,6 +302,8 @@ export function buildRunTelemetry(args: {
     placesStoppedEarly: result.placesStoppedEarly,
     placesStopMessage: result.placesStopMessage ?? null,
     placesBudgetExhausted: result.placesBudgetExhausted,
+    serpQuotasExhausted: result.serpQuotasExhausted,
+    serpStopMessage: result.serpStopMessage ?? null,
     searchLocation: result.search.location ?? null,
     searchQuery: result.search.q,
     weekBucket: result.weekBucket,

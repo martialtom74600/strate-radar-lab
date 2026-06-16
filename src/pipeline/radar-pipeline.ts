@@ -40,7 +40,7 @@ import {
 import {
   type WebsiteResolution,
 } from '../lib/website-resolver.js';
-import { createBraveSearchWebClient, describeWebSearchBoot } from '../services/serp/brave-search.client.js';
+import { createSerpManagerWebClient, describeSerpBoot, isSerpQuotasExhaustedError } from '../services/serp/serp-manager.js';
 import type { WebSearchClient } from '../services/serp/web-search.types.js';
 import { wrapWebSearchClientWithBudget, WEB_SEARCH_BUDGET_EXHAUSTED_REASON } from '../services/serp/web-search-budget.js';
 import {
@@ -212,7 +212,7 @@ export type RadarPipelineResult = {
   readonly placesRequestsMax: number;
   readonly webSearchRequestsUsed: number;
   readonly webSearchRequestsMax: number;
-  /** Client Brave instancié (clé + plafond > 0 + RADAR_WEB_SEARCH_ENABLED). */
+  /** Client SerpManager instancié (Serper + fallback Brave, plafond > 0 + RADAR_WEB_SEARCH_ENABLED). */
   readonly webSearchConfigured: boolean;
   readonly webSearchBootStatus: string;
   readonly reportCityDisplayName: string;
@@ -226,6 +226,9 @@ export type RadarPipelineResult = {
   readonly placesStoppedEarly: boolean;
   readonly placesStopMessage?: string;
   readonly placesBudgetExhausted: boolean;
+  /** Arrêt anticipé : quotas Serper + Brave épuisés (kill switch couche 4). */
+  readonly serpQuotasExhausted: boolean;
+  readonly serpStopMessage?: string;
   /** Mode audit ciblé (nom précis) — pas de prospection trend / grainage. */
   readonly targetedMode: boolean;
   readonly targetProspectMisses?: readonly string[];
@@ -969,15 +972,15 @@ export async function runRadarPipeline(
     });
   }
 
-  const webSearchBoot = describeWebSearchBoot(config);
+  const webSearchBoot = describeSerpBoot(config);
   const baseWebSearchClient =
-    webSearchRequestsMax > 0 ? createBraveSearchWebClient(config) : null;
+    webSearchRequestsMax > 0 ? createSerpManagerWebClient(config) : null;
   const webSearchClient =
     baseWebSearchClient !== null
       ? wrapWebSearchClientWithBudget(baseWebSearchClient, webSearchBudget)
       : null;
 
-  console.log(`[radar] Brave Search : ${webSearchBoot.statusLine}`);
+  console.log(`[radar] SERP (Serper→Brave) : ${webSearchBoot.statusLine}`);
 
   const lines: RadarPipelineLine[] = [];
   const gatekeeperExclusions: GatekeeperExclusion[] = [];
@@ -996,7 +999,7 @@ export async function runRadarPipeline(
 
   radarVerbose(
     config,
-    `\n—— Strate Radar · ${reportCityDisplayName} · quotas création ${targetCreationCount} · refonte ${targetRefonteCount} · plafond Places ${placesRequestsMax} · Brave Search ${webSearchRequestsMax}/run ——`,
+    `\n—— Strate Radar · ${reportCityDisplayName} · quotas création ${targetCreationCount} · refonte ${targetRefonteCount} · plafond Places ${placesRequestsMax} · SERP ${webSearchRequestsMax}/run ——`,
   );
   radarVerbose(
     config,
@@ -1014,6 +1017,8 @@ export async function runRadarPipeline(
   let serpBudgetExhausted = false;
   let placesStoppedEarly = false;
   let placesStopMessage: string | undefined;
+  let serpQuotasExhausted = false;
+  let serpStopMessage: string | undefined;
 
   huntExpandLoop: while (true) {
     runOuter: for (const job of searchJobs) {
@@ -1121,28 +1126,41 @@ export async function runRadarPipeline(
             huntSectorScannedCounts.set(scanKey, (huntSectorScannedCounts.get(scanKey) ?? 0) + 1);
           }
 
-          const line = await processLocalRow({
-            config,
-            serp: row,
-            weekBucket,
-            recentDays,
-            repo,
-            psiClient,
-            groqClient,
-            serpClient,
-            webSearchClient,
-            searchLocation: cityLocation,
-            searchHl: options.search.hl,
-            searchGl: options.search.gl,
-            seedCategory: seedLabel,
-            trendingQuery: job.trendingQuery,
-            progressTag,
-            gatekeeperExclusions,
-            placesBudget: serpBudget,
-            quotaState,
-            forceRescan,
-            scoreNearMisses,
-          });
+          let line;
+          try {
+            line = await processLocalRow({
+              config,
+              serp: row,
+              weekBucket,
+              recentDays,
+              repo,
+              psiClient,
+              groqClient,
+              serpClient,
+              webSearchClient,
+              searchLocation: cityLocation,
+              searchHl: options.search.hl,
+              searchGl: options.search.gl,
+              seedCategory: seedLabel,
+              trendingQuery: job.trendingQuery,
+              progressTag,
+              gatekeeperExclusions,
+              placesBudget: serpBudget,
+              quotaState,
+              forceRescan,
+              scoreNearMisses,
+            });
+          } catch (e) {
+            if (isSerpQuotasExhaustedError(e)) {
+              serpQuotasExhausted = true;
+              serpStopMessage = e.message;
+              console.error(
+                '[RADAR] FATAL: Quotas SERP (Serper + Brave) épuisés — arrêt prospection pour éviter les coûts Places inutiles.',
+              );
+              break huntExpandLoop;
+            }
+            throw e;
+          }
 
           if (targetedMode) {
             targetProspectHandled = true;
@@ -1191,7 +1209,7 @@ export async function runRadarPipeline(
     if (quotaState.creationsFound >= quotaState.targetCreation) break;
     if (creationHuntExpansionRing >= config.RADAR_CREATION_HUNT_MAX_EXPANSIONS) break;
     if (serpBudget.used >= placesRequestsMax) break;
-    if (placesStoppedEarly || serpBudgetExhausted) break;
+    if (placesStoppedEarly || serpBudgetExhausted || serpQuotasExhausted) break;
 
     const nextPlan = await planNextCreationHuntExpansion({
       config,
@@ -1226,9 +1244,11 @@ export async function runRadarPipeline(
 
   radarVerbose(
     config,
-    `\n—— Fin · création ${quotaState.creationsFound}/${quotaState.targetCreation} · refonte ${quotaState.refontesFound}/${quotaState.targetRefonte} · ${totalBusinessesScanned} fiches · Places ${serpBudget.used}/${placesRequestsMax} · Brave Search ${webSearchBudget.used}/${webSearchRequestsMax}${
+    `\n—— Fin · création ${quotaState.creationsFound}/${quotaState.targetCreation} · refonte ${quotaState.refontesFound}/${quotaState.targetRefonte} · ${totalBusinessesScanned} fiches · Places ${serpBudget.used}/${placesRequestsMax} · SERP ${webSearchBudget.used}/${webSearchRequestsMax}${
       serpBudgetExhausted ? ' (plafond budget Places)' : ''
-    }${placesStoppedEarly ? ' (arrêt HTTP 429 Places)' : ''} ——\n`,
+    }${placesStoppedEarly ? ' (arrêt HTTP 429 Places)' : ''}${
+      serpQuotasExhausted ? ' (quotas Serper + Brave épuisés)' : ''
+    } ——\n`,
   );
 
   if (campaignPair !== undefined && campaignRepo !== undefined) {
@@ -1357,10 +1377,12 @@ export async function runRadarPipeline(
     demandDrivenMode,
     trendQueriesResolved,
     placesStoppedEarly,
+    ...(placesStopMessage !== undefined ? { placesStopMessage } : {}),
     placesBudgetExhausted: serpBudgetExhausted,
+    serpQuotasExhausted,
+    ...(serpStopMessage !== undefined ? { serpStopMessage } : {}),
     targetedMode,
     ...(targetProspectMisses.length > 0 ? { targetProspectMisses } : {}),
-    ...(placesStopMessage !== undefined ? { placesStopMessage } : {}),
     gatekeeperExclusions,
     scoreNearMisses: nearMissReport.shown,
     scoreNearMissesTotal: nearMissReport.total,

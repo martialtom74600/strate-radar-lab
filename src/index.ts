@@ -58,12 +58,21 @@ async function main(): Promise<void> {
     }
   }
 
+  if (result.serpQuotasExhausted) {
+    console.warn(
+      '\n⚠ Quotas SERP (Serper + Brave) épuisés — run interrompu. Rapport et export reflètent les résultats **jusqu’à l’arrêt**.',
+    );
+    if (result.serpStopMessage) {
+      console.warn(`   ${result.serpStopMessage}`);
+    }
+  }
+
   console.log(
     `Export Shadow Site : ${finalized.shadowExportPath} (${result.lines.filter((l) => l.conversionBadge).length} lead(s))`,
   );
 
   console.log(
-    `Leads : création ${result.creationsFound}/${result.targetCreationCount} · refonte ${result.refontesFound}/${result.targetRefonteCount} · Fiches : ${result.totalBusinessesScanned} · Places : ${result.placesRequestsUsed}/${result.placesRequestsMax} · Brave Search : ${result.webSearchRequestsUsed}/${result.webSearchRequestsMax}`,
+    `Leads : création ${result.creationsFound}/${result.targetCreationCount} · refonte ${result.refontesFound}/${result.targetRefonteCount} · Fiches : ${result.totalBusinessesScanned} · Places : ${result.placesRequestsUsed}/${result.placesRequestsMax} · SERP : ${result.webSearchRequestsUsed}/${result.webSearchRequestsMax}`,
   );
 }
 

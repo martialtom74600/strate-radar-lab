@@ -232,12 +232,20 @@ export function renderRapportMatinal(
     `- **Création :** ${result.creationsFound} / ${result.targetCreationCount} · **Refonte :** ${result.refontesFound} / ${result.targetRefonteCount}`,
     `- **Fiches Maps parcourues :** ${result.totalBusinessesScanned}`,
     `- **Requêtes Places (plafond run) :** ${result.placesRequestsUsed} / ${result.placesRequestsMax}`,
-    `- **Requêtes Brave Search (plafond run) :** ${result.webSearchRequestsUsed} / ${result.webSearchRequestsMax}`,
+    `- **Requêtes SERP Serper→Brave (plafond run) :** ${result.webSearchRequestsUsed} / ${result.webSearchRequestsMax}`,
     ...(result.placesStoppedEarly
       ? [
           `- **⚠ Arrêt Google Places :** quota / limite (HTTP 429) — run terminé avec résultats partiels.`,
           ...(result.placesStopMessage !== undefined
             ? [`  - _${result.placesStopMessage.replace(/\s+/g, ' ').trim()}_`]
+            : []),
+        ]
+      : []),
+    ...(result.serpQuotasExhausted
+      ? [
+          `- **⚠ Arrêt SERP :** quotas Serper + Brave épuisés — run terminé avec résultats partiels.`,
+          ...(result.serpStopMessage !== undefined
+            ? [`  - _${result.serpStopMessage.replace(/\s+/g, ' ').trim()}_`]
             : []),
         ]
       : []),

@@ -11,12 +11,20 @@ export type WebSearchResult = {
   readonly error: WebSearchError | null;
 };
 
-export type WebSearchClient = {
-  readonly searchWeb: (
-    q: string,
-    opts?: { readonly hl?: string; readonly gl?: string },
-  ) => Promise<WebSearchResult>;
+export type WebSearchOptions = {
+  readonly hl?: string;
+  readonly gl?: string;
+  readonly location?: string;
 };
+
+export type WebSearchClient = {
+  readonly searchWeb: (q: string, opts?: WebSearchOptions) => Promise<WebSearchResult>;
+};
+
+/** Erreurs quota / paiement API (Serper, Brave) — déclenchent fallback ou kill switch. */
+export function isWebSearchQuotaError(error: WebSearchError): boolean {
+  return error.httpStatus === 402 || error.httpStatus === 403 || error.httpStatus === 429;
+}
 
 export function isStaticWebSearchNoiseHost(hostname: string): boolean {
   const h = hostname.toLowerCase();

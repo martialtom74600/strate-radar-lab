@@ -368,6 +368,7 @@ export async function resolveProspectWebsitePresence(
         const webResult = await webSearchClient.searchWeb(webQuery, {
           ...(hl !== undefined ? { hl } : {}),
           ...(gl !== undefined ? { gl } : {}),
+          ...(locationHint ? { location: locationHint } : {}),
         });
         if (webResult.error) {
           recordAttempt(

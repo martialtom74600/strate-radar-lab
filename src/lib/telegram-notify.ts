@@ -119,7 +119,7 @@ export function buildTelegramReportSections(args: {
     '—— SCAN ——',
     `Fiches parcourues : ${telemetry.totalBusinessesScanned}`,
     `Places API : ${telemetry.placesRequestsUsed}/${telemetry.placesRequestsMax}`,
-    `Brave Search : ${telemetry.webSearchRequestsUsed}/${telemetry.webSearchRequestsMax} · ${telemetry.webSearchConfigured ? 'clé OK' : 'inactif'}`,
+    `SERP (Serper→Brave) : ${telemetry.webSearchRequestsUsed}/${telemetry.webSearchRequestsMax} · ${telemetry.webSearchConfigured ? 'actif' : 'inactif'}`,
     '',
     '—— INGEST VITRINE ——',
     `Configuré : ${telemetry.ingest.configured ? 'oui' : 'non'}`,
@@ -217,7 +217,7 @@ export function buildTelegramReportSections(args: {
     sections.push(gkLines.join('\n'));
   }
 
-  if (telemetry.placesStoppedEarly || telemetry.placesBudgetExhausted) {
+  if (telemetry.placesStoppedEarly || telemetry.placesBudgetExhausted || telemetry.serpQuotasExhausted) {
     const infra: string[] = ['—— INFRA API ——', ''];
     if (telemetry.placesStoppedEarly) {
       infra.push('⚠️ Places arrêt anticipé (429 / quota).');
@@ -225,6 +225,10 @@ export function buildTelegramReportSections(args: {
     }
     if (telemetry.placesBudgetExhausted) {
       infra.push('⚠️ Budget Places du run épuisé.');
+    }
+    if (telemetry.serpQuotasExhausted) {
+      infra.push('⚠️ Quotas SERP épuisés (Serper + Brave).');
+      if (telemetry.serpStopMessage) infra.push(telemetry.serpStopMessage);
     }
     sections.push(infra.join('\n'));
   }

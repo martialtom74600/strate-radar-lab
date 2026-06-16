@@ -1,7 +1,7 @@
 import { loadScrubConfig } from '../config/index.js';
 import { createRadarSearchClient } from '../lib/google-places.client.js';
 import { runRetroactiveScrub } from '../lib/retroactive-scrub.js';
-import { createBraveSearchWebClient } from '../services/serp/brave-search.client.js';
+import { createSerpManagerWebClient, describeSerpBoot } from '../services/serp/serp-manager.js';
 import {
   closeDatabase,
   migrateDiamondRescanGuard,
@@ -38,7 +38,8 @@ export async function runRetroactiveScrubMain(): Promise<void> {
 
   const repo = new ProspectRepository(db);
   const serpClient = createRadarSearchClient(config);
-  const webSearchClient = createBraveSearchWebClient(config);
+  const webSearchClient = createSerpManagerWebClient(config);
+  const serpBoot = describeSerpBoot(config);
   const supabase = config.DATABASE_URL?.trim()
     ? createSupabaseScrubClient(config.DATABASE_URL)
     : null;
@@ -50,8 +51,10 @@ export async function runRetroactiveScrubMain(): Promise<void> {
   }
   if (!webSearchClient) {
     console.log(
-      '[SCRUB] BRAVE_SEARCH_API_KEY absente — le scrub ne peut pas retrouver les sites absents de Google Maps (ex. lamy-joaillerie.com). Copiez le secret GitHub BRAVE_SEARCH_API_KEY dans strate-radar-lab/.env',
+      '[SCRUB] SERPER_API_KEY et BRAVE_SEARCH_API_KEY absentes — le scrub ne peut pas retrouver les sites absents de Google Maps (ex. lamy-joaillerie.com).',
     );
+  } else {
+    console.log(`[SCRUB] SERP (Serper→Brave) : ${serpBoot.statusLine}`);
   }
 
   try {
@@ -81,6 +84,15 @@ export async function runRetroactiveScrubMain(): Promise<void> {
               ? ` ${result.orphansSkippedMock} mock(s) simulation ignorés.`
               : ' Ajoutez DATABASE_URL (Supabase) ou restaurez la SQLite Actions.'),
         );
+      }
+    }
+
+    if (result.serpQuotasExhausted) {
+      console.warn(
+        '\n⚠ Quotas SERP (Serper + Brave) épuisés — scrub interrompu avec résultats partiels.',
+      );
+      if (result.serpStopMessage) {
+        console.warn(`   ${result.serpStopMessage}`);
       }
     }
 
