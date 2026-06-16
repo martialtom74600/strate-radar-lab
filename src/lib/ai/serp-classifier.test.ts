@@ -5,6 +5,7 @@ import '../../config/index.js';
 import type { AppConfig } from '../../config/index.js';
 import { serpClassificationSchema } from './serp-classification-schema.js';
 import {
+  applyQuarantinePolicy,
   assessSerpClassificationCoherence,
   buildSerpClassifierUserPrompt,
   classifySerpUrls,
@@ -56,17 +57,48 @@ describe('SERP_CLASSIFIER_SYSTEM_PROMPT', () => {
 });
 
 describe('assessSerpClassificationCoherence', () => {
-  it('relève owner_site si domaine dédié ignoré par le LLM', () => {
+  it('relève owner_site si domaine dédié ignoré et raison cite une plateforme', () => {
     const coherence = assessSerpClassificationCoherence(
       {
         reason: 'Présence sur pappers.fr uniquement.',
         confidence: 0.8,
         status: 'presence_only',
+        matchedUrl: null,
       },
       ['https://www.pappers.fr/foo', 'https://www.annecy-mobilites.fr'],
     );
     assert.equal(coherence.coherent, false);
     assert.equal(coherence.fallback?.status, 'owner_site');
+  });
+
+  it('laisse passer presence_only si le LLM cite un annuaire vertical', () => {
+    const coherence = assessSerpClassificationCoherence(
+      {
+        reason: 'https://www.petitfute.com/ma-chouette-boutique — annuaire, pas de site propre.',
+        confidence: 0.9,
+        status: 'presence_only',
+        matchedUrl: 'https://www.petitfute.com/ma-chouette-boutique',
+      },
+      [
+        'https://www.petitfute.com/ma-chouette-boutique',
+        'https://www.instagram.com/ma_chouette_boutique_',
+      ],
+    );
+    assert.equal(coherence.coherent, true);
+  });
+
+  it('corrige owner_site sur plateforme Solocal', () => {
+    const coherence = assessSerpClassificationCoherence(
+      {
+        reason: 'https://foo.site-solocal.com/ est le site du commerce.',
+        confidence: 1,
+        status: 'owner_site',
+        matchedUrl: 'https://foo.site-solocal.com/',
+      },
+      ['https://foo.site-solocal.com/'],
+    );
+    assert.equal(coherence.coherent, false);
+    assert.equal(coherence.fallback?.status, 'presence_only');
   });
 
   it('laisse passer presence_only sans domaine dédié', () => {
@@ -75,6 +107,7 @@ describe('assessSerpClassificationCoherence', () => {
         reason: 'https://www.facebook.com/funny-dog/ — réseau social.',
         confidence: 1,
         status: 'presence_only',
+        matchedUrl: 'https://www.facebook.com/funny-dog/',
       },
       ['https://www.facebook.com/funny-dog/', 'https://www.pagesjaunes.fr/pros/123'],
     );
@@ -82,49 +115,65 @@ describe('assessSerpClassificationCoherence', () => {
   });
 });
 
-describe('classifySerpUrlsDetailed — structurel sans Groq', () => {
+describe('classifySerpUrlsDetailed — sans Groq', () => {
   const simConfig = {
     STRATE_RADAR_SIMULATION: true,
     GROQ_API_KEY: undefined,
     GROQ_PREFLIGHT_TIMEOUT_MS: 15_000,
   } as AppConfig;
 
-  it('presence_only sans appel Groq (Facebook + PagesJaunes)', async () => {
-    const detailed = await classifySerpUrlsDetailed({
-      config: simConfig,
-      companyName: 'Funny Dog',
-      city: 'Annecy',
-      urls: ['https://www.facebook.com/funny-dog/', 'https://www.pagesjaunes.fr/pros/123'],
-    });
-    assert.equal(detailed.result.status, 'presence_only');
-    assert.equal(detailed.trace.llmSkipped, true);
-    assert.equal(detailed.trace.model, 'structural');
+  it('rejette si Groq indisponible et URLs présentes', async () => {
+    await assert.rejects(
+      () =>
+        classifySerpUrlsDetailed({
+          config: simConfig,
+          companyName: 'Funny Dog',
+          city: 'Annecy',
+          urls: ['https://www.facebook.com/funny-dog/'],
+        }),
+      (err: unknown) =>
+        err instanceof Error && /GROQ_API_KEY absente|mode simulation/i.test(err.message),
+    );
   });
 
-  it('owner_site en simulation si domaine dédié (Annecy Assistance)', async () => {
+  it('needs_review si bucket vide (quarantaine)', async () => {
     const detailed = await classifySerpUrlsDetailed({
       config: simConfig,
-      companyName: 'Annecy Assistance Depannage SARL',
+      companyName: 'Vide',
       city: 'Annecy',
-      urls: [
-        'http://annecyassistancedepannage.site-solocal.com/',
-        'https://www.annecy-mobilites.fr',
-        'https://www.pappers.fr/entreprise/foo',
-      ],
+      urls: [],
     });
-    assert.equal(detailed.result.status, 'owner_site');
-    assert.match(detailed.result.matchedUrl ?? '', /annecy-mobilites\.fr/i);
+    assert.equal(detailed.result.status, 'needs_review');
+  });
+});
+
+describe('applyQuarantinePolicy', () => {
+  it('convertit none en needs_review', () => {
+    const out = applyQuarantinePolicy({
+      status: 'none',
+      confidence: 0,
+      reason: 'Indécision LLM.',
+    });
+    assert.equal(out.status, 'needs_review');
+    assert.match(out.reason, /quarantaine/i);
   });
 
-  it('presence_only pour lacarte.menu sans Groq', async () => {
-    const detailed = await classifySerpUrlsDetailed({
-      config: simConfig,
-      companyName: 'Le Balcon du Lac',
-      city: 'Annecy',
-      urls: ['https://lacarte.menu/le-balcon', 'https://www.tripadvisor.fr/foo'],
+  it('convertit confidence=0 en needs_review', () => {
+    const out = applyQuarantinePolicy({
+      status: 'presence_only',
+      confidence: 0,
+      reason: 'Hésitation.',
     });
-    assert.equal(detailed.result.status, 'presence_only');
-    assert.equal(detailed.trace.llmSkipped, true);
+    assert.equal(out.status, 'needs_review');
+  });
+
+  it('laisse passer owner_site avec confiance', () => {
+    const out = applyQuarantinePolicy({
+      status: 'owner_site',
+      confidence: 0.95,
+      reason: 'Site dédié.',
+    });
+    assert.equal(out.status, 'owner_site');
   });
 });
 
@@ -139,16 +188,15 @@ describe('extractMatchedUrl', () => {
 });
 
 describe('buildSerpClassifierUserPrompt', () => {
-  it('inclut commerce, ville et URLs dédiées', () => {
+  it('inclut commerce, ville et URLs organiques', () => {
     const prompt = buildSerpClassifierUserPrompt({
       companyName: 'Bijouterie LAMY',
       city: 'Annecy',
-      urls: ['https://www.lamy-joaillerie.com/'],
-      platformUrls: ['https://www.facebook.com/lamyannecy'],
+      urls: ['https://www.lamy-joaillerie.com/', 'https://www.facebook.com/lamyannecy'],
     });
     assert.match(prompt, /Bijouterie LAMY/);
     assert.match(prompt, /lamy-joaillerie\.com/);
-    assert.match(prompt, /facebook\.com/);
+    assert.match(prompt, /URLs organiques/);
   });
 });
 

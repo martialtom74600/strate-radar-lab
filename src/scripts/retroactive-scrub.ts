@@ -97,7 +97,7 @@ export async function runRetroactiveScrubMain(): Promise<void> {
     }
 
     console.log(
-      `Nettoyage terminé. ${result.analyzed} dossiers analysés, ${result.disqualified} faux positifs disqualifiés.`,
+      `Nettoyage terminé. ${result.analyzed} dossiers analysés · 🟢 ${result.triageReady} prêts · 🔴 ${result.disqualified} disqualifiés · 🟠 ${result.triageNeedsReview} en quarantaine.`,
     );
   } finally {
     await closeDatabase(db);

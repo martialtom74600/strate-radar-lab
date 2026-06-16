@@ -72,5 +72,6 @@ describe('shouldDisqualifyWebsitePresenceForScrub', () => {
     assert.equal(shouldDisqualifyWebsitePresenceForScrub({ status: 'corporate_parent' }), true);
     assert.equal(shouldDisqualifyWebsitePresenceForScrub({ status: 'presence_only' }), false);
     assert.equal(shouldDisqualifyWebsitePresenceForScrub({ status: 'none' }), false);
+    assert.equal(shouldDisqualifyWebsitePresenceForScrub({ status: 'needs_review' }), false);
   });
 });

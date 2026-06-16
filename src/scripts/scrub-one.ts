@@ -144,7 +144,11 @@ async function main(): Promise<void> {
     }
 
     if (!evaluated.shouldDisqualify) {
-      console.log('[SCRUB-ONE] Conservé — pas de révocation (presence_only / none).');
+      if (evaluated.resolution.status === 'needs_review') {
+        console.log('[SCRUB-ONE] 🟠 Quarantaine — vérification manuelle requise (pas de révocation).');
+      } else {
+        console.log('[SCRUB-ONE] 🟢 Conservé — pas de révocation (presence_only).');
+      }
       return;
     }
 

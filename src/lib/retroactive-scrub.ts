@@ -13,6 +13,13 @@ import {
   shouldDisqualifyWebsitePresenceForScrub,
 } from './diamond-website-detection.js';
 import {
+  isScrubDisqualifiedStatus,
+  isScrubNeedsReview,
+  isScrubReadyProspect,
+  printScrubTriageSummary,
+  type ScrubTriageEntry,
+} from './scrub-triage.js';
+import {
   persistClassifierDecision,
   type ScrubClassifierPersistInput,
 } from './scrub-classifier-persistence.js';
@@ -171,6 +178,13 @@ function formatScrubResolutionLog(
         : '';
     return `${title} · presence_only · conservé${resolution.presencePlatform ? ` (${resolution.presencePlatform})` : ''}${latency}${reason}`;
   }
+  if (resolution.status === 'needs_review') {
+    const latency =
+      resolution.classifierAudit?.latencyMs !== undefined
+        ? ` · ${resolution.classifierAudit.latencyMs}ms`
+        : '';
+    return `${title} · needs_review · quarantaine 🟠${resolution.url ? ` · ${resolution.url}` : ''}${latency}${reason}`;
+  }
   return `${title} · none · conservé${reason}`;
 }
 
@@ -263,11 +277,41 @@ async function analyzeScrubCandidates(args: {
   readonly organicFetched: number;
   readonly serpQuotasExhausted: boolean;
   readonly serpStopMessage?: string;
+  readonly triage: {
+    readonly ready: readonly ScrubTriageEntry[];
+    readonly disqualified: readonly ScrubTriageEntry[];
+    readonly needsReview: readonly ScrubTriageEntry[];
+  };
 }> {
   let disqualified = 0;
   let organicFetched = 0;
   let serpQuotasExhausted = false;
   let serpStopMessage: string | undefined;
+  const ready: ScrubTriageEntry[] = [];
+  const disqualifiedEntries: ScrubTriageEntry[] = [];
+  const needsReview: ScrubTriageEntry[] = [];
+
+  const pushTriage = (candidate: ScrubCandidate, evaluated: Awaited<ReturnType<typeof evaluateScrubCandidateWithWebsiteResolver>>) => {
+    const entry: ScrubTriageEntry = {
+      businessName: candidate.businessName,
+      slug: candidate.slug ?? null,
+      status: evaluated.resolution.status,
+      url: evaluated.resolution.url,
+      reason: evaluated.resolution.classificationReason,
+    };
+    if (isScrubDisqualifiedStatus(evaluated.resolution.status) && evaluated.shouldDisqualify) {
+      disqualifiedEntries.push(entry);
+    } else if (isScrubNeedsReview(evaluated.resolution.status)) {
+      needsReview.push(entry);
+    } else if (isScrubReadyProspect(evaluated.resolution.status)) {
+      ready.push(entry);
+    } else {
+      needsReview.push({
+        ...entry,
+        reason: entry.reason ?? `Statut ${evaluated.resolution.status} — triage manuel recommandé.`,
+      });
+    }
+  };
 
   for (const candidate of args.candidates) {
     if (serpQuotasExhausted) break;
@@ -306,6 +350,8 @@ async function analyzeScrubCandidates(args: {
 
     console.log(`[SCRUB] ${formatScrubResolutionLog(serp.title, evaluated.resolution)}`);
 
+    pushTriage(candidate, evaluated);
+
     await persistScrubClassifierDecision({
       repo: args.repo,
       supabase: args.supabase,
@@ -340,11 +386,18 @@ async function analyzeScrubCandidates(args: {
     disqualified += 1;
   }
 
+  printScrubTriageSummary({
+    ready,
+    disqualified: disqualifiedEntries,
+    needsReview,
+  });
+
   return {
     disqualified,
     organicFetched,
     serpQuotasExhausted,
     ...(serpStopMessage !== undefined ? { serpStopMessage } : {}),
+    triage: { ready, disqualified: disqualifiedEntries, needsReview },
   };
 }
 export type RunRetroactiveScrubOptions = {
@@ -371,6 +424,9 @@ export type RetroactiveScrubResult = {
   readonly dataSource: 'supabase' | 'sqlite';
   readonly serpQuotasExhausted: boolean;
   readonly serpStopMessage?: string;
+  readonly triageReady: number;
+  readonly triageDisqualified: number;
+  readonly triageNeedsReview: number;
 };
 
 async function backfillOrphanDiamondSnapshots(args: {
@@ -505,7 +561,7 @@ export async function runRetroactiveScrub(
 
   console.log(`[SCRUB] ${candidates.length} dossier(s) éligible(s) (création / présence)`);
 
-  const { disqualified, organicFetched, serpQuotasExhausted, serpStopMessage } =
+  const { disqualified, organicFetched, serpQuotasExhausted, serpStopMessage, triage } =
     await analyzeScrubCandidates({
     candidates,
     config,
@@ -530,5 +586,8 @@ export async function runRetroactiveScrub(
     dataSource: useSupabase ? 'supabase' : 'sqlite',
     serpQuotasExhausted,
     ...(serpStopMessage !== undefined ? { serpStopMessage } : {}),
+    triageReady: triage.ready.length,
+    triageDisqualified: triage.disqualified.length,
+    triageNeedsReview: triage.needsReview.length,
   };
 }

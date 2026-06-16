@@ -186,6 +186,14 @@ export type RawEnv = {
    * `all_presence` : exclut aussi PagesJaunes, Facebook, etc.
    */
   readonly RADAR_PRESENCE_SKIP_POLICY: PresenceSkipPolicy;
+  /** Top 5 Scanner : blocklist → Jina → Groq avec short-circuit (défaut true). */
+  readonly RADAR_TOP5_SCANNER: boolean;
+  /** Clé Jina Reader (optionnelle — tier gratuit sans clé, rate limit plus bas). */
+  readonly JINA_API_KEY: string | undefined;
+  /** Timeout fetch Jina Reader par URL (ms). */
+  readonly RADAR_JINA_TIMEOUT_MS: number;
+  /** Taille max du markdown Jina envoyé à Groq (caractères). */
+  readonly RADAR_JINA_MAX_MARKDOWN_CHARS: number;
 };
 
 /** Quotas finaux après résolution legacy (70/30) ou défauts 15 / 5. */
@@ -317,6 +325,15 @@ function parseRawEnv(env: NodeJS.ProcessEnv): RawEnv {
       30,
     ),
     RADAR_PRESENCE_SKIP_POLICY: parsePresenceSkipPolicy(env.RADAR_PRESENCE_SKIP_POLICY),
+    RADAR_TOP5_SCANNER: boolFromEnvDefaultTrue(env.RADAR_TOP5_SCANNER),
+    JINA_API_KEY: optString(env.JINA_API_KEY),
+    RADAR_JINA_TIMEOUT_MS: coerceIntInRange(env.RADAR_JINA_TIMEOUT_MS, 8_000, 2_000, 30_000),
+    RADAR_JINA_MAX_MARKDOWN_CHARS: coerceIntInRange(
+      env.RADAR_JINA_MAX_MARKDOWN_CHARS,
+      12_000,
+      2_000,
+      50_000,
+    ),
   };
 }
 

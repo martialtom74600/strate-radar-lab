@@ -4,7 +4,12 @@ export type WebsitePresenceStatus =
   | 'owner_site'
   | 'presence_only'
   | 'corporate_parent'
-  | 'none';
+  | 'none'
+  /** Doute IA ou erreur API — vérification manuelle requise avant impression / révocation. */
+  | 'needs_review';
+
+/** Statuts que Groq peut renvoyer directement (hors quarantaine). */
+export type LlmWebsitePresenceStatus = Exclude<WebsitePresenceStatus, 'needs_review'>;
 
 export type PresenceSkipPolicy =
   | 'booking_platforms'
@@ -75,6 +80,12 @@ export function assessMandatoryBookingPlatformExclusion(
   if (resolution.status === 'owner_site') {
     return { skip: false, reason: null };
   }
+  if (resolution.status === 'needs_review') {
+    return {
+      skip: true,
+      reason: 'Classification incertaine — vérification manuelle requise.',
+    };
+  }
   const hay = resolutionScanText(resolution);
   if (scanTextForBookingSignal(hay)) {
     return {
@@ -91,6 +102,12 @@ export function assessResolutionPresenceSkip(
 ): PresencePipelineSkipAssessment {
   if (policy === 'off') return { skip: false, reason: null };
   if (resolution.status === 'owner_site') return { skip: false, reason: null };
+  if (resolution.status === 'needs_review') {
+    return {
+      skip: true,
+      reason: 'Classification incertaine — vérification manuelle requise.',
+    };
+  }
 
   if (policy === 'all_presence' && resolution.status === 'presence_only') {
     return {

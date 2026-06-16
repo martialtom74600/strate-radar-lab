@@ -11,9 +11,14 @@ import {
   presencePlatformFromUrl,
   type SerpClassifierDetailedResult,
 } from './ai/serp-classifier.js';
+import { scanTop5CandidatesDetailed, type Top5WebDiscoveryContext } from './ai/top5-scanner.js';
 import type { ResolvedWebsite } from './diamond.js';
 import type { OrganicSerpHit } from './organic-serp-hit.js';
-import { buildOwnerDiscoveryQuery, resolveProspectCity } from './search-location-hint.js';
+import {
+  buildOwnerDiscoveryQuery,
+  cityHintFromSearchLocation,
+  resolveProspectCity,
+} from './search-location-hint.js';
 import {
   formatWebSearchErrorNote,
   type WebSearchClient,
@@ -22,13 +27,15 @@ import type { SerpClient } from '../services/serp/search-client.types.js';
 import type { SerpLocalResult } from '../services/serp/schemas.js';
 import { normalizeProspectUrl, toAbsoluteHttpUrl } from './url.js';
 import { parseOwnerWebsiteUrl, type WebsitePresenceStatus } from './website-presence-types.js';
+import { isDedicatedOwnerUrl } from './host-presence.js';
 
 export type WebsiteResolutionSource =
   | 'maps_link'
   | 'place_details'
   | 'places_requery'
   | 'web_search'
-  | 'serp_classifier';
+  | 'serp_classifier'
+  | 'top5_scanner';
 
 export type WebsiteResolutionAttempt = {
   readonly layer: string;
@@ -84,9 +91,12 @@ function recordAttempt(
   attempts.push({ layer, url, outcome, ...(note !== undefined ? { note } : {}) });
 }
 
+/** Capacité du collecteur URL avant le Top 5 / classifieur (Maps + web + Places). */
+const URL_COLLECTOR_BUCKET_MAX = 12;
+
 function pushUniqueUrl(bucket: string[], raw: string | null | undefined): void {
   const trimmed = raw?.trim();
-  if (!trimmed || bucket.length >= 7) return;
+  if (!trimmed || bucket.length >= URL_COLLECTOR_BUCKET_MAX) return;
   if (bucket.some((existing) => existing.toLowerCase() === trimmed.toLowerCase())) return;
   if (!toAbsoluteHttpUrl(trimmed)) return;
   bucket.push(trimmed);
@@ -174,6 +184,26 @@ function buildResultFromClassification(args: {
     };
   }
 
+  if (classification.status === 'needs_review') {
+    const reviewUrl = parsed?.displayUrl ?? matched ?? null;
+    return {
+      ownerSite: null,
+      resolution: {
+        status: 'needs_review',
+        confidence: classification.confidence,
+        url: reviewUrl,
+        displayUrl: reviewUrl,
+        normalizedUrl: reviewUrl ? parseOwnerWebsiteUrl(reviewUrl)?.normalizedUrl ?? null : null,
+        source,
+        mapsListingWebsite,
+        presencePlatform: reviewUrl ? presencePlatformFromUrl(reviewUrl) : null,
+        classificationReason: classification.reason,
+        classifierAudit,
+        attempts,
+      },
+    };
+  }
+
   if (classification.status === 'presence_only') {
     return {
       ownerSite: null,
@@ -251,7 +281,7 @@ function buildResultFromClassification(args: {
 
 function summarizeCascadeForAudit(attempts: readonly WebsiteResolutionAttempt[]): string {
   return attempts
-    .filter((row) => row.layer !== 'serp_classifier')
+    .filter((row) => row.layer !== 'serp_classifier' && row.layer !== 'top5_scanner')
     .map((row) => `${row.layer}=${row.outcome}${row.note ? `(${row.note.slice(0, 40)})` : ''}`)
     .join(' · ');
 }
@@ -274,8 +304,116 @@ function emitClassifierAuditLog(args: {
   });
 }
 
-function buildWebSearchQuery(businessName: string, searchLocation: string | null): string {
-  return buildOwnerDiscoveryQuery(businessName, searchLocation, '');
+function buildWebSearchQuery(
+  businessName: string,
+  prospectCity: string | null,
+  searchLocation: string | null,
+  fallbackLocation: string,
+): string {
+  return buildOwnerDiscoveryQuery(
+    businessName,
+    prospectCity ?? searchLocation,
+    fallbackLocation,
+  );
+}
+
+async function runOwnerDiscoveryWebSearch(args: {
+  readonly config: AppConfig;
+  readonly serp: SerpLocalResult;
+  readonly webSearchClient: WebSearchClient | null;
+  readonly searchLocation: string | null;
+  readonly prospectCity: string | null;
+  readonly hl: string | undefined;
+  readonly gl: string | undefined;
+  readonly urlBucket: string[];
+  readonly attempts: WebsiteResolutionAttempt[];
+}): Promise<{ readonly context: Top5WebDiscoveryContext; readonly sourceSet: boolean }> {
+  const discoveryQuery = buildWebSearchQuery(
+    args.serp.title,
+    args.prospectCity,
+    args.searchLocation,
+    args.config.RADAR_SEARCH_LOCATION,
+  );
+  const serpLocation = args.prospectCity
+    ? `${args.prospectCity}, France`
+    : cityHintFromSearchLocation(args.searchLocation, args.config.RADAR_SEARCH_LOCATION);
+
+  if (!args.webSearchClient || !discoveryQuery) {
+    const reason = !args.webSearchClient
+      ? 'Recherche web désactivée, clé Serper/Brave absente ou plafond run à 0'
+      : 'requête vide';
+    recordAttempt(args.attempts, 'web_search', null, 'skipped', reason);
+    return {
+      context: { attempted: false, ok: false, hits: 0, error: reason },
+      sourceSet: false,
+    };
+  }
+
+  try {
+    const searchOpts = {
+      ...(args.hl !== undefined ? { hl: args.hl } : {}),
+      ...(args.gl !== undefined ? { gl: args.gl } : {}),
+      location: serpLocation,
+    };
+
+    const runQuery = async (query: string) => args.webSearchClient!.searchWeb(query, searchOpts);
+
+    const webResult = await runQuery(discoveryQuery);
+    if (webResult.error) {
+      const note = formatWebSearchErrorNote(webResult.error);
+      recordAttempt(args.attempts, 'web_search', null, 'skipped', note);
+      return {
+        context: { attempted: true, ok: false, hits: 0, error: note },
+        sourceSet: false,
+      };
+    }
+
+    let totalHits = 0;
+    let dedicatedHits = 0;
+    const ingestHits = (hits: readonly { readonly link: string }[]) => {
+      const dedicated = hits.filter((hit) => isDedicatedOwnerUrl(hit.link));
+      const platforms = hits.filter((hit) => !isDedicatedOwnerUrl(hit.link));
+      for (const hit of [...dedicated, ...platforms]) {
+        totalHits += 1;
+        if (isDedicatedOwnerUrl(hit.link)) dedicatedHits += 1;
+        pushUniqueUrl(args.urlBucket, hit.link);
+      }
+    };
+
+    ingestHits(webResult.hits);
+
+    let queryNote = `${webResult.hits.length} hit(s) · q=${discoveryQuery.slice(0, 72)}`;
+
+    if (dedicatedHits === 0) {
+      const fallbackQuery = `${discoveryQuery} site`.trim();
+      const fallback = await runQuery(fallbackQuery);
+      if (!fallback.error && fallback.hits.length > 0) {
+        const beforeDedicated = dedicatedHits;
+        ingestHits(fallback.hits);
+        if (dedicatedHits > beforeDedicated) {
+          queryNote += ` · fallback site +${fallback.hits.length} hit(s)`;
+        }
+      }
+    }
+
+    recordAttempt(args.attempts, 'web_search', null, 'skipped', queryNote);
+    return {
+      context: {
+        attempted: true,
+        ok: true,
+        hits: totalHits,
+        error: null,
+      },
+      sourceSet: totalHits > 0,
+    };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    recordAttempt(args.attempts, 'web_search', null, 'skipped', msg.slice(0, 240));
+    return {
+      context: { attempted: true, ok: false, hits: 0, error: msg.slice(0, 200) },
+      sourceSet: false,
+    };
+  }
 }
 
 /**
@@ -291,9 +429,12 @@ export async function resolveProspectWebsitePresence(
   const mapsListingWebsite = serp.website?.trim() || null;
   const placeId = serp.place_id?.trim() || null;
   const prospectCity = resolveProspectCity(serp, searchLocation);
+  const priorityUrls: string[] = [];
+  let placeDetailsUri: string | null = null;
 
   pushUniqueUrl(urlBucket, mapsListingWebsite);
   if (mapsListingWebsite) {
+    priorityUrls.push(mapsListingWebsite);
     recordAttempt(attempts, 'maps_listing', mapsListingWebsite, 'skipped', 'URL transmise au classifieur');
   }
 
@@ -301,7 +442,11 @@ export async function resolveProspectWebsitePresence(
     try {
       const detailsUri = await serpClient.fetchPlaceWebsiteUri(placeId);
       if (detailsUri) {
+        placeDetailsUri = detailsUri;
         pushUniqueUrl(urlBucket, detailsUri);
+        if (!priorityUrls.some((u) => u.toLowerCase() === detailsUri.toLowerCase())) {
+          priorityUrls.push(detailsUri);
+        }
         recordAttempt(attempts, 'place_details', detailsUri, 'skipped', 'URL transmise au classifieur');
       } else {
         recordAttempt(attempts, 'place_details', null, 'skipped', 'websiteUri absent');
@@ -328,8 +473,34 @@ export async function resolveProspectWebsitePresence(
         }
       : {};
 
-  let classifierSource: WebsiteResolutionSource = 'serp_classifier';
+  let classifierSource: WebsiteResolutionSource = config.RADAR_TOP5_SCANNER
+    ? 'top5_scanner'
+    : 'serp_classifier';
   let organicProbeIndex = -1;
+  let webDiscovery: Top5WebDiscoveryContext = {
+    attempted: false,
+    ok: false,
+    hits: 0,
+    error: null,
+  };
+
+  if (config.RADAR_TOP5_SCANNER) {
+    const webOut = await runOwnerDiscoveryWebSearch({
+      config,
+      serp,
+      webSearchClient,
+      searchLocation,
+      prospectCity,
+      hl,
+      gl,
+      urlBucket,
+      attempts,
+    });
+    webDiscovery = webOut.context;
+    if (webOut.sourceSet) {
+      classifierSource = 'web_search';
+    }
+  }
 
   if (deepQuery) {
     try {
@@ -359,51 +530,22 @@ export async function resolveProspectWebsitePresence(
     recordAttempt(attempts, 'places_requery', null, 'skipped', 'requête vide');
   }
 
-  if (webSearchClient && deepQuery) {
-    try {
-      const webQuery = buildWebSearchQuery(serp.title, searchLocation);
-      if (!webQuery) {
-        recordAttempt(attempts, 'web_search', null, 'skipped', 'requête vide');
-      } else {
-        const webResult = await webSearchClient.searchWeb(webQuery, {
-          ...(hl !== undefined ? { hl } : {}),
-          ...(gl !== undefined ? { gl } : {}),
-          ...(locationHint ? { location: locationHint } : {}),
-        });
-        if (webResult.error) {
-          recordAttempt(
-            attempts,
-            'web_search',
-            null,
-            'skipped',
-            formatWebSearchErrorNote(webResult.error),
-          );
-        } else {
-          for (const hit of webResult.hits) {
-            pushUniqueUrl(urlBucket, hit.link);
-          }
-          classifierSource = 'web_search';
-          recordAttempt(
-            attempts,
-            'web_search',
-            null,
-            'skipped',
-            `${webResult.hits.length} hit(s) SERP → classifieur`,
-          );
-        }
-      }
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      recordAttempt(attempts, 'web_search', null, 'skipped', msg.slice(0, 240));
-    }
-  } else if (!webSearchClient) {
-    recordAttempt(
+  if (!config.RADAR_TOP5_SCANNER) {
+    const webOut = await runOwnerDiscoveryWebSearch({
+      config,
+      serp,
+      webSearchClient,
+      searchLocation,
+      prospectCity,
+      hl,
+      gl,
+      urlBucket,
       attempts,
-      'web_search',
-      null,
-      'skipped',
-      'Recherche web désactivée, clé Brave absente ou plafond run à 0',
-    );
+    });
+    webDiscovery = webOut.context;
+    if (webOut.sourceSet) {
+      classifierSource = 'web_search';
+    }
   }
 
   const urlsForClassifier = urlBucket.slice(0, SERP_CLASSIFIER_MAX_URLS);
@@ -422,7 +564,7 @@ export async function resolveProspectWebsitePresence(
     }
     return buildResultFromClassification({
       classification: {
-        status: 'none',
+        status: 'needs_review',
         confidence: 0,
         reason: 'Aucune URL collectée pour ce commerce.',
         matchedUrl: null,
@@ -435,16 +577,26 @@ export async function resolveProspectWebsitePresence(
   }
 
   let detailed: SerpClassifierDetailedResult;
+  const classifierLayer = config.RADAR_TOP5_SCANNER ? 'top5_scanner' : 'serp_classifier';
   try {
-    detailed = await classifySerpUrlsDetailed({
-      config,
-      companyName: serp.title,
-      city: prospectCity,
-      urls: urlBucket,
-    });
+    detailed = config.RADAR_TOP5_SCANNER
+      ? await scanTop5CandidatesDetailed({
+          config,
+          companyName: serp.title,
+          city: prospectCity,
+          urlsCollected: urlBucket,
+          priorityUrls,
+          discovery: webDiscovery,
+        })
+      : await classifySerpUrlsDetailed({
+          config,
+          companyName: serp.title,
+          city: prospectCity,
+          urls: urlBucket,
+        });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    recordAttempt(attempts, 'serp_classifier', null, 'skipped', msg.slice(0, 200));
+    recordAttempt(attempts, classifierLayer, null, 'skipped', msg.slice(0, 200));
     if (config.RADAR_VERBOSE) {
       logSerpClassifierFailure({
         logPrefix: logTag,
@@ -456,10 +608,10 @@ export async function resolveProspectWebsitePresence(
     }
     return buildResultFromClassification({
       classification: {
-        status: 'none',
+        status: 'needs_review',
         confidence: 0,
-        reason: msg.slice(0, 240),
-        matchedUrl: null,
+        reason: `[quarantaine] Erreur classifieur : ${msg.slice(0, 220)}`,
+        matchedUrl: urlsForClassifier[0] ?? null,
       },
       classifierAudit: null,
       mapsListingWebsite,
@@ -476,7 +628,7 @@ export async function resolveProspectWebsitePresence(
 
   recordAttempt(
     attempts,
-    'serp_classifier',
+    classifierLayer,
     classification.matchedUrl,
     classification.status,
     classification.reason,
@@ -505,13 +657,17 @@ export async function resolveProspectWebsitePresence(
     classification.matchedUrl &&
     normalizeProspectUrl(classification.matchedUrl) === normalizeProspectUrl(mapsListingWebsite)
       ? 'maps_link'
+      : classification.status === 'owner_site' && placeDetailsUri &&
+          classification.matchedUrl &&
+          normalizeProspectUrl(classification.matchedUrl) === normalizeProspectUrl(placeDetailsUri)
+        ? 'place_details'
       : classifierSource === 'web_search'
         ? 'web_search'
         : organicProbeIndex >= 0
           ? 'places_requery'
           : mapsListingWebsite
             ? 'maps_link'
-            : 'serp_classifier';
+            : classifierSource;
 
   return buildResultFromClassification({
     classification,

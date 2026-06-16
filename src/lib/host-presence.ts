@@ -7,7 +7,9 @@ import { toAbsoluteHttpUrl } from './url.js';
 
 /** Plateformes où un commerce n'a pas son propre site (liste courte, stable). */
 export const MULTI_TENANT_PLATFORMS = [
+  '118000.fr',
   '118712.fr',
+  'auto-selection.com',
   'data.gouv.fr',
   'deliveroo.fr',
   'doctolib.fr',
@@ -27,19 +29,33 @@ export const MULTI_TENANT_PLATFORMS = [
   'mappy.com',
   'pagesjaunes.fr',
   'pappers.fr',
+  'petitfute.com',
   'planity.com',
   'search.brave.com',
   'site-solocal.com',
   'societe.com',
   'solocal.com',
   'tiktok.com',
+  'travaux.com',
   'tripadvisor.com',
   'tripadvisor.fr',
   'ubereats.com',
   'waze.com',
   'wikidata.org',
   'wikipedia.org',
+  'yelp.fr',
   'youtube.com',
+] as const;
+
+/** Réseaux nationaux / franchises — page agence ≠ site indépendant de l'artisan. */
+export const CORPORATE_NETWORK_DOMAINS = [
+  'century21.fr',
+  'compagnieduvegetal.fr',
+  'fiducial.fr',
+  'guy-hoquet.com',
+  'laforet.com',
+  'orpi.com',
+  'stephaneplazaimmobilier.com',
 ] as const;
 
 const MULTI_PART_PUBLIC_SUFFIXES = [
@@ -106,6 +122,18 @@ export function isMultiTenantPlatformHost(hostname: string): boolean {
   if (!registrable) return true;
 
   return (MULTI_TENANT_PLATFORMS as readonly string[]).includes(registrable);
+}
+
+/** Succursale ou franchise sur le domaine d'un réseau national connu. */
+export function isCorporateNetworkHost(hostname: string): boolean {
+  const registrable = getRegistrableDomain(hostname.toLowerCase().replace(/^www\./, ''));
+  if (!registrable) return false;
+  return (CORPORATE_NETWORK_DOMAINS as readonly string[]).includes(registrable);
+}
+
+export function isCorporateNetworkUrl(raw: string): boolean {
+  const host = hostnameFromUrl(raw);
+  return host !== null && isCorporateNetworkHost(host);
 }
 
 /** Domaine propre hors plateformes connues et bruit SERP. */

@@ -38,6 +38,7 @@ export type WebsiteResolutionPayload = {
     | 'places_requery'
     | 'web_search'
     | 'serp_classifier'
+    | 'top5_scanner'
     | null;
   readonly mapsListingWebsite: string | null;
   readonly presencePlatform: string | null;
