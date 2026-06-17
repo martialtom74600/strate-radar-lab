@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "exportedAt": "2026-06-16T04:39:22.638Z",
+  "exportedAt": "2026-06-17T04:38:07.211Z",
   "zones": [
     {
       "zone": "Annecy, France",
       "priority": 200,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-06-16T04:38:05.641Z",
+      "last_run_at": "2026-06-17T04:34:47.673Z",
       "last_creations": 5,
-      "total_scanned": 3147,
+      "total_scanned": 3166,
       "consecutive_low_runs": 0,
-      "updated_at": "2026-06-16T04:38:05.641Z"
+      "updated_at": "2026-06-17T04:34:47.673Z"
     }
   ],
   "sectorRuns": [
@@ -462,6 +462,13 @@
       "creations_found": 5,
       "scanned_count": 36,
       "run_at": "2026-06-16T04:38:05.641Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Fleuriste",
+      "creations_found": 5,
+      "scanned_count": 19,
+      "run_at": "2026-06-17T04:34:47.673Z"
     }
   ]
 }
