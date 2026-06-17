@@ -31,6 +31,8 @@ import {
   shouldRejectCorporateParentForCreationHunt,
   shouldRejectOwnerSiteForCreationHunt,
 } from '../lib/diamond-website-detection.js';
+import { TOP5_GROQ_INTER_REQUEST_DELAY_MS } from '../lib/ai/top5-scanner.js';
+import { sleep } from '../lib/retry.js';
 import { persistClassifierDecision } from '../lib/scrub-classifier-persistence.js';
 import {
   assessMandatoryBookingPlatformExclusion,
@@ -1188,6 +1190,16 @@ export async function runRadarPipeline(
 
           if (targetedMode) {
             break huntExpandLoop;
+          }
+
+          if (
+            !config.simulation &&
+            !targetedMode &&
+            TOP5_GROQ_INTER_REQUEST_DELAY_MS > 0 &&
+            !leadQuotasSatisfied(quotaState) &&
+            serpBudget.used < placesRequestsMax
+          ) {
+            await sleep(TOP5_GROQ_INTER_REQUEST_DELAY_MS);
           }
         }
 
