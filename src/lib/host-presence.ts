@@ -5,7 +5,7 @@
 
 import { toAbsoluteHttpUrl } from './url.js';
 
-/** Plateformes où un commerce n'a pas son propre site (liste courte, stable). */
+/** Plateformes où un commerce n'a pas son propre site — géants technologiques stables uniquement. */
 export const MULTI_TENANT_PLATFORMS = [
   '118000.fr',
   '118712.fr',

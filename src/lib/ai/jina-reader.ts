@@ -13,6 +13,23 @@ function truncateMarkdown(text: string, maxChars: number): string {
   return `${trimmed.slice(0, maxChars - 1)}…`;
 }
 
+/** Retire le bruit Jina Reader (Title, URL Source…) qui induit Groq en erreur. */
+export function cleanJinaMarkdownForClassifier(raw: string): string {
+  let text = raw.trim();
+  text = text
+    .replace(/^Title:\s*.*$/gim, '')
+    .replace(/^URL Source:\s*.*$/gim, '')
+    .replace(/^Published Time:\s*.*$/gim, '')
+    .replace(/^Markdown Content:\s*$/gim, '')
+    .replace(/^Warning:\s*.*$/gim, '');
+
+  const headingIdx = text.search(/^#\s+/m);
+  if (headingIdx > 0) {
+    text = text.slice(headingIdx);
+  }
+  return text.trim();
+}
+
 /** Fetch page markdown via Jina Reader (`https://r.jina.ai/{URL}`). */
 export async function fetchJinaReaderMarkdown(args: {
   readonly url: string;
@@ -59,7 +76,7 @@ export async function fetchJinaReaderMarkdown(args: {
     }
 
     const body = await response.text();
-    const markdown = truncateMarkdown(body, maxChars);
+    const markdown = truncateMarkdown(cleanJinaMarkdownForClassifier(body), maxChars);
     if (!markdown) {
       return { ok: false, error: 'Jina : contenu vide', latencyMs };
     }

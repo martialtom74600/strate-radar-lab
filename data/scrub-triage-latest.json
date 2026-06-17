@@ -1,0 +1,518 @@
+{
+  "generatedAt": "2026-06-17T12:27:08.382Z",
+  "dryRun": false,
+  "counts": {
+    "ready": 62,
+    "disqualified": 10,
+    "needsReview": 0
+  },
+  "ready": [
+    {
+      "businessName": "Le Comptoir des Fleurs",
+      "slug": "le-comptoir-des-fleurs-annecy-e0bee3fc38",
+      "status": "presence_only",
+      "url": "https://www.facebook.com/lecomptoirdesfleursseynod/?locale=fr_FR",
+      "reason": "Aucun site officiel indépendant confirmé (3 candidat(s) analysé(s) via Jina+Groq) (facebook.com)"
+    },
+    {
+      "businessName": "5pm lab (Borgona)",
+      "slug": "5pm-lab-borgona-annecy-ffa2c89e25",
+      "status": "presence_only",
+      "url": "https://www.instagram.com/5pmlab/",
+      "reason": "Aucun site officiel indépendant confirmé (3 candidat(s) analysé(s) via Jina+Groq) (instagram.com)"
+    },
+    {
+      "businessName": "Fleurs et Jungle",
+      "slug": "fleurs-et-jungle-annecy-e53af78e09",
+      "status": "presence_only",
+      "url": "https://www.instagram.com/fleursetjungle/",
+      "reason": "Présence sur plateforme tierce uniquement — aucun domaine dédié à analyser (instagram.com)"
+    },
+    {
+      "businessName": "Perce Neige",
+      "slug": "perce-neige-annecy-dc794eec17",
+      "status": "presence_only",
+      "url": "https://www.facebook.com/Cotenature74/",
+      "reason": "Aucun site officiel indépendant confirmé (3 candidat(s) analysé(s) via Jina+Groq) (facebook.com)"
+    },
+    {
+      "businessName": "Ferme maraichère \"Ceux Qui Sèment\"",
+      "slug": "ferme-maraichere-ceux-qui-sement-annecy-f329d27e94",
+      "status": "presence_only",
+      "url": "https://www.facebook.com/Ceux-qui-s%C3%A8ment-103081994680994/",
+      "reason": "Aucun site officiel indépendant confirmé (3 candidat(s) analysé(s) via Jina+Groq) (facebook.com)"
+    },
+    {
+      "businessName": "Jardinerie Des Alpes",
+      "slug": "jardinerie-des-alpes-annecy-6d7a76422a",
+      "status": "presence_only",
+      "url": "https://www.facebook.com/jardineriedesalpes?utm_source=gmb",
+      "reason": "Aucun site officiel indépendant confirmé (1 candidat(s) analysé(s) via Jina+Groq) (facebook.com)"
+    },
+    {
+      "businessName": "SARL Paysage du lac",
+      "slug": "sarl-paysage-du-lac-annecy-ff00bd92a6",
+      "status": "presence_only",
+      "url": "https://annuaire-entreprises.data.gouv.fr/entreprise/paysage-du-lac-898135868",
+      "reason": "Aucun site officiel indépendant confirmé (2 candidat(s) analysé(s) via Jina+Groq) (data.gouv.fr)"
+    },
+    {
+      "businessName": "Car Clean Bazin (Sarl)",
+      "slug": "car-clean-bazin-sarl-annecy-229cde4406",
+      "status": "presence_only",
+      "url": "https://annuaire-entreprises.data.gouv.fr/entreprise/478522931",
+      "reason": "Aucun site officiel indépendant confirmé (2 candidat(s) analysé(s) via Jina+Groq) (data.gouv.fr)"
+    },
+    {
+      "businessName": "Lavage Du Marais",
+      "slug": "lavage-du-marais-annecy-88a3e830ca",
+      "status": "presence_only",
+      "url": "https://fr.linkedin.com/posts/nvmi-sas-8517a5326_aujourdhui-nous-sommes-intervenu-pour-notre-activity-7342977228831367171-7QjT",
+      "reason": "Aucun site officiel indépendant confirmé (5 candidat(s) analysé(s) via Jina+Groq) (linkedin.com)"
+    },
+    {
+      "businessName": "Lifting Cars",
+      "slug": "lifting-cars-annecy-5b8a6f365a",
+      "status": "presence_only",
+      "url": "https://fr.mappy.com/poi/5ed49dd554c4c03a4a11f577",
+      "reason": "Aucun site officiel indépendant confirmé (3 candidat(s) analysé(s) via Jina+Groq) (mappy.com)"
+    },
+    {
+      "businessName": "L'Atelier d'Isope",
+      "slug": "l-atelier-d-isope-annecy-5e91b1b6ff",
+      "status": "presence_only",
+      "url": "https://www.facebook.com/atelierisope/",
+      "reason": "Aucun site officiel indépendant confirmé (2 candidat(s) analysé(s) via Jina+Groq) (facebook.com)"
+    },
+    {
+      "businessName": "Funny dog",
+      "slug": "funny-dog-annecy-746edb19d2",
+      "status": "presence_only",
+      "url": "https://www.facebook.com/p/Funny-dog-toilettage-100054432852069/",
+      "reason": "Aucun site officiel indépendant confirmé (3 candidat(s) analysé(s) via Jina+Groq) (facebook.com)"
+    },
+    {
+      "businessName": "Styl Dog",
+      "slug": "styl-dog-annecy-965cf4681a",
+      "status": "presence_only",
+      "url": "https://www.facebook.com/p/Styl-Dog-100051110923472/?locale=fr_FR",
+      "reason": "Aucun site officiel indépendant confirmé (3 candidat(s) analysé(s) via Jina+Groq) (facebook.com)"
+    },
+    {
+      "businessName": "Chez Moustiche Tattoo",
+      "slug": "chez-moustiche-tattoo-annecy-e205e66e85",
+      "status": "presence_only",
+      "url": "https://www.instagram.com/m.o.u.s.t.i.c.h.e/?hl=fr",
+      "reason": "Présence sur plateforme tierce uniquement — aucun domaine dédié à analyser (instagram.com)"
+    },
+    {
+      "businessName": "Freak's tattoo",
+      "slug": "freak-s-tattoo-annecy-aa683d0e09",
+      "status": "presence_only",
+      "url": "https://www.instagram.com/freaks_tattoo/",
+      "reason": "Aucun site officiel indépendant confirmé (1 candidat(s) analysé(s) via Jina+Groq) (instagram.com)"
+    },
+    {
+      "businessName": "Eleven Tattoo Studio",
+      "slug": "eleven-tattoo-studio-annecy-ba0367f610",
+      "status": "presence_only",
+      "url": "https://www.facebook.com/eleventattoo/",
+      "reason": "Aucun site officiel indépendant confirmé (3 candidat(s) analysé(s) via Jina+Groq) (facebook.com)"
+    },
+    {
+      "businessName": "Le Paradis de Talie",
+      "slug": "le-paradis-de-talie-annecy-cd62e3c201",
+      "status": "presence_only",
+      "url": "https://www.facebook.com/p/Paradis-de-Talie-100070188528905/",
+      "reason": "Aucun site officiel indépendant confirmé (2 candidat(s) analysé(s) via Jina+Groq) (facebook.com)"
+    },
+    {
+      "businessName": "lojobijoux",
+      "slug": "lojobijoux-annecy-b65e65c2b2",
+      "status": "presence_only",
+      "url": "https://annuaire-entreprises.data.gouv.fr/entreprise/lojo-lojo-lojo-948776059",
+      "reason": "Présence sur plateforme tierce uniquement — aucun domaine dédié à analyser (data.gouv.fr)"
+    },
+    {
+      "businessName": "Saint Simond Antiquités",
+      "slug": "saint-simond-antiquites-annecy-0d9a34eb08",
+      "status": "presence_only",
+      "url": "https://www.pagesjaunes.fr/annuaire/aix-les-bains-73/antiquaire",
+      "reason": "Aucun site officiel indépendant confirmé (1 candidat(s) analysé(s) via Jina+Groq) (pagesjaunes.fr)"
+    },
+    {
+      "businessName": "Beauquis Philippe",
+      "slug": "beauquis-philippe-annecy-3b9adcaa3b",
+      "status": "presence_only",
+      "url": "https://www.pagesjaunes.fr/pros/06427498",
+      "reason": "Aucun site officiel indépendant confirmé (3 candidat(s) analysé(s) via Jina+Groq) (pagesjaunes.fr)"
+    },
+    {
+      "businessName": "Maison FORAIN",
+      "slug": "maison-forain-annecy-3e983e7607",
+      "status": "presence_only",
+      "url": "https://www.facebook.com/MaisonForain/",
+      "reason": "Aucun site officiel indépendant confirmé (3 candidat(s) analysé(s) via Jina+Groq) (facebook.com)"
+    },
+    {
+      "businessName": "Ramonage mesnil",
+      "slug": "ramonage-mesnil-annecy-bc50db1feb",
+      "status": "presence_only",
+      "url": "https://www.pagesjaunes.fr/pros/08140188",
+      "reason": "Aucun site officiel indépendant confirmé (2 candidat(s) analysé(s) via Jina+Groq) (pagesjaunes.fr)"
+    },
+    {
+      "businessName": "Baliwood Design",
+      "slug": "baliwood-design-annecy-887ccc1e67",
+      "status": "presence_only",
+      "url": "https://www.instagram.com/baliwooddesign/",
+      "reason": "Aucun site officiel indépendant confirmé (1 candidat(s) analysé(s) via Jina+Groq) (instagram.com)"
+    },
+    {
+      "businessName": "DSP Team",
+      "slug": "dsp-team-annecy-68cb26c826",
+      "status": "presence_only",
+      "url": "https://www.pappers.fr/entreprise/dsp-team-930866819",
+      "reason": "Aucun site officiel indépendant confirmé (2 candidat(s) analysé(s) via Jina+Groq) (pappers.fr)"
+    },
+    {
+      "businessName": "Phenix Custom Annecy – Detailing automobile & nettoyage intérieur",
+      "slug": "phenix-custom-annecy-detailing-automobile-nettoyage-interieur-annecy-4c6d73ec84",
+      "status": "presence_only",
+      "url": "https://www.pagesjaunes.fr/pros/64633820",
+      "reason": "Aucun site officiel indépendant confirmé (1 candidat(s) analysé(s) via Jina+Groq) (pagesjaunes.fr)"
+    },
+    {
+      "businessName": "Isabel-Maria Torres-Hureau",
+      "slug": "isabel-maria-torres-hureau-annecy-444962479c",
+      "status": "presence_only",
+      "url": null,
+      "reason": "Aucun site officiel indépendant confirmé (5 candidat(s) analysé(s) via Jina+Groq)"
+    },
+    {
+      "businessName": "Laverie des Tilleuls",
+      "slug": "laverie-des-tilleuls-annecy-0254989fa2",
+      "status": "presence_only",
+      "url": "https://annuaire-entreprises.data.gouv.fr/entreprise/la-laverie-des-tilleuls-992504506",
+      "reason": "Aucun site officiel indépendant confirmé (2 candidat(s) analysé(s) via Jina+Groq) (data.gouv.fr)"
+    },
+    {
+      "businessName": "Restaur'auto",
+      "slug": "restaur-auto-annecy-af20bbfa41",
+      "status": "presence_only",
+      "url": "https://www.facebook.com/profile.php?id=100076237652080",
+      "reason": "Aucun site officiel indépendant confirmé (2 candidat(s) analysé(s) via Jina+Groq) (facebook.com)"
+    },
+    {
+      "businessName": "CARROSSERIE D'AMICO ET FILS",
+      "slug": "carrosserie-d-amico-et-fils-annecy-7497214343",
+      "status": "presence_only",
+      "url": "https://www.facebook.com/Carrosserie-dAmico-104040788533962/",
+      "reason": "Présence sur plateforme tierce uniquement — aucun domaine dédié à analyser (facebook.com)"
+    },
+    {
+      "businessName": "Carrosserie Mécanique Champion et Fils",
+      "slug": "carrosserie-mecanique-champion-et-fils-annecy-bca999759c",
+      "status": "presence_only",
+      "url": "https://www.facebook.com/ReseauAD/?utm_source=gmb",
+      "reason": "Aucun site officiel indépendant confirmé (2 candidat(s) analysé(s) via Jina+Groq) (facebook.com)"
+    },
+    {
+      "businessName": "Boucherie des Clarines",
+      "slug": "boucherie-des-clarines-annecy-57cba56055",
+      "status": "presence_only",
+      "url": "https://www.facebook.com/boucheriedesclarines/",
+      "reason": "Aucun site officiel indépendant confirmé (2 candidat(s) analysé(s) via Jina+Groq) (facebook.com)"
+    },
+    {
+      "businessName": "CH NETTOYAGE",
+      "slug": "ch-nettoyage-annecy-68019b23ad",
+      "status": "presence_only",
+      "url": "https://www.pagesjaunes.fr/pros/60080007",
+      "reason": "Aucun site officiel indépendant confirmé (1 candidat(s) analysé(s) via Jina+Groq) (pagesjaunes.fr)"
+    },
+    {
+      "businessName": "Arc en Ciel Nettoyage",
+      "slug": "arc-en-ciel-nettoyage-annecy-541751788a",
+      "status": "presence_only",
+      "url": "https://www.facebook.com/Arc-en-ciel-Nettoyage-111341674798784/?ref=page_internal",
+      "reason": "Présence sur plateforme tierce uniquement — aucun domaine dédié à analyser (facebook.com)"
+    },
+    {
+      "businessName": "A&D Kiné périnatale et pédiatrique - Pré et Post-Partum, Acupuncture, LPG, Pilates, pessaires",
+      "slug": "a-d-kine-perinatale-et-pediatrique-pre-et-post-partum-acupuncture-lpg-pilates-pessaires-annecy-d438e514d8",
+      "status": "presence_only",
+      "url": "https://www.facebook.com/kine.perinatale.pediatrique.annecy/",
+      "reason": "Aucun site officiel indépendant confirmé (3 candidat(s) analysé(s) via Jina+Groq) (facebook.com)"
+    },
+    {
+      "businessName": "Marion Prévôt Chiropracteur D.C. / Birthkeeper - Doula Albertville",
+      "slug": "marion-prevot-chiropracteur-d-c-birthkeeper-doula-albertville-annecy-0a12bb5779",
+      "status": "presence_only",
+      "url": "https://www.doctolib.fr/chiropracteur/albertville/marion-prevot-faverges",
+      "reason": "Aucun site officiel indépendant confirmé (3 candidat(s) analysé(s) via Jina+Groq) (doctolib.fr)"
+    },
+    {
+      "businessName": "Chabrand François",
+      "slug": "chabrand-francois-annecy-69b3a201cc",
+      "status": "presence_only",
+      "url": "https://www.societe.com/societe/monsieur-francois-chabrand-377486956.html",
+      "reason": "Aucun site officiel indépendant confirmé (4 candidat(s) analysé(s) via Jina+Groq) (societe.com)"
+    },
+    {
+      "businessName": "Perrin Carrelages",
+      "slug": "perrin-carrelages-annecy-904908e2ad",
+      "status": "presence_only",
+      "url": "https://www.facebook.com/Perrincarrelages/",
+      "reason": "Aucun site officiel indépendant confirmé (1 candidat(s) analysé(s) via Jina+Groq) (facebook.com)"
+    },
+    {
+      "businessName": "3sk carrelage",
+      "slug": "3sk-carrelage-annecy-19e04db106",
+      "status": "presence_only",
+      "url": "https://annuaire-entreprises.data.gouv.fr/entreprise/830631495",
+      "reason": "Présence sur plateforme tierce uniquement — aucun domaine dédié à analyser (data.gouv.fr)"
+    },
+    {
+      "businessName": "Denis Peinture Intérieur",
+      "slug": "denis-peinture-interieur-annecy-2c0f17a41f",
+      "status": "presence_only",
+      "url": "https://www.facebook.com/chirurgiendesmurs/?locale=fr_FR",
+      "reason": "Présence sur plateforme tierce uniquement — aucun domaine dédié à analyser (facebook.com)"
+    },
+    {
+      "businessName": "Gomes Peinture Annecy",
+      "slug": "gomes-peinture-annecy-annecy-d85f540ecc",
+      "status": "presence_only",
+      "url": "https://www.travaux.com/professionnel/gomes/reviews",
+      "reason": "Aucun site officiel indépendant confirmé (1 candidat(s) analysé(s) via Jina+Groq) (travaux.com)"
+    },
+    {
+      "businessName": "Aydın Maçonnerie",
+      "slug": "ayd-n-maconnerie-annecy-157319da59",
+      "status": "presence_only",
+      "url": "https://www.societe.com/societe/monsieur-emrah-aydin-893950402.html",
+      "reason": "Aucun site officiel indépendant confirmé (2 candidat(s) analysé(s) via Jina+Groq) (societe.com)"
+    },
+    {
+      "businessName": "Ummi mon amour",
+      "slug": "ummi-mon-amour-annecy-7e0074dbf6",
+      "status": "presence_only",
+      "url": "https://www.instagram.com/ummi.cafe?igsh=MWN2czl4N3AwbTB2dg==",
+      "reason": "Aucun site officiel indépendant confirmé (2 candidat(s) analysé(s) via Jina+Groq) (instagram.com)"
+    },
+    {
+      "businessName": "Edouard FAVRE-FELIX - Paysagiste & Arboriste",
+      "slug": "edouard-favre-felix-paysagiste-arboriste-annecy-360ef7390b",
+      "status": "presence_only",
+      "url": "https://www.facebook.com/p/Edouard-Paysagiste-Arboriste-100057119183702/?locale=fr_FR",
+      "reason": "Aucun site officiel indépendant confirmé (2 candidat(s) analysé(s) via Jina+Groq) (facebook.com)"
+    },
+    {
+      "businessName": "Plombier Tom Sanit 💧",
+      "slug": "plombier-tom-sanit-annecy-ffb0c3d743",
+      "status": "presence_only",
+      "url": "https://www.facebook.com/profile.php?id=100076461480518",
+      "reason": "Aucun site officiel indépendant confirmé (4 candidat(s) analysé(s) via Jina+Groq) (facebook.com)"
+    },
+    {
+      "businessName": "Capron plomberie",
+      "slug": "capron-plomberie-annecy-5cb3bdaedd",
+      "status": "presence_only",
+      "url": "https://www.pagesjaunes.fr/pros/56225963",
+      "reason": "Aucun site officiel indépendant confirmé (1 candidat(s) analysé(s) via Jina+Groq) (pagesjaunes.fr)"
+    },
+    {
+      "businessName": "Aqua Pro Renove - Plombier",
+      "slug": "aqua-pro-renove-plombier-annecy-64c1466d6a",
+      "status": "presence_only",
+      "url": "https://annuaire-entreprises.data.gouv.fr/etablissement/93064850600010",
+      "reason": "Aucun site officiel indépendant confirmé (3 candidat(s) analysé(s) via Jina+Groq) (data.gouv.fr)"
+    },
+    {
+      "businessName": "ÏÒ Coiffeur",
+      "slug": "io-coiffeur-annecy-ece1742e3c",
+      "status": "presence_only",
+      "url": "https://www.facebook.com/iocoiffeur/",
+      "reason": "Présence sur plateforme tierce uniquement — aucun domaine dédié à analyser (facebook.com)"
+    },
+    {
+      "businessName": "AGC JFB automobiles",
+      "slug": "agc-jfb-automobiles-annecy-b86fdb482e",
+      "status": "presence_only",
+      "url": "https://annuaire-entreprises.data.gouv.fr/entreprise/agc-jfb-jfb-automibiles-788812600",
+      "reason": "Aucun site officiel indépendant confirmé (2 candidat(s) analysé(s) via Jina+Groq) (data.gouv.fr)"
+    },
+    {
+      "businessName": "City Auto",
+      "slug": "city-auto-annecy-6136d2f79d",
+      "status": "presence_only",
+      "url": "https://annuaire-entreprises.data.gouv.fr/entreprise/535270359",
+      "reason": "Aucun site officiel indépendant confirmé (1 candidat(s) analysé(s) via Jina+Groq) (data.gouv.fr)"
+    },
+    {
+      "businessName": "Les Canetons",
+      "slug": "les-canetons-annecy-5545a556fd",
+      "status": "presence_only",
+      "url": "https://www.pagesjaunes.fr/pros/06399579",
+      "reason": "Aucun site officiel indépendant confirmé (2 candidat(s) analysé(s) via Jina+Groq) (pagesjaunes.fr)"
+    },
+    {
+      "businessName": "Dés Ateliers",
+      "slug": "des-ateliers-annecy-fcc40d83df",
+      "status": "presence_only",
+      "url": "https://www.facebook.com/desateliers/",
+      "reason": "Aucun site officiel indépendant confirmé (3 candidat(s) analysé(s) via Jina+Groq) (facebook.com)"
+    },
+    {
+      "businessName": "Ma chouette boutique",
+      "slug": "ma-chouette-boutique-annecy-f34c098954",
+      "status": "presence_only",
+      "url": "https://www.instagram.com/ma_chouette_boutique_?igsh=MXZuZmcwZ3Z3NG1vdQ==",
+      "reason": "Aucun site officiel indépendant confirmé (1 candidat(s) analysé(s) via Jina+Groq) (instagram.com)"
+    },
+    {
+      "businessName": "Chablais Dépannage",
+      "slug": "chablais-depannage-annecy-d27024faa1",
+      "status": "presence_only",
+      "url": "http://www.facebook.com/chablais.depannage",
+      "reason": "Aucun site officiel indépendant confirmé (1 candidat(s) analysé(s) via Jina+Groq) (facebook.com)"
+    },
+    {
+      "businessName": "TOCHON DEPANNAGE",
+      "slug": "tochon-depannage-annecy-7ed18f2b43",
+      "status": "presence_only",
+      "url": "https://annuaire-entreprises.data.gouv.fr/entreprise/797836178",
+      "reason": "Aucun site officiel indépendant confirmé (1 candidat(s) analysé(s) via Jina+Groq) (data.gouv.fr)"
+    },
+    {
+      "businessName": "Les Caprices d’Émilie",
+      "slug": "les-caprices-d-emilie-annecy-6b61fa8487",
+      "status": "presence_only",
+      "url": "https://www.instagram.com/les_caprices_emilie_annecy/",
+      "reason": "Aucun site officiel indépendant confirmé (1 candidat(s) analysé(s) via Jina+Groq) (instagram.com)"
+    },
+    {
+      "businessName": "Le Pas Sage",
+      "slug": "le-pas-sage-annecy-8c00b1bff8",
+      "status": "presence_only",
+      "url": "https://www.facebook.com/profile.php?id=100085295809924",
+      "reason": "Présence sur plateforme tierce uniquement — aucun domaine dédié à analyser (facebook.com)"
+    },
+    {
+      "businessName": "Le Bar Roux d'Heure",
+      "slug": "le-bar-roux-d-heure-annecy-4708a96aac",
+      "status": "presence_only",
+      "url": "https://www.facebook.com/lebarrouxdheure/",
+      "reason": "Aucun site officiel indépendant confirmé (1 candidat(s) analysé(s) via Jina+Groq) (facebook.com)"
+    },
+    {
+      "businessName": "Le Vieil Annecy",
+      "slug": "le-vieil-annecy-annecy-9168fe2d8c",
+      "status": "presence_only",
+      "url": "https://www.tripadvisor.fr/Restaurant_Review-g187260-d3295175-Reviews-Le_Vieil_Annecy-Annecy_Haute_Savoie_Auvergne_Rhone_Alpes.html",
+      "reason": "Aucun site officiel indépendant confirmé (1 candidat(s) analysé(s) via Jina+Groq) (tripadvisor.fr)"
+    },
+    {
+      "businessName": "marielouloucookies",
+      "slug": "marielouloucookies-annecy-37b3ce0ec2",
+      "status": "presence_only",
+      "url": "https://www.instagram.com/marielouloucookies/",
+      "reason": "Aucun site officiel indépendant confirmé (1 candidat(s) analysé(s) via Jina+Groq) (instagram.com)"
+    },
+    {
+      "businessName": "bubble wash",
+      "slug": "bubble-wash-annecy-bed481d51d",
+      "status": "presence_only",
+      "url": "https://annuaire-entreprises.data.gouv.fr/etablissement/85160359700036",
+      "reason": "Aucun site officiel indépendant confirmé (2 candidat(s) analysé(s) via Jina+Groq) (data.gouv.fr)"
+    },
+    {
+      "businessName": "L’Atelier Canin By Andréa",
+      "slug": "l-atelier-canin-by-andrea-annecy-39fdd14c91",
+      "status": "presence_only",
+      "url": "https://www.instagram.com/lateliercaninbyandrea/",
+      "reason": "Aucun site officiel indépendant confirmé (1 candidat(s) analysé(s) via Jina+Groq) (instagram.com)"
+    },
+    {
+      "businessName": "Sam Elec",
+      "slug": "sam-elec-annecy-00616f2895",
+      "status": "presence_only",
+      "url": "http://www.facebook.com/Sam-Elec-101038978594588",
+      "reason": "Aucun site officiel indépendant confirmé (2 candidat(s) analysé(s) via Jina+Groq) (facebook.com)"
+    }
+  ],
+  "disqualified": [
+    {
+      "businessName": "La Bohème",
+      "slug": "la-boheme-annecy-2d9ccfae4b",
+      "status": "owner_site",
+      "url": "https://laboheme-fleuriste.fr/",
+      "reason": "[structure] Page d'accueil de laboheme-fleuriste.fr — domaine aligné au commerce, contenu confirmé (voie rapide)."
+    },
+    {
+      "businessName": "L'Arbre à Fées - Artisan Fleuriste Salon De Thé Naturel",
+      "slug": "l-arbre-a-fees-artisan-fleuriste-salon-de-the-naturel-annecy-2f07d24c4e",
+      "status": "owner_site",
+      "url": "https://www.arbreafees.fr/",
+      "reason": "[structure] Page d'accueil de arbreafees.fr — domaine aligné au commerce, contenu confirmé (voie rapide)."
+    },
+    {
+      "businessName": "L'Astrantia",
+      "slug": "l-astrantia-annecy-66e5e045bd",
+      "status": "owner_site",
+      "url": "https://astrantia-fleuriste-annecy.fr/",
+      "reason": "[top5-scanner] Le domaine astrantia-fleuriste-annecy.fr est aligné avec le nom du commerce, le contenu confirme clairement l'identité du commerce et il n'y a pas de chemins de listing profonds."
+    },
+    {
+      "businessName": "Jardinerie Armataffet",
+      "slug": "jardinerie-armataffet-annecy-3c439c6771",
+      "status": "corporate_parent",
+      "url": "https://www.compagnieduvegetal.fr/jardineries/74268-seynod/fdajfacibegjichfjeb.htm",
+      "reason": "Page sur réseau national connu (compagnieduvegetal.fr) — pas un site indépendant."
+    },
+    {
+      "businessName": "Les Pieds sur Terre - Paysagiste Annecy",
+      "slug": "les-pieds-sur-terre-paysagiste-annecy-annecy-41049180e3",
+      "status": "owner_site",
+      "url": "https://www.terreetpaysage.com/",
+      "reason": "[top5-scanner] Le domaine terreetpaysage.com est aligné avec le nom du commerce, le contenu confirme clairement l'identité du commerce et il n'y a pas de chemins de listing profonds."
+    },
+    {
+      "businessName": "Annecy Assistance Depannage SARL",
+      "slug": "annecy-assistance-depannage-sarl-annecy-929ffbd148",
+      "status": "owner_site",
+      "url": "https://www.annecy-mobilites.fr/",
+      "reason": "[top5-scanner] Le nom du commerce est confirmé dans le contenu, il y a un lien vers la page d'entreprise, les tarifs sont disponibles en téléchargement, et il y a des liens vers les réseaux sociaux. Cependant, le domaine n'est pas aligné avec le nom du commerce, ce qui réduit la confiance."
+    },
+    {
+      "businessName": "Obsydia",
+      "slug": "obsydia-annecy-9a8677f653",
+      "status": "owner_site",
+      "url": "https://obsydia.fr/",
+      "reason": "[structure] Page d'accueil de obsydia.fr — domaine aligné au commerce, contenu confirmé (voie rapide)."
+    },
+    {
+      "businessName": "Jerem Ink Tattoo | Tatoueur à Annecy",
+      "slug": "jerem-ink-tattoo-tatoueur-a-annecy-annecy-b792a04d78",
+      "status": "owner_site",
+      "url": "https://le16ze.com/",
+      "reason": "[top5-scanner] Le contenu de la page confirme clairement l'identité du commerce (nom, adresse, style de tatouage, etc.) et le nom du propriétaire (Jérémy David). Le domaine le16ze.com est également aligné avec le nom du commerce, même si ce n'est pas un nom de domaine directement lié au nom du commerce. La structure de la page et le contenu ne suggèrent pas qu'il s'agit d'un annuaire, d'un comparateur ou d'un réseau social."
+    },
+    {
+      "businessName": "Tête de Cochon",
+      "slug": "tete-de-cochon-annecy-c0dc2533d3",
+      "status": "owner_site",
+      "url": "http://www.cochon-annecy.com/",
+      "reason": "[top5-scanner] Le contenu de la page confirme clairement l'identité du commerce, le nom du domaine est proche du nom du commerce et la page semble être la page d'accueil du site officiel."
+    },
+    {
+      "businessName": "Starphone Annecy",
+      "slug": "starphone-annecy-annecy-a947d7a4f1",
+      "status": "owner_site",
+      "url": "https://smilephone.fr/",
+      "reason": "[top5-scanner] Le contenu de la page confirme clairement que il s'agit du site officiel de SmilePhone, avec des informations détaillées sur les services proposés, les centres de réparation, et des articles de blog. Le nom du commerce est confirmé dans le contenu et le domaine du site est smilephone.fr, qui est différent du nom du commerce. Cependant, le domaine smilephone.fr n'est pas aligné avec le nom du commerce, ce qui réduit la confiance."
+    }
+  ],
+  "needsReview": []
+}

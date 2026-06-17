@@ -98,7 +98,7 @@ const SYSTEM_PROMPT = SERP_CLASSIFIER_SYSTEM_PROMPT;
 
 export const SERP_CLASSIFIER_MAX_URLS = 5;
 const GROQ_CLASSIFIER_MAX_TOKENS = 512;
-const GROQ_CLASSIFIER_MAX_ATTEMPTS = 3;
+export const GROQ_CLASSIFIER_MAX_ATTEMPTS = 3;
 export const GROQ_CLASSIFIER_INTER_REQUEST_DELAY_MS = 4_000;
 const GROQ_RETRY_AFTER_MARGIN_MS = 2_000;
 const GROQ_RATE_LIMIT_BACKOFF_MS = [5_000, 10_000, 20_000];
@@ -287,7 +287,7 @@ function attachMatchedUrl(
   }) as SerpClassifierResult;
 }
 
-function isGroqRateLimitError(err: unknown): boolean {
+export function isGroqRateLimitError(err: unknown): boolean {
   if (err instanceof RateLimitError) return true;
   if (err instanceof APIError && err.status === 429) return true;
   const msg = err instanceof Error ? err.message : String(err);
@@ -324,7 +324,35 @@ export function parseGroqRateLimitKind(err: unknown): GroqRateLimitKind {
   return 'unknown';
 }
 
-function groqRateLimitPauseMs(retryIndex: number, err: unknown): number {
+const GROQ_LIMIT_LABELS: Record<GroqRateLimitKind, string> = {
+  tpd: 'TPD (tokens/jour)',
+  tpm: 'TPM (tokens/minute)',
+  rpm: 'RPM (requêtes/minute)',
+  unknown: 'rate limit (type non identifié)',
+};
+
+function formatGroqRetryHint(err: unknown, kind: GroqRateLimitKind): string {
+  const retryMs = parseGroqRetryAfterDelayMs(err);
+  if (retryMs !== null) {
+    if (retryMs >= 60_000) {
+      return ` — réessayer dans ~${Math.ceil(retryMs / 60_000)} min`;
+    }
+    return ` — réessayer dans ~${Math.ceil(retryMs / 1_000)} s`;
+  }
+  if (kind === 'tpd') return ' — réessayer demain (reset journalier UTC)';
+  if (kind === 'tpm' || kind === 'rpm') return ' — réessayer dans 1–2 min';
+  return '';
+}
+
+/** Message lisible pour logs scrub / quarantaine (type de limite + délai retry-after). */
+export function formatGroqRateLimitReason(err: unknown, context?: string): string {
+  const kind = parseGroqRateLimitKind(err);
+  const ctx = context?.trim() ? ` · ${context.trim()}` : '';
+  return `[quarantaine] Groq ${GROQ_LIMIT_LABELS[kind]}${formatGroqRetryHint(err, kind)}${ctx} — vérification manuelle requise.`;
+}
+
+/** Délai avant retry Groq : `retry-after` + marge, sinon backoff fixe. */
+export function computeGroqRateLimitBackoffMs(retryIndex: number, err: unknown): number {
   const fromHeader = parseGroqRetryAfterDelayMs(err);
   if (fromHeader !== null) return fromHeader + GROQ_RETRY_AFTER_MARGIN_MS;
   return (
@@ -358,12 +386,12 @@ function buildRateLimitExhaustedResult(args: {
   readonly model: string;
   readonly timeoutMs: number;
   readonly startedAt: number;
-  readonly limitKind?: GroqRateLimitKind;
+  readonly err: unknown;
 }): SerpClassifierDetailedResult {
-  const reason =
-    args.limitKind === 'tpd'
-      ? 'Quota journalier Groq épuisé — vérification manuelle requise.'
-      : `Rate limit Groq après ${GROQ_CLASSIFIER_MAX_ATTEMPTS} tentatives — vérification manuelle requise.`;
+  const reason = formatGroqRateLimitReason(
+    args.err,
+    `après ${GROQ_CLASSIFIER_MAX_ATTEMPTS} tentatives`,
+  );
   return {
     result: {
       status: 'needs_review',
@@ -555,12 +583,12 @@ export async function classifySerpUrlsDetailed(args: {
             model,
             timeoutMs,
             startedAt,
-            limitKind,
+            err: e,
           });
         }
 
         if (attempt < GROQ_CLASSIFIER_MAX_ATTEMPTS) {
-          await sleep(groqRateLimitPauseMs(attempt - 1, e));
+          await sleep(computeGroqRateLimitBackoffMs(attempt - 1, e));
           continue;
         }
 
@@ -575,7 +603,7 @@ export async function classifySerpUrlsDetailed(args: {
           model,
           timeoutMs,
           startedAt,
-          limitKind,
+          err: e,
         });
       }
 

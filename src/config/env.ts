@@ -192,6 +192,8 @@ export type RawEnv = {
   readonly JINA_API_KEY: string | undefined;
   /** Timeout fetch Jina Reader par URL (ms). */
   readonly RADAR_JINA_TIMEOUT_MS: number;
+  /** Timeout Groq Top 5 Scanner par URL (ms) — après scrape Jina. */
+  readonly RADAR_TOP5_GROQ_TIMEOUT_MS: number;
   /** Taille max du markdown Jina envoyé à Groq (caractères). */
   readonly RADAR_JINA_MAX_MARKDOWN_CHARS: number;
 };
@@ -327,7 +329,8 @@ function parseRawEnv(env: NodeJS.ProcessEnv): RawEnv {
     RADAR_PRESENCE_SKIP_POLICY: parsePresenceSkipPolicy(env.RADAR_PRESENCE_SKIP_POLICY),
     RADAR_TOP5_SCANNER: boolFromEnvDefaultTrue(env.RADAR_TOP5_SCANNER),
     JINA_API_KEY: optString(env.JINA_API_KEY),
-    RADAR_JINA_TIMEOUT_MS: coerceIntInRange(env.RADAR_JINA_TIMEOUT_MS, 8_000, 2_000, 30_000),
+    RADAR_JINA_TIMEOUT_MS: coerceIntInRange(env.RADAR_JINA_TIMEOUT_MS, 15_000, 2_000, 45_000),
+    RADAR_TOP5_GROQ_TIMEOUT_MS: coerceIntInRange(env.RADAR_TOP5_GROQ_TIMEOUT_MS, 30_000, 5_000, 60_000),
     RADAR_JINA_MAX_MARKDOWN_CHARS: coerceIntInRange(
       env.RADAR_JINA_MAX_MARKDOWN_CHARS,
       12_000,

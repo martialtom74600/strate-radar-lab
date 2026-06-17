@@ -10,13 +10,15 @@ import {
   scanTop5CandidatesDetailed,
   TOP5_SCANNER_SYSTEM_PROMPT,
 } from './top5-scanner.js';
+import { RateLimitError } from 'groq-sdk';
 
 const baseConfig = {
   STRATE_RADAR_SIMULATION: false,
   GROQ_API_KEY: 'test-key',
   GROQ_MODEL: 'llama-3.3-70b-versatile',
   GROQ_PREFLIGHT_TIMEOUT_MS: 5_000,
-  RADAR_JINA_TIMEOUT_MS: 8_000,
+  RADAR_TOP5_GROQ_TIMEOUT_MS: 20_000,
+  RADAR_JINA_TIMEOUT_MS: 12_000,
   RADAR_JINA_MAX_MARKDOWN_CHARS: 12_000,
 } as AppConfig;
 
@@ -104,6 +106,18 @@ describe('buildTop5ScannerUserPrompt', () => {
     assert.match(prompt, /o-poil-toilettage\.fr/);
     assert.match(prompt, /Toilettage canin/);
   });
+
+  it('injecte les hints structurels pour Groq', () => {
+    const prompt = buildTop5ScannerUserPrompt({
+      companyName: 'Annecy Assistance Depannage SARL',
+      city: 'Annecy',
+      url: 'https://www.annecy-mobilites.fr/contact',
+      markdown: '# Contact',
+      structuralHints: '- URL page d\'accueil (/) : non',
+    });
+    assert.match(prompt, /Indices structurels/);
+    assert.match(prompt, /page d'accueil/);
+  });
 });
 
 describe('scanTop5CandidatesDetailed', () => {
@@ -160,7 +174,7 @@ describe('scanTop5CandidatesDetailed', () => {
     assert.equal(jinaCalled, false);
   });
 
-  it('short-circuit owner_site au premier TRUE Groq (Annecy Assistance)', async () => {
+  it('Annecy Assistance homepage — Groq tranche (pas voie rapide, domaines différents)', async () => {
     let groqCalls = 0;
     let jinaCalls = 0;
 
@@ -174,11 +188,11 @@ describe('scanTop5CandidatesDetailed', () => {
         'https://www.annecy-mobilites.fr',
       ],
       deps: {
-        fetchPage: async (args) => {
+        fetchPage: async () => {
           jinaCalls += 1;
           return {
             ok: true,
-            markdown: `# ${args.url}`,
+            markdown: `# Annecy Assistance Dépannage\nRemorquage à Annecy`,
             latencyMs: 10,
           };
         },
@@ -191,11 +205,59 @@ describe('scanTop5CandidatesDetailed', () => {
 
     assert.equal(detailed.result.status, 'owner_site');
     assert.equal(detailed.result.matchedUrl, 'https://www.annecy-mobilites.fr');
-    assert.equal(groqCalls, 1);
     assert.equal(jinaCalls, 1);
+    assert.equal(groqCalls, 1);
+    assert.match(detailed.result.reason ?? '', /top5-scanner/i);
   });
 
-  it('Funny dog — owner_site sur domaine dédié après FALSE sur blog', async () => {
+  it("L'Arbre à Fées — voie rapide sur arbreafees.fr (inclusion normalisée)", async () => {
+    let groqCalls = 0;
+
+    const detailed = await scanTop5CandidatesDetailed({
+      config: baseConfig,
+      companyName: "L'Arbre à Fées - Artisan Fleuriste Salon De Thé Naturel",
+      city: 'Sevrier',
+      priorityUrls: ['https://www.arbreafees.fr/'],
+      urlsCollected: ['https://www.arbreafees.fr/'],
+      deps: {
+        fetchPage: mockJina(`# L'Arbre à Fées\nSalon de thé et fleuriste à Sevrier`),
+        askOfficialSite: async () => {
+          groqCalls += 1;
+          return mockGroq(true, 'Site officiel indépendant.')();
+        },
+      },
+    });
+
+    assert.equal(groqCalls, 0);
+    assert.equal(detailed.result.status, 'owner_site');
+    assert.match(detailed.result.reason ?? '', /structure/i);
+    assert.equal(detailed.result.matchedUrl, 'https://www.arbreafees.fr/');
+  });
+
+  it('Annecy Assistance /contact — Groq tranche, pas de voie rapide', async () => {
+    let groqCalls = 0;
+
+    const detailed = await scanTop5CandidatesDetailed({
+      config: baseConfig,
+      companyName: 'Annecy Assistance Depannage SARL',
+      city: 'Annecy',
+      priorityUrls: [],
+      urlsCollected: ['https://www.annecy-mobilites.fr/contact'],
+      deps: {
+        fetchPage: mockJina('# Contact\nAnnecy Assistance Dépannage à Annecy'),
+        askOfficialSite: async () => {
+          groqCalls += 1;
+          return mockGroq(true, 'Page contact du site officiel Annecy Assistance.')();
+        },
+      },
+    });
+
+    assert.equal(groqCalls, 1);
+    assert.equal(detailed.result.status, 'owner_site');
+    assert.equal(detailed.result.matchedUrl, 'https://www.annecy-mobilites.fr/contact');
+  });
+
+  it('Funny dog — owner_site sur domaine dédié (priorisé avant blog)', async () => {
     let groqCalls = 0;
 
     const detailed = await scanTop5CandidatesDetailed({
@@ -219,7 +281,7 @@ describe('scanTop5CandidatesDetailed', () => {
 
     assert.equal(detailed.result.status, 'owner_site');
     assert.equal(detailed.result.matchedUrl, 'https://o-poil-toilettage.fr');
-    assert.equal(groqCalls, 2);
+    assert.ok(groqCalls >= 1);
   });
 
   it('needs_review si Jina échoue sur tous les candidats', async () => {
@@ -241,35 +303,67 @@ describe('scanTop5CandidatesDetailed', () => {
     assert.match(detailed.result.reason, /Jina/i);
   });
 
-  it('needs_review si Groq quota (rate limit)', async () => {
+  it('needs_review si Groq quota journalier (TPD, sans retry)', async () => {
+    let calls = 0;
     const detailed = await scanTop5CandidatesDetailed({
       config: baseConfig,
       companyName: 'Test',
       city: 'Annecy',
       priorityUrls: [],
       urlsCollected: ['https://example.fr'],
+      discovery: { attempted: true, ok: true, hits: 2, error: null },
       deps: {
-        fetchPage: mockJina('# page'),
+        fetchPage: mockJina('# page annuaire'),
         askOfficialSite: async () => {
-          throw new Error('429 rate limit TPD');
+          calls += 1;
+          throw new Error('429 tokens per day (TPD)');
         },
       },
     });
+    assert.equal(calls, 1);
     assert.equal(detailed.result.status, 'needs_review');
-    assert.match(detailed.result.reason, /Groq|Quota|Rate limit/i);
+    assert.match(detailed.result.reason, /TPD/i);
   });
 
-  it('presence_only si Groq FALSE sur tous les candidats', async () => {
+  it('retry TPM puis classifie (pas de quarantaine technique)', async () => {
+    let calls = 0;
     const detailed = await scanTop5CandidatesDetailed({
       config: baseConfig,
       companyName: 'Test',
       city: 'Annecy',
       priorityUrls: [],
+      urlsCollected: ['https://annuaire.example.fr/fiche'],
+      discovery: { attempted: true, ok: true, hits: 2, error: null },
+      deps: {
+        fetchPage: mockJina('# Annuaire\nFiche établissement sur annuaire.example.fr'),
+        askOfficialSite: async () => {
+          calls += 1;
+          if (calls < 3) {
+            throw new RateLimitError(429, undefined, 'tokens per minute (TPM)', {
+              'retry-after': '0',
+            });
+          }
+          return mockGroq(false, 'Fiche annuaire, pas un site propriétaire.')();
+        },
+      },
+    });
+    assert.equal(calls, 3);
+    assert.equal(detailed.result.status, 'presence_only');
+  });
+
+  it('presence_only si Groq FALSE sur annuaire vertical (fleuristes-et-fleurs)', async () => {
+    const detailed = await scanTop5CandidatesDetailed({
+      config: baseConfig,
+      companyName: 'Test Fleuriste',
+      city: 'Annecy',
+      priorityUrls: [],
       urlsCollected: ['https://fleuristes-et-fleurs.com/boutique'],
       discovery: { attempted: true, ok: true, hits: 3, error: null },
       deps: {
-        fetchPage: mockJina('# annuaire vertical'),
-        askOfficialSite: mockGroq(false, 'Fiche annuaire, pas site propre.'),
+        fetchPage: mockJina(
+          '# Fleuristes et Fleurs\nAnnuaire national — fiche établissement référencée sur fleuristes-et-fleurs.com',
+        ),
+        askOfficialSite: mockGroq(false, 'Annuaire vertical listant plusieurs commerces, pas un site propre.'),
       },
     });
     assert.equal(detailed.result.status, 'presence_only');

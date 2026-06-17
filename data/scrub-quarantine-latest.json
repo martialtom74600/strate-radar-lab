@@ -1,0 +1,208 @@
+{
+  "generatedAt": "2026-06-17T12:24:52.376Z",
+  "dryRun": false,
+  "persisted": true,
+  "entries": [
+    {
+      "slug": "bubble-wash-annecy-bed481d51d",
+      "businessName": "bubble wash",
+      "auditId": "7fb6d4fd-2572-4fa4-921e-713ba3370d2d",
+      "placeKey": "pid:ChIJD7wTv-iPi0cRz4awY0eIvm0",
+      "dryRun": false,
+      "disqualified": false,
+      "websiteStatus": "presence_only",
+      "resolution": {
+        "status": "presence_only",
+        "confidence": 0.95,
+        "url": "https://annuaire-entreprises.data.gouv.fr/etablissement/85160359700036",
+        "displayUrl": "https://annuaire-entreprises.data.gouv.fr/etablissement/85160359700036",
+        "normalizedUrl": "annuaire-entreprises.data.gouv.fr/etablissement/85160359700036",
+        "source": "web_search",
+        "mapsListingWebsite": null,
+        "presencePlatform": "data.gouv.fr",
+        "classificationReason": "Aucun site officiel indépendant confirmé (2 candidat(s) analysé(s) via Jina+Groq) (data.gouv.fr)",
+        "classifierAudit": {
+          "model": "llama-3.1-8b-instant",
+          "latencyMs": 9610,
+          "urlsSent": [
+            "https://wash-totalenergies.fr/centre-de-lavage/station/relais-des-allueges/",
+            "https://annecy.work/categorie-pro/station-de-lavage/"
+          ],
+          "urlsDropped": [
+            "https://www.pappers.fr/entreprise/851603597"
+          ],
+          "matchedUrl": "https://annuaire-entreprises.data.gouv.fr/etablissement/85160359700036",
+          "status": "presence_only",
+          "confidence": 0.95,
+          "reason": "Aucun site officiel indépendant confirmé (2 candidat(s) analysé(s) via Jina+Groq) (data.gouv.fr)",
+          "rawResponse": "{\n  \"official\": false,\n   \"confidence\": 0.0,\n   \"reason\": \"Cette page est un listing de plusieurs stations de lavage à Annecy, y compris bubble wash, et ne semble pas être le site officiel indépendant de ce commerce.\"\n}",
+          "promptTokens": 2037,
+          "completionTokens": 61,
+          "totalTokens": 2098
+        },
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) · q=bubble wash Annecy"
+          },
+          {
+            "layer": "places_requery",
+            "url": "https://annuaire-entreprises.data.gouv.fr/etablissement/85160359700036",
+            "outcome": "presence_only",
+            "note": "Aucun site officiel indépendant confirmé (2 candidat(s) analysé(s) via Jina+Groq) (data.gouv.fr)"
+          },
+          {
+            "layer": "top5_scanner",
+            "url": "https://annuaire-entreprises.data.gouv.fr/etablissement/85160359700036",
+            "outcome": "presence_only",
+            "note": "Aucun site officiel indépendant confirmé (2 candidat(s) analysé(s) via Jina+Groq) (data.gouv.fr)"
+          }
+        ]
+      }
+    },
+    {
+      "slug": "l-atelier-canin-by-andrea-annecy-39fdd14c91",
+      "businessName": "L’Atelier Canin By Andréa",
+      "auditId": "bb6bbf39-ffaa-4a82-8d50-13e4c0a8d8af",
+      "placeKey": "pid:ChIJARQ3HbSai0cR8NcM1w1wcTY",
+      "dryRun": false,
+      "disqualified": false,
+      "websiteStatus": "presence_only",
+      "resolution": {
+        "status": "presence_only",
+        "confidence": 0.95,
+        "url": "https://www.instagram.com/lateliercaninbyandrea/",
+        "displayUrl": "https://www.instagram.com/lateliercaninbyandrea/",
+        "normalizedUrl": "instagram.com/lateliercaninbyandrea",
+        "source": "web_search",
+        "mapsListingWebsite": null,
+        "presencePlatform": "instagram.com",
+        "classificationReason": "Aucun site officiel indépendant confirmé (1 candidat(s) analysé(s) via Jina+Groq) (instagram.com)",
+        "classifierAudit": {
+          "model": "llama-3.1-8b-instant",
+          "latencyMs": 996,
+          "urlsSent": [
+            "https://www.hunimalis.com/fr/customer/latelier-canin-by-andrea"
+          ],
+          "urlsDropped": [
+            "https://www.pagesjaunes.fr/annuaire/seynod-74/toilettage-de-chiens-et-chats"
+          ],
+          "matchedUrl": "https://www.instagram.com/lateliercaninbyandrea/",
+          "status": "presence_only",
+          "confidence": 0.95,
+          "reason": "Aucun site officiel indépendant confirmé (1 candidat(s) analysé(s) via Jina+Groq) (instagram.com)",
+          "rawResponse": "{\n  \"official\": false,\n   \"confidence\": 0.0,\n   \"reason\": \"La page est un listing sur le site Hunimalis, qui liste plusieurs commerces, et non le site officiel indépendant de L'Atelier Canin By Andréa.\"\n}",
+          "promptTokens": 2451,
+          "completionTokens": 62,
+          "totalTokens": 2513
+        },
+        "attempts": [
+          {
+            "layer": "place_details",
+            "url": null,
+            "outcome": "skipped",
+            "note": "websiteUri absent"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) · q=L’Atelier Canin By Andréa Annecy"
+          },
+          {
+            "layer": "places_requery",
+            "url": "https://www.instagram.com/lateliercaninbyandrea/",
+            "outcome": "presence_only",
+            "note": "Aucun site officiel indépendant confirmé (1 candidat(s) analysé(s) via Jina+Groq) (instagram.com)"
+          },
+          {
+            "layer": "top5_scanner",
+            "url": "https://www.instagram.com/lateliercaninbyandrea/",
+            "outcome": "presence_only",
+            "note": "Aucun site officiel indépendant confirmé (1 candidat(s) analysé(s) via Jina+Groq) (instagram.com)"
+          }
+        ]
+      }
+    },
+    {
+      "slug": "sam-elec-annecy-00616f2895",
+      "businessName": "Sam Elec",
+      "auditId": "1e21b852-15cd-4216-84cf-65e9ff3503be",
+      "placeKey": "pid:ChIJK7kt2ecveWsRygtTznG5apI",
+      "dryRun": false,
+      "disqualified": false,
+      "websiteStatus": "presence_only",
+      "resolution": {
+        "status": "presence_only",
+        "confidence": 0.95,
+        "url": "http://www.facebook.com/Sam-Elec-101038978594588",
+        "displayUrl": "http://www.facebook.com/Sam-Elec-101038978594588",
+        "normalizedUrl": "facebook.com/Sam-Elec-101038978594588",
+        "source": "web_search",
+        "mapsListingWebsite": "http://www.facebook.com/Sam-Elec-101038978594588",
+        "presencePlatform": "facebook.com",
+        "classificationReason": "Aucun site officiel indépendant confirmé (2 candidat(s) analysé(s) via Jina+Groq) (facebook.com)",
+        "classifierAudit": {
+          "model": "llama-3.1-8b-instant",
+          "latencyMs": 27889,
+          "urlsSent": [
+            "https://www.reseau-pro-des-sources.com/adherent-19-sam-elec-artisanat-batiment.php",
+            "https://votre-electricien.fr/electricien/haute-savoie/faverges-74210/sam-elec"
+          ],
+          "urlsDropped": [
+            "https://www.pappers.fr/entreprise/sam-elec-933773913",
+            "https://www.pagesjaunes.fr/pros/61494262"
+          ],
+          "matchedUrl": "http://www.facebook.com/Sam-Elec-101038978594588",
+          "status": "presence_only",
+          "confidence": 0.95,
+          "reason": "Aucun site officiel indépendant confirmé (2 candidat(s) analysé(s) via Jina+Groq) (facebook.com)",
+          "rawResponse": "{\n  \"official\": false,\n   \"confidence\": 0.0,\n   \"reason\": \"La page est un listing sur un annuaire, le domaine votre-electricien.fr n'est pas aligné avec le nom du commerce, et le contenu ne correspond pas clairement à un site officiel indépendant du commerce.\"\n}",
+          "promptTokens": 2454,
+          "completionTokens": 72,
+          "totalTokens": 2526
+        },
+        "attempts": [
+          {
+            "layer": "maps_listing",
+            "url": "http://www.facebook.com/Sam-Elec-101038978594588",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur"
+          },
+          {
+            "layer": "place_details",
+            "url": "http://www.facebook.com/Sam-Elec-101038978594588",
+            "outcome": "skipped",
+            "note": "URL transmise au classifieur"
+          },
+          {
+            "layer": "web_search",
+            "url": null,
+            "outcome": "skipped",
+            "note": "6 hit(s) · q=Sam Elec Rte de Vesonne"
+          },
+          {
+            "layer": "places_requery",
+            "url": "http://www.facebook.com/Sam-Elec-101038978594588",
+            "outcome": "presence_only",
+            "note": "Aucun site officiel indépendant confirmé (2 candidat(s) analysé(s) via Jina+Groq) (facebook.com)"
+          },
+          {
+            "layer": "top5_scanner",
+            "url": "http://www.facebook.com/Sam-Elec-101038978594588",
+            "outcome": "presence_only",
+            "note": "Aucun site officiel indépendant confirmé (2 candidat(s) analysé(s) via Jina+Groq) (facebook.com)"
+          }
+        ]
+      }
+    }
+  ]
+}

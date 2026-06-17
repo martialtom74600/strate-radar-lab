@@ -12,11 +12,14 @@ import {
   evaluateDiamondWebsitePresence,
   shouldDisqualifyWebsitePresenceForScrub,
 } from './diamond-website-detection.js';
+import { TOP5_GROQ_INTER_REQUEST_DELAY_MS } from './ai/top5-scanner.js';
+import { sleep } from './retry.js';
 import {
   isScrubDisqualifiedStatus,
   isScrubNeedsReview,
   isScrubReadyProspect,
   printScrubTriageSummary,
+  writeScrubTriageExport,
   type ScrubTriageEntry,
 } from './scrub-triage.js';
 import {
@@ -225,7 +228,7 @@ function scrubCandidateFromSupabase(row: SupabaseScrubCandidate): ScrubCandidate
   };
 }
 
-async function persistScrubClassifierDecision(args: {
+export async function persistScrubClassifierDecision(args: {
   readonly repo: ProspectRepository;
   readonly supabase: SupabaseScrubClient | null;
   readonly input: ScrubClassifierPersistInput;
@@ -367,6 +370,9 @@ async function analyzeScrubCandidates(args: {
     });
 
     if (!evaluated.shouldDisqualify) {
+      if (!serpQuotasExhausted && TOP5_GROQ_INTER_REQUEST_DELAY_MS > 0) {
+        await sleep(TOP5_GROQ_INTER_REQUEST_DELAY_MS);
+      }
       continue;
     }
 
@@ -384,6 +390,10 @@ async function analyzeScrubCandidates(args: {
       await args.repo.recordPlaceOutcome(candidate.placeKey, 'disqualified');
     }
     disqualified += 1;
+
+    if (!serpQuotasExhausted && TOP5_GROQ_INTER_REQUEST_DELAY_MS > 0) {
+      await sleep(TOP5_GROQ_INTER_REQUEST_DELAY_MS);
+    }
   }
 
   printScrubTriageSummary({
@@ -391,6 +401,15 @@ async function analyzeScrubCandidates(args: {
     disqualified: disqualifiedEntries,
     needsReview,
   });
+
+  const triageExportPath = await writeScrubTriageExport({
+    outputDir: path.join(process.cwd(), 'data'),
+    dryRun: args.dryRun,
+    ready,
+    disqualified: disqualifiedEntries,
+    needsReview,
+  });
+  console.log(`[SCRUB] Export triage → ${triageExportPath}`);
 
   return {
     disqualified,

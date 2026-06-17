@@ -12,6 +12,7 @@ import {
   classifySerpUrlsDetailed,
   DEFAULT_SERP_CLASSIFIER_MODEL,
   extractMatchedUrl,
+  formatGroqRateLimitReason,
   parseGroqRetryAfterDelayMs,
   parseGroqRateLimitKind,
   SERP_CLASSIFIER_SYSTEM_PROMPT,
@@ -211,6 +212,32 @@ describe('parseGroqRateLimitKind', () => {
   it('détecte TPD', () => {
     const err = new Error('429 tokens per day (TPD)');
     assert.equal(parseGroqRateLimitKind(err), 'tpd');
+  });
+});
+
+describe('formatGroqRateLimitReason', () => {
+  it('inclut TPM et retry-after en secondes', () => {
+    const err = new RateLimitError(429, undefined, 'tokens per minute (TPM)', {
+      'retry-after': '45',
+    });
+    const reason = formatGroqRateLimitReason(err);
+    assert.match(reason, /TPM \(tokens\/minute\)/);
+    assert.match(reason, /réessayer dans ~45 s/);
+    assert.match(reason, /\[quarantaine\]/);
+  });
+
+  it('inclut TPD sans retry-after', () => {
+    const err = new Error('429 tokens per day (TPD)');
+    const reason = formatGroqRateLimitReason(err);
+    assert.match(reason, /TPD \(tokens\/jour\)/);
+    assert.match(reason, /réessayer demain/);
+  });
+
+  it('accepte un contexte optionnel', () => {
+    const err = new Error('429 requests per minute (RPM)');
+    const reason = formatGroqRateLimitReason(err, 'après 3 tentatives');
+    assert.match(reason, /RPM \(requêtes\/minute\)/);
+    assert.match(reason, /après 3 tentatives/);
   });
 });
 
