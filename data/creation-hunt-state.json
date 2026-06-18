@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "exportedAt": "2026-06-17T04:38:07.211Z",
+  "exportedAt": "2026-06-18T05:02:47.002Z",
   "zones": [
     {
       "zone": "Annecy, France",
       "priority": 200,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-06-17T04:34:47.673Z",
+      "last_run_at": "2026-06-18T04:34:22.507Z",
       "last_creations": 5,
-      "total_scanned": 3166,
+      "total_scanned": 3261,
       "consecutive_low_runs": 0,
-      "updated_at": "2026-06-17T04:34:47.673Z"
+      "updated_at": "2026-06-18T04:34:22.507Z"
     }
   ],
   "sectorRuns": [
@@ -469,6 +469,20 @@
       "creations_found": 5,
       "scanned_count": 19,
       "run_at": "2026-06-17T04:34:47.673Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Prothésiste",
+      "creations_found": 1,
+      "scanned_count": 54,
+      "run_at": "2026-06-18T04:34:22.507Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Chauffage",
+      "creations_found": 4,
+      "scanned_count": 41,
+      "run_at": "2026-06-18T04:34:22.507Z"
     }
   ]
 }
