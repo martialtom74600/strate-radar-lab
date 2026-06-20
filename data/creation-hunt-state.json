@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "exportedAt": "2026-06-19T04:59:30.232Z",
+  "exportedAt": "2026-06-20T04:42:31.248Z",
   "zones": [
     {
       "zone": "Annecy, France",
       "priority": 200,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-06-19T04:35:43.717Z",
+      "last_run_at": "2026-06-20T04:32:47.475Z",
       "last_creations": 5,
-      "total_scanned": 3375,
+      "total_scanned": 3415,
       "consecutive_low_runs": 0,
-      "updated_at": "2026-06-19T04:35:43.717Z"
+      "updated_at": "2026-06-20T04:32:47.475Z"
     }
   ],
   "sectorRuns": [
@@ -504,6 +504,13 @@
       "creations_found": 3,
       "scanned_count": 9,
       "run_at": "2026-06-19T04:35:43.717Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Façade",
+      "creations_found": 5,
+      "scanned_count": 40,
+      "run_at": "2026-06-20T04:32:47.475Z"
     }
   ]
 }
