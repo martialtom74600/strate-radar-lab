@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "exportedAt": "2026-06-20T04:42:31.248Z",
+  "exportedAt": "2026-06-21T05:10:58.597Z",
   "zones": [
     {
       "zone": "Annecy, France",
       "priority": 200,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-06-20T04:32:47.475Z",
+      "last_run_at": "2026-06-21T04:35:38.807Z",
       "last_creations": 5,
-      "total_scanned": 3415,
+      "total_scanned": 3592,
       "consecutive_low_runs": 0,
-      "updated_at": "2026-06-20T04:32:47.475Z"
+      "updated_at": "2026-06-21T04:35:38.807Z"
     }
   ],
   "sectorRuns": [
@@ -511,6 +511,27 @@
       "creations_found": 5,
       "scanned_count": 40,
       "run_at": "2026-06-20T04:32:47.475Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Charpente",
+      "creations_found": 3,
+      "scanned_count": 85,
+      "run_at": "2026-06-21T04:35:38.807Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Paysagiste",
+      "creations_found": 0,
+      "scanned_count": 84,
+      "run_at": "2026-06-21T04:35:38.807Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Tatoueur",
+      "creations_found": 2,
+      "scanned_count": 8,
+      "run_at": "2026-06-21T04:35:38.807Z"
     }
   ]
 }
