@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "exportedAt": "2026-06-21T05:10:58.597Z",
+  "exportedAt": "2026-06-22T04:55:06.167Z",
   "zones": [
     {
       "zone": "Annecy, France",
       "priority": 200,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-06-21T04:35:38.807Z",
+      "last_run_at": "2026-06-22T04:36:29.324Z",
       "last_creations": 5,
-      "total_scanned": 3592,
+      "total_scanned": 3690,
       "consecutive_low_runs": 0,
-      "updated_at": "2026-06-21T04:35:38.807Z"
+      "updated_at": "2026-06-22T04:36:29.324Z"
     }
   ],
   "sectorRuns": [
@@ -532,6 +532,20 @@
       "creations_found": 2,
       "scanned_count": 8,
       "run_at": "2026-06-21T04:35:38.807Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Toiture",
+      "creations_found": 2,
+      "scanned_count": 85,
+      "run_at": "2026-06-22T04:36:29.324Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Tatoueur",
+      "creations_found": 3,
+      "scanned_count": 13,
+      "run_at": "2026-06-22T04:36:29.324Z"
     }
   ]
 }
