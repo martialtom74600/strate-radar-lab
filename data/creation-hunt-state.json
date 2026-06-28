@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "exportedAt": "2026-06-27T04:33:15.336Z",
+  "exportedAt": "2026-06-28T04:52:47.095Z",
   "zones": [
     {
       "zone": "Annecy, France",
       "priority": 200,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-06-27T04:24:42.005Z",
+      "last_run_at": "2026-06-28T04:34:31.494Z",
       "last_creations": 5,
-      "total_scanned": 3863,
+      "total_scanned": 3931,
       "consecutive_low_runs": 0,
-      "updated_at": "2026-06-27T04:24:42.005Z"
+      "updated_at": "2026-06-28T04:34:31.494Z"
     }
   ],
   "sectorRuns": [
@@ -588,6 +588,13 @@
       "creations_found": 5,
       "scanned_count": 37,
       "run_at": "2026-06-27T04:24:42.005Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Coiffure",
+      "creations_found": 5,
+      "scanned_count": 68,
+      "run_at": "2026-06-28T04:34:31.494Z"
     }
   ]
 }
