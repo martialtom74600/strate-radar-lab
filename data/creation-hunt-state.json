@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "exportedAt": "2026-06-28T04:52:47.095Z",
+  "exportedAt": "2026-06-29T05:01:24.971Z",
   "zones": [
     {
       "zone": "Annecy, France",
       "priority": 200,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-06-28T04:34:31.494Z",
+      "last_run_at": "2026-06-29T04:35:32.375Z",
       "last_creations": 5,
-      "total_scanned": 3931,
+      "total_scanned": 3988,
       "consecutive_low_runs": 0,
-      "updated_at": "2026-06-28T04:34:31.494Z"
+      "updated_at": "2026-06-29T04:35:32.375Z"
     }
   ],
   "sectorRuns": [
@@ -595,6 +595,13 @@
       "creations_found": 5,
       "scanned_count": 68,
       "run_at": "2026-06-28T04:34:31.494Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Esthétique",
+      "creations_found": 5,
+      "scanned_count": 57,
+      "run_at": "2026-06-29T04:35:32.375Z"
     }
   ]
 }
