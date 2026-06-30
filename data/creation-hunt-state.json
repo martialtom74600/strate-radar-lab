@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "exportedAt": "2026-06-29T05:01:24.971Z",
+  "exportedAt": "2026-06-30T04:54:25.370Z",
   "zones": [
     {
       "zone": "Annecy, France",
       "priority": 200,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-06-29T04:35:32.375Z",
+      "last_run_at": "2026-06-30T04:28:53.954Z",
       "last_creations": 5,
-      "total_scanned": 3988,
+      "total_scanned": 4100,
       "consecutive_low_runs": 0,
-      "updated_at": "2026-06-29T04:35:32.375Z"
+      "updated_at": "2026-06-30T04:28:53.954Z"
     }
   ],
   "sectorRuns": [
@@ -602,6 +602,20 @@
       "creations_found": 5,
       "scanned_count": 57,
       "run_at": "2026-06-29T04:35:32.375Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Fleuriste",
+      "creations_found": 3,
+      "scanned_count": 104,
+      "run_at": "2026-06-30T04:28:53.954Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Tatoueur",
+      "creations_found": 2,
+      "scanned_count": 8,
+      "run_at": "2026-06-30T04:28:53.954Z"
     }
   ]
 }
