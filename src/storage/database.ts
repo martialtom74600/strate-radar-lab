@@ -651,7 +651,48 @@ export class ProspectRepository {
     );
   }
 
-  /** Dernier traitement dans les N jours (aucune ligne = reprendre le lieu). */
+  /** Dernier outcome enregistré pour ce lieu (sans filtre temporel). */
+  async getPlaceOutcome(placeKey: string): Promise<'diamond' | 'disqualified' | null> {
+    return new Promise((resolve, reject) => {
+      this.db.get(
+        `SELECT outcome FROM radar_place_last_outcome WHERE place_key = ?`,
+        [placeKey],
+        (err: Error | null, row: unknown) => {
+          if (err) reject(err);
+          else {
+            const raw =
+              row &&
+              typeof row === 'object' &&
+              row !== null &&
+              'outcome' in row &&
+              typeof (row as { outcome: unknown }).outcome === 'string'
+                ? (row as { outcome: string }).outcome
+                : null;
+            if (raw === 'diamond' || raw === 'disqualified') resolve(raw);
+            else resolve(null);
+          }
+        },
+      );
+    });
+  }
+
+  /**
+   * Diamant : blocage permanent (pas de rescan / pas de nouvel ingest).
+   * Disqualifié : fenêtre glissante `withinDays` (défaut 7 j).
+   */
+  async shouldSkipPlaceRescan(
+    placeKey: string,
+    withinDays: number,
+  ): Promise<'diamond' | 'disqualified' | null> {
+    const outcome = await this.getPlaceOutcome(placeKey);
+    if (outcome === 'diamond') return 'diamond';
+    if (outcome !== 'disqualified') return null;
+    return (await this.getOutcomeWithinLastDays(placeKey, withinDays)) === 'disqualified'
+      ? 'disqualified'
+      : null;
+  }
+
+  /** Dernier traitement disqualifié dans les N jours (diamant exclu — voir shouldSkipPlaceRescan). */
   async getOutcomeWithinLastDays(
     placeKey: string,
     withinDays: number,
@@ -661,6 +702,7 @@ export class ProspectRepository {
       this.db.get(
         `SELECT outcome FROM radar_place_last_outcome
          WHERE place_key = ?
+         AND outcome = 'disqualified'
          AND datetime(recorded_at) > datetime('now', '-' || ? || ' days')`,
         [placeKey, dayStr],
         (err: Error | null, row: unknown) => {
@@ -674,7 +716,7 @@ export class ProspectRepository {
               typeof (row as { outcome: unknown }).outcome === 'string'
                 ? (row as { outcome: string }).outcome
                 : null;
-            if (raw === 'diamond' || raw === 'disqualified') resolve(raw);
+            if (raw === 'disqualified') resolve('disqualified');
             else resolve(null);
           }
         },

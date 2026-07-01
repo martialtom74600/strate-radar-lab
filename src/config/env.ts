@@ -245,6 +245,7 @@ function parseRawEnv(env: NodeJS.ProcessEnv): RawEnv {
       10,
       500,
     ),
+    /** Fenêtre anti-rescan pour les disqualifiés uniquement — les diamants sont bloqués sans limite. */
     RADAR_SQLITE_RECENT_DAYS: coerceIntInRange(env.RADAR_SQLITE_RECENT_DAYS, 7, 1, 30),
     RADAR_VERBOSE: boolFromEnvDefaultTrue(env.RADAR_VERBOSE),
     RADAR_FETCH_TIMEOUT_MS: coerceIntInRange(env.RADAR_FETCH_TIMEOUT_MS, 15_000, 3000, 120_000),

@@ -335,11 +335,11 @@ async function processLocalRow(ctx: ProcessLocalContext): Promise<RadarPipelineL
   const placeKey = stablePlaceKey(serp);
 
   if (!forceRescan) {
-    const recent = await repo.getOutcomeWithinLastDays(placeKey, recentDays);
-    if (recent === 'disqualified' || recent === 'diamond') {
+    const skip = await repo.shouldSkipPlaceRescan(placeKey, recentDays);
+    if (skip === 'diamond' || skip === 'disqualified') {
       radarVerbose(
         config,
-        `${progressTag} ${truncateTitle(serp.title)} · ⊗ SQLite · ${recent === 'diamond' ? 'déjà diamant' : 'déjà disqualifié'} (< ${recentDays} j)`,
+        `${progressTag} ${truncateTitle(serp.title)} · ⊗ SQLite · ${skip === 'diamond' ? 'déjà diamant (permanent)' : `déjà disqualifié (< ${recentDays} j)`}`,
       );
       return null;
     }
