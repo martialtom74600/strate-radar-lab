@@ -17,11 +17,12 @@ import {
 import { sleep } from '../retry.js';
 import { fetchJinaReaderMarkdown } from './jina-reader.js';
 import {
-  assessStructuralOwnerSiteSignal,
-  formatStructuralHintsForGroq,
-  scoreOwnerCandidateUrl,
-  type StructuralOwnerSiteSignal,
-} from './top5-owner-signals.js';
+  assessCorporateParentCandidate,
+  corporateParentFromAssessment,
+  corporateParentFromLocator,
+  pickStrongerCorporateCandidate,
+  resolveSharedParentDomainLocator,
+} from './top5-corporate-signals.js';
 import {
   applyQuarantinePolicy,
   computeGroqRateLimitBackoffMs,
@@ -33,6 +34,12 @@ import {
   type SerpClassifierDetailedResult,
   type SerpClassifierResult,
 } from './serp-classifier.js';
+import {
+  assessStructuralOwnerSiteSignal,
+  formatStructuralHintsForGroq,
+  scoreOwnerCandidateUrl,
+  type StructuralOwnerSiteSignal,
+} from './top5-owner-signals.js';
 
 export const TOP5_SCANNER_MAX_CANDIDATES = 5;
 /** Espace les appels Groq du scanner (prompts Jina lourds → TPM free tier ~6K). */
@@ -545,6 +552,7 @@ export async function scanTop5CandidatesDetailed(args: {
   let jinaSuccessCount = 0;
   const groqFailures: string[] = [];
   const jinaFailures: string[] = [];
+  let bestCorporate: { url: string; confidence: number; reason: string } | null = null;
 
   for (const candidateUrl of prep.candidates) {
     if (isCorporateNetworkUrl(candidateUrl)) {
@@ -630,6 +638,34 @@ export async function scanTop5CandidatesDetailed(args: {
       lastUsage = groq.usage;
 
       if (groq.parsed.official) {
+        const corporateAssessment = assessCorporateParentCandidate({
+          companyName: args.companyName,
+          url: candidateUrl,
+          markdown: jina.markdown,
+          groqOfficial: true,
+          groqReason: groq.parsed.reason,
+        });
+        if (corporateAssessment.match) {
+          const result = corporateParentFromAssessment({
+            url: candidateUrl,
+            assessment: corporateAssessment,
+          });
+          return {
+            result,
+            trace: buildScannerTrace({
+              companyName: args.companyName,
+              city: args.city,
+              urlsInput,
+              prep,
+              model: groq.model,
+              timeoutMs,
+              startedAt,
+              rawResponse: groq.rawResponse,
+              usage: groq.usage,
+            }),
+          };
+        }
+
         const result: SerpClassifierResult = {
           status: 'owner_site',
           confidence: groq.parsed.confidence,
@@ -651,6 +687,18 @@ export async function scanTop5CandidatesDetailed(args: {
           }),
         };
       }
+
+      const corporateAssessment = assessCorporateParentCandidate({
+        companyName: args.companyName,
+        url: candidateUrl,
+        markdown: jina.markdown,
+        groqOfficial: false,
+        groqReason: groq.parsed.reason,
+      });
+      bestCorporate = pickStrongerCorporateCandidate(bestCorporate, {
+        url: candidateUrl,
+        assessment: corporateAssessment,
+      });
     } catch (e) {
       if (isGroqRateLimitError(e)) {
         const reason = formatGroqRateLimitReason(e);
@@ -709,6 +757,54 @@ export async function scanTop5CandidatesDetailed(args: {
       confidence: 0,
       reason: `[quarantaine] Groq indisponible : ${groqFailures.slice(0, 2).join(' · ')}`,
       matchedUrl: prep.candidates[0] ?? null,
+    };
+    return {
+      result,
+      trace: buildScannerTrace({
+        companyName: args.companyName,
+        city: args.city,
+        urlsInput,
+        prep,
+        model,
+        timeoutMs,
+        startedAt,
+        rawResponse: lastRawResponse,
+        usage: lastUsage,
+      }),
+    };
+  }
+
+  const sharedLocatorUrl = resolveSharedParentDomainLocator(
+    prep.candidates,
+    args.companyName,
+  );
+  if (sharedLocatorUrl) {
+    const result = corporateParentFromLocator({
+      url: sharedLocatorUrl,
+      companyName: args.companyName,
+    });
+    return {
+      result,
+      trace: buildScannerTrace({
+        companyName: args.companyName,
+        city: args.city,
+        urlsInput,
+        prep,
+        model,
+        timeoutMs,
+        startedAt,
+        rawResponse: lastRawResponse,
+        usage: lastUsage,
+      }),
+    };
+  }
+
+  if (bestCorporate) {
+    const result: SerpClassifierResult = {
+      status: 'corporate_parent',
+      confidence: bestCorporate.confidence,
+      reason: bestCorporate.reason,
+      matchedUrl: bestCorporate.url,
     };
     return {
       result,

@@ -427,6 +427,8 @@ export type RunRetroactiveScrubOptions = {
   readonly supabase: SupabaseScrubClient | null;
   readonly dryRun: boolean;
   readonly importShadowExport: boolean;
+  /** N audits les plus récents (created_at DESC Supabase / recorded_at DESC SQLite). */
+  readonly limit?: number;
 };
 
 export type RetroactiveScrubResult = {
@@ -579,6 +581,14 @@ export async function runRetroactiveScrub(
   }
 
   console.log(`[SCRUB] ${candidates.length} dossier(s) éligible(s) (création / présence)`);
+
+  const limit = options.limit;
+  if (limit !== undefined && limit > 0 && candidates.length > limit) {
+    candidates = candidates.slice(0, limit);
+    console.log(
+      `[SCRUB] Limite --limit ${limit} · ${candidates.length} dossier(s) les plus récents`,
+    );
+  }
 
   const { disqualified, organicFetched, serpQuotasExhausted, serpStopMessage, triage } =
     await analyzeScrubCandidates({

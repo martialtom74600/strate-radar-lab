@@ -14,19 +14,37 @@ import {
 } from '../storage/index.js';
 import { createSupabaseScrubClient } from '../storage/supabase-scrub.js';
 
-function parseArgs(argv: readonly string[]): { dryRun: boolean; importShadow: boolean } {
+function parseArgs(argv: readonly string[]): {
+  dryRun: boolean;
+  importShadow: boolean;
+  limit: number | undefined;
+} {
+  let limit: number | undefined;
+  for (let i = 0; i < argv.length; i += 1) {
+    const arg = argv[i];
+    if (arg === '--limit' || arg === '-n') {
+      const raw = argv[i + 1];
+      const parsed = raw ? Number.parseInt(raw, 10) : NaN;
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        throw new Error('--limit requiert un entier positif (ex. --limit 45)');
+      }
+      limit = parsed;
+      i += 1;
+    }
+  }
   return {
     dryRun: argv.includes('--dry-run'),
     importShadow: !argv.includes('--no-import-shadow'),
+    limit,
   };
 }
 
 export async function runRetroactiveScrubMain(): Promise<void> {
-  const { dryRun, importShadow } = parseArgs(process.argv.slice(2));
+  const { dryRun, importShadow, limit } = parseArgs(process.argv.slice(2));
   const config = loadScrubConfig(process.env, { dryRun });
 
   console.log(
-    `Strate Radar — scrub retroactif (website-resolver)${dryRun ? ' · DRY-RUN' : ''}${config.simulation ? ' · simulation' : ''}`,
+    `Strate Radar — scrub retroactif (website-resolver)${dryRun ? ' · DRY-RUN' : ''}${config.simulation ? ' · simulation' : ''}${limit ? ` · limit=${limit}` : ''}`,
   );
 
   const db = await openDatabase(config.STRATE_RADAR_DB_PATH);
@@ -66,6 +84,7 @@ export async function runRetroactiveScrubMain(): Promise<void> {
       supabase,
       dryRun,
       importShadowExport: importShadow && !supabase,
+      ...(limit !== undefined ? { limit } : {}),
     });
 
     if (result.organicFetched > 0) {

@@ -368,4 +368,55 @@ describe('scanTop5CandidatesDetailed', () => {
     });
     assert.equal(detailed.result.status, 'presence_only');
   });
+
+  it('corporate_parent si plusieurs fiches magasin sur le même domaine parent (réseau)', async () => {
+    const detailed = await scanTop5CandidatesDetailed({
+      config: baseConfig,
+      companyName: 'Carrefour City',
+      city: 'Annecy',
+      priorityUrls: [],
+      urlsCollected: [
+        'https://www.carrefour.fr/magasin/annecy-centre',
+        'https://www.carrefour.fr/magasin/annecy-nord',
+        'https://www.mappy.com/poi/carrefour-city-annecy',
+      ],
+      discovery: { attempted: true, ok: true, hits: 5, error: null },
+      deps: {
+        fetchPage: mockJina('# Carrefour City Annecy\nFiche magasin sur carrefour.fr'),
+        askOfficialSite: async (args) => {
+          if (args.url.includes('carrefour.fr')) {
+            return mockGroq(
+              false,
+              'Page magasin sur le réseau national Carrefour — pas un site indépendant.',
+            )();
+          }
+          return mockGroq(false, 'Fiche Mappy, pas un site propriétaire.')();
+        },
+      },
+    });
+    assert.equal(detailed.result.status, 'corporate_parent');
+    assert.match(detailed.result.matchedUrl ?? '', /carrefour\.fr/);
+    assert.match(detailed.result.reason ?? '', /top5-scanner/i);
+  });
+
+  it('corporate_parent si Groq TRUE sur page locator du domaine parent (Hase)', async () => {
+    const detailed = await scanTop5CandidatesDetailed({
+      config: baseConfig,
+      companyName: 'Hase Chauffage',
+      city: 'Annecy',
+      priorityUrls: [],
+      urlsCollected: ['https://www.hase.fr/installateurs/delegues/annecy-chauffage'],
+      discovery: { attempted: true, ok: true, hits: 3, error: null },
+      deps: {
+        fetchPage: mockJina('# Hase Chauffage Annecy\nInstallateur délégué Hase à Annecy'),
+        askOfficialSite: mockGroq(
+          true,
+          'Page installateur sur le site du réseau Hase — site officiel de la marque.',
+        ),
+      },
+    });
+    assert.equal(detailed.result.status, 'corporate_parent');
+    assert.match(detailed.result.matchedUrl ?? '', /hase\.fr/);
+    assert.doesNotMatch(detailed.result.reason ?? '', /owner/i);
+  });
 });
