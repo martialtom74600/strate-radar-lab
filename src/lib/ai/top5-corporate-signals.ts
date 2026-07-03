@@ -8,6 +8,7 @@ import {
   hostnameFromUrl,
   isDedicatedOwnerUrl,
 } from '../host-presence.js';
+import { isWebsiteBuilderUrl } from '../website-builder-hosts.js';
 import {
   contentConfirmsBusinessName,
   domainMatchesBusinessName,
@@ -37,11 +38,42 @@ export function groqRejectionIndicatesCorporateParent(reason: string): boolean {
 }
 
 const DIRECTORY_ONLY_REJECTION =
-  /\b(annuaire|listing|comparateur|r[ée]seau\s+social|pages?\s*jaunes|mappy|bonial|custplace|118712|petit\s*fute|fiche\s+(sur|dans))\b/i;
+  /\b(annuaire|listing|comparateur|r[ée]seau\s+social|pages?\s*jaunes|mappy|bonial|custplace|118712|petit\s*fute|fiche\s+(sur|dans)|article\s+de\s+presse|presse\s+locale|journal(?:iste)?|r[ée]daction)\b/i;
 
-/** Groq FALSE parce que c'est un annuaire — ne pas classer corporate_parent. */
+/** Groq FALSE parce que c'est un annuaire / presse — ne pas classer corporate_parent. */
 export function groqRejectionIsDirectoryOnly(reason: string): boolean {
   return DIRECTORY_ONLY_REJECTION.test(reason.trim());
+}
+
+const PRESS_OR_DIRECTORY_MARKDOWN =
+  /\b(publi[ée]\s+le|mis\s+[àa]\s+jour\s+le|r[ée]daction|cat[ée]gorie\s+des\s+pros|article\s+de\s+presse|tous\s+les\s+[ée]tablissements|liste\s+des\s+(commerces|professionnels|praticiens)|annuaire\s+(des|de\s+la)|comparateur\s+de)\b/i;
+
+/** Contenu Jina typique presse / annuaire — ne pas mapper en franchise/réseau. */
+export function markdownIndicatesPressOrDirectoryListing(markdown: string): boolean {
+  const sample = markdown.trim().slice(0, 12_000);
+  if (!sample) return false;
+  return PRESS_OR_DIRECTORY_MARKDOWN.test(sample);
+}
+
+/** Groq doute sur le contenu sans signal annuaire/franchise — rescue domaine aligné possible. */
+export function groqRejectionIsContentUncertaintyOnly(reason: string): boolean {
+  const hay = reason.trim();
+  if (!hay) return false;
+  if (groqRejectionIsDirectoryOnly(hay)) return false;
+  if (groqRejectionIndicatesCorporateParent(hay)) return false;
+  return /\b(contenu|correspond\s+pas|pas\s+confirm|pas\s+clairement|ne\s+mentionne\s+pas)\b/i.test(hay);
+}
+
+function shouldSuppressCorporateParent(args: {
+  readonly url: string;
+  readonly markdown: string;
+  readonly groqReason?: string;
+}): boolean {
+  if (isWebsiteBuilderUrl(args.url)) return true;
+  if (markdownIndicatesPressOrDirectoryListing(args.markdown)) return true;
+  const groqReason = args.groqReason?.trim() ?? '';
+  if (groqReason && groqRejectionIsDirectoryOnly(groqReason)) return true;
+  return false;
 }
 
 function formatCorporateReason(detail: string): string {
@@ -79,6 +111,16 @@ export function assessCorporateParentCandidate(args: {
   });
 
   const groqReason = args.groqReason?.trim() ?? '';
+
+  if (
+    shouldSuppressCorporateParent({
+      url: args.url,
+      markdown: args.markdown,
+      ...(groqReason ? { groqReason } : {}),
+    })
+  ) {
+    return none;
+  }
 
   if (args.groqOfficial === false && groqReason) {
     if (groqRejectionIndicatesCorporateParent(groqReason)) {
@@ -140,6 +182,7 @@ export function resolveSharedParentDomainLocator(
   const buckets = new Map<string, string[]>();
 
   for (const url of candidates) {
+    if (isWebsiteBuilderUrl(url)) continue;
     const host = hostnameFromUrl(url);
     const registrable = host ? getRegistrableDomain(host) : null;
     if (!registrable || !isDedicatedOwnerUrl(url)) continue;
@@ -224,4 +267,92 @@ export function pickStrongerCorporateCandidate(
     };
   }
   return current;
+}
+
+export type OwnerSiteRescueAssessment = {
+  readonly match: boolean;
+  readonly confidence: number;
+  readonly reason: string;
+};
+
+function formatOwnerRescueReason(detail: string): string {
+  const t = detail.trim();
+  if (t.startsWith('[top5-scanner]')) return t;
+  return `[top5-scanner] ${t}`;
+}
+
+/** Site hébergé Webnode/Wix/etc. — site propre au commerce, pas un réseau national. */
+export function assessWebsiteBuilderOwnerSite(args: {
+  readonly companyName: string;
+  readonly url: string;
+  readonly markdown: string;
+  readonly groqOfficial?: boolean;
+}): OwnerSiteRescueAssessment {
+  const none: OwnerSiteRescueAssessment = { match: false, confidence: 0, reason: '' };
+  if (!isWebsiteBuilderUrl(args.url) || !isDedicatedOwnerUrl(args.url)) return none;
+
+  const host = hostnameFromUrl(args.url);
+  const registrable = host ? getRegistrableDomain(host) : null;
+  if (!registrable) return none;
+
+  const contentConfirms = contentConfirmsBusinessName({
+    markdown: args.markdown,
+    companyName: args.companyName,
+    registrable,
+  });
+
+  if (args.groqOfficial === true || contentConfirms) {
+    return {
+      match: true,
+      confidence: args.groqOfficial === true ? 0.9 : 0.87,
+      reason: formatOwnerRescueReason(
+        `Site sur hébergeur ${registrable} — vitrine propre au commerce (pas franchise).`,
+      ),
+    };
+  }
+
+  return none;
+}
+
+/**
+ * Domaine aligné + homepage : Groq hésite sur le contenu mais ce n'est ni annuaire ni franchise.
+ * Ex. rhonealpesnettoyage.fr alors que Groq dit « contenu pas clairement confirmé ».
+ */
+export function assessAlignedHomepageOwnerRescue(args: {
+  readonly companyName: string;
+  readonly url: string;
+  readonly markdown: string;
+  readonly groqReason: string;
+}): OwnerSiteRescueAssessment {
+  const none: OwnerSiteRescueAssessment = { match: false, confidence: 0, reason: '' };
+
+  if (!isDedicatedOwnerUrl(args.url) || isWebsiteBuilderUrl(args.url)) return none;
+
+  const host = hostnameFromUrl(args.url);
+  const registrable = host ? getRegistrableDomain(host) : null;
+  if (!registrable) return none;
+
+  if (
+    shouldSuppressCorporateParent({
+      url: args.url,
+      markdown: args.markdown,
+      groqReason: args.groqReason,
+    })
+  ) {
+    return none;
+  }
+
+  if (!domainMatchesBusinessName(registrable, args.companyName)) return none;
+  if (!isHomepageUrl(args.url) || isDirectoryStylePath(args.url)) return none;
+
+  const groqReason = args.groqReason.trim();
+  if (!groqReason || !groqRejectionIsContentUncertaintyOnly(groqReason)) return none;
+
+  return {
+    match: true,
+    confidence: 0.88,
+    reason: formatOwnerRescueReason(
+      `Page d'accueil de ${registrable} alignée au commerce — site propre (doute contenu Groq ignoré).`,
+    ),
+  };
 }

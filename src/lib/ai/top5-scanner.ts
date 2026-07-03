@@ -17,7 +17,9 @@ import {
 import { sleep } from '../retry.js';
 import { fetchJinaReaderMarkdown } from './jina-reader.js';
 import {
+  assessAlignedHomepageOwnerRescue,
   assessCorporateParentCandidate,
+  assessWebsiteBuilderOwnerSite,
   corporateParentFromAssessment,
   corporateParentFromLocator,
   pickStrongerCorporateCandidate,
@@ -318,6 +320,19 @@ async function askGroqOfficialSiteWithRetry(args: {
     'GROQ_TOP5_SCANNER',
     `Top5 Scanner Groq : échec après ${GROQ_CLASSIFIER_MAX_ATTEMPTS} tentatives.`,
   );
+}
+
+function ownerSiteFromRescue(args: {
+  readonly candidateUrl: string;
+  readonly confidence: number;
+  readonly reason: string;
+}): SerpClassifierResult {
+  return {
+    status: 'owner_site',
+    confidence: args.confidence,
+    reason: args.reason,
+    matchedUrl: args.candidateUrl,
+  };
 }
 
 function ownerSiteFromStructural(args: {
@@ -638,6 +653,34 @@ export async function scanTop5CandidatesDetailed(args: {
       lastUsage = groq.usage;
 
       if (groq.parsed.official) {
+        const builderOwner = assessWebsiteBuilderOwnerSite({
+          companyName: args.companyName,
+          url: candidateUrl,
+          markdown: jina.markdown,
+          groqOfficial: true,
+        });
+        if (builderOwner.match) {
+          const result = ownerSiteFromRescue({
+            candidateUrl,
+            confidence: builderOwner.confidence,
+            reason: builderOwner.reason,
+          });
+          return {
+            result,
+            trace: buildScannerTrace({
+              companyName: args.companyName,
+              city: args.city,
+              urlsInput,
+              prep,
+              model: groq.model,
+              timeoutMs,
+              startedAt,
+              rawResponse: groq.rawResponse,
+              usage: groq.usage,
+            }),
+          };
+        }
+
         const corporateAssessment = assessCorporateParentCandidate({
           companyName: args.companyName,
           url: candidateUrl,
@@ -672,6 +715,62 @@ export async function scanTop5CandidatesDetailed(args: {
           reason: `[top5-scanner] ${groq.parsed.reason}`,
           matchedUrl: candidateUrl,
         };
+        return {
+          result,
+          trace: buildScannerTrace({
+            companyName: args.companyName,
+            city: args.city,
+            urlsInput,
+            prep,
+            model: groq.model,
+            timeoutMs,
+            startedAt,
+            rawResponse: groq.rawResponse,
+            usage: groq.usage,
+          }),
+        };
+      }
+
+      const builderOwner = assessWebsiteBuilderOwnerSite({
+        companyName: args.companyName,
+        url: candidateUrl,
+        markdown: jina.markdown,
+        groqOfficial: false,
+      });
+      if (builderOwner.match) {
+        const result = ownerSiteFromRescue({
+          candidateUrl,
+          confidence: builderOwner.confidence,
+          reason: builderOwner.reason,
+        });
+        return {
+          result,
+          trace: buildScannerTrace({
+            companyName: args.companyName,
+            city: args.city,
+            urlsInput,
+            prep,
+            model: groq.model,
+            timeoutMs,
+            startedAt,
+            rawResponse: groq.rawResponse,
+            usage: groq.usage,
+          }),
+        };
+      }
+
+      const homepageRescue = assessAlignedHomepageOwnerRescue({
+        companyName: args.companyName,
+        url: candidateUrl,
+        markdown: jina.markdown,
+        groqReason: groq.parsed.reason,
+      });
+      if (homepageRescue.match) {
+        const result = ownerSiteFromRescue({
+          candidateUrl,
+          confidence: homepageRescue.confidence,
+          reason: homepageRescue.reason,
+        });
         return {
           result,
           trace: buildScannerTrace({

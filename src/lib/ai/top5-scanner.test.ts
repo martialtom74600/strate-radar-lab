@@ -419,4 +419,65 @@ describe('scanTop5CandidatesDetailed', () => {
     assert.match(detailed.result.matchedUrl ?? '', /hase\.fr/);
     assert.doesNotMatch(detailed.result.reason ?? '', /owner/i);
   });
+
+  it('owner_site sur Webnode si contenu confirmé (MJ ink — pas corporate_parent)', async () => {
+    const detailed = await scanTop5CandidatesDetailed({
+      config: baseConfig,
+      companyName: 'MJ ink',
+      city: 'Argonay',
+      priorityUrls: [],
+      urlsCollected: ['https://mj-tattoo.webnode.fr/portfolio/portrait/'],
+      discovery: { attempted: true, ok: true, hits: 2, error: null },
+      deps: {
+        fetchPage: mockJina('# MJ ink\nTatoueur à Argonay — MJ ink tattoo'),
+        askOfficialSite: mockGroq(
+          false,
+          'Le domaine webnode.fr n\'est pas aligné — portfolio plutôt que site officiel.',
+        ),
+      },
+    });
+    assert.equal(detailed.result.status, 'owner_site');
+    assert.match(detailed.result.matchedUrl ?? '', /webnode\.fr/);
+  });
+
+  it('owner_site si homepage alignée et Groq doute le contenu (Rhône-Alpes Nettoyage)', async () => {
+    const detailed = await scanTop5CandidatesDetailed({
+      config: baseConfig,
+      companyName: 'Rhône-Alpes Nettoyage',
+      city: 'Annecy',
+      priorityUrls: [],
+      urlsCollected: ['https://rhonealpesnettoyage.fr/'],
+      discovery: { attempted: true, ok: true, hits: 3, error: null },
+      deps: {
+        fetchPage: mockJina('# Nettoyage professionnel Rhône-Alpes'),
+        askOfficialSite: mockGroq(
+          false,
+          'Le contenu de la page ne correspond pas clairement à ce commerce.',
+        ),
+      },
+    });
+    assert.equal(detailed.result.status, 'owner_site');
+    assert.match(detailed.result.matchedUrl ?? '', /rhonealpesnettoyage\.fr/);
+  });
+
+  it('presence_only si presse locale (pas corporate_parent)', async () => {
+    const detailed = await scanTop5CandidatesDetailed({
+      config: baseConfig,
+      companyName: 'Toilettes royale',
+      city: 'Argonay',
+      priorityUrls: [],
+      urlsCollected: [
+        'https://www.ledauphine.com/societe/2025/05/01/les-toilettes-operationnelles',
+      ],
+      discovery: { attempted: true, ok: true, hits: 2, error: null },
+      deps: {
+        fetchPage: mockJina('Publié le 1 mai 2025 · Rédaction Le Dauphiné\nArticle local'),
+        askOfficialSite: mockGroq(
+          false,
+          "Cette page est un article de presse — pas le site officiel indépendant du commerce.",
+        ),
+      },
+    });
+    assert.equal(detailed.result.status, 'presence_only');
+  });
 });
