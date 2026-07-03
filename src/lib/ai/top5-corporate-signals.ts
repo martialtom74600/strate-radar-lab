@@ -38,11 +38,41 @@ export function groqRejectionIndicatesCorporateParent(reason: string): boolean {
 }
 
 const DIRECTORY_ONLY_REJECTION =
-  /\b(annuaire|listing|comparateur|r[ée]seau\s+social|pages?\s*jaunes|mappy|bonial|custplace|118712|petit\s*fute|fiche\s+(sur|dans)|article\s+de\s+presse|presse\s+locale|journal(?:iste)?|r[ée]daction)\b/i;
+  /\b(annuaire|comparateur|r[ée]seau\s+social|pages?\s*jaunes|mappy|bonial|custplace|118712|petit\s*fute|fiche\s+(sur|dans)|article\s+de\s+presse|presse\s+locale|journal(?:iste)?|r[ée]daction)\b/i;
+
+/** « listing » seul est trop large (Groq le dit aussi sur carrefour.fr/magasin). */
+const DIRECTORY_LISTING_PHRASE =
+  /\blisting\b.*\b(annuaire|bonial|mappy|pages?\s*jaunes|comparateur|externe|tiers)\b|\b(annuaire|bonial|mappy)\b.*\blisting\b/i;
 
 /** Groq FALSE parce que c'est un annuaire / presse — ne pas classer corporate_parent. */
 export function groqRejectionIsDirectoryOnly(reason: string): boolean {
-  return DIRECTORY_ONLY_REJECTION.test(reason.trim());
+  const hay = reason.trim();
+  return DIRECTORY_ONLY_REJECTION.test(hay) || DIRECTORY_LISTING_PHRASE.test(hay);
+}
+
+const STORE_LOCATOR_PATH =
+  /\/(magasin|magasins|stores|store|boutiques?|shops?|magasins-instituts-de-beaute|instituts-de-beaute|point-de-vente|locator)\b/i;
+
+/**
+ * Succursale sur le domaine de la marque (ex. carrefour.fr/magasin/… pour « Carrefour City »).
+ * Structurelle — pas de blocklist enseigne.
+ */
+export function isBrandStoreLocatorPage(args: {
+  readonly url: string;
+  readonly companyName: string;
+}): boolean {
+  if (!isDedicatedOwnerUrl(args.url)) return false;
+  const host = hostnameFromUrl(args.url);
+  const registrable = host ? getRegistrableDomain(host) : null;
+  if (!registrable || !domainMatchesBusinessName(registrable, args.companyName)) return false;
+  if (isHomepageUrl(args.url)) return false;
+  try {
+    const path = new URL(args.url.startsWith('http') ? args.url : `https://${args.url}`).pathname;
+    if (STORE_LOCATOR_PATH.test(path)) return true;
+  } catch {
+    // ignore
+  }
+  return isDirectoryStylePath(args.url);
 }
 
 const PRESS_OR_DIRECTORY_MARKDOWN =
@@ -111,6 +141,16 @@ export function assessCorporateParentCandidate(args: {
   });
 
   const groqReason = args.groqReason?.trim() ?? '';
+
+  if (isBrandStoreLocatorPage({ url: args.url, companyName: args.companyName })) {
+    return {
+      match: true,
+      confidence: 0.91,
+      reason: formatCorporateReason(
+        `Fiche succursale sur ${registrable} — domaine marque aligné, pas un site vitrine indépendant.`,
+      ),
+    };
+  }
 
   if (
     shouldSuppressCorporateParent({

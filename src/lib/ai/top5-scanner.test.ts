@@ -370,30 +370,35 @@ describe('scanTop5CandidatesDetailed', () => {
   });
 
   it('corporate_parent si plusieurs fiches magasin sur le même domaine parent (réseau)', async () => {
+    let jinaCalls = 0;
     const detailed = await scanTop5CandidatesDetailed({
       config: baseConfig,
       companyName: 'Carrefour City',
       city: 'Annecy',
       priorityUrls: [],
       urlsCollected: [
-        'https://www.carrefour.fr/magasin/annecy-centre',
-        'https://www.carrefour.fr/magasin/annecy-nord',
-        'https://www.mappy.com/poi/carrefour-city-annecy',
+        'https://www.carrefour.fr/magasin/city-annecy-chambery',
+        'https://www.carrefour.fr/magasin/city-annecy-stade',
+        'https://www.carrefour.fr/magasin/city-annecy-les-teppes',
+        'https://www.carrefour.fr/magasin/city-annecy-annapurna',
+        'https://www.bonial.fr/Magasins/Annecy/Carrefour-City-place-Annapurna/v-f423192860',
+        'https://fr.mappy.com/poi/53e60dffe4b0dc27172299a2',
       ],
       discovery: { attempted: true, ok: true, hits: 5, error: null },
       deps: {
-        fetchPage: mockJina('# Carrefour City Annecy\nFiche magasin sur carrefour.fr'),
+        fetchPage: async () => {
+          jinaCalls += 1;
+          return { ok: true, markdown: '# Carrefour City', latencyMs: 1 };
+        },
         askOfficialSite: async (args) => {
-          if (args.url.includes('carrefour.fr')) {
-            return mockGroq(
-              false,
-              'Page magasin sur le réseau national Carrefour — pas un site indépendant.',
-            )();
-          }
-          return mockGroq(false, 'Fiche Mappy, pas un site propriétaire.')();
+          const reason = args.url.includes('bonial')
+            ? "Cette page est un listing sur l'annuaire Bonial, pas le site officiel."
+            : 'Page listing interne sur carrefour.fr/magasin.';
+          return mockGroq(false, reason)();
         },
       },
     });
+    assert.equal(jinaCalls, 0);
     assert.equal(detailed.result.status, 'corporate_parent');
     assert.match(detailed.result.matchedUrl ?? '', /carrefour\.fr/);
     assert.match(detailed.result.reason ?? '', /top5-scanner/i);

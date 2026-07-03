@@ -70,6 +70,8 @@ const officialSiteSchema = z.object({
 
 export type Top5ScannerCandidatePrep = {
   readonly candidates: readonly string[];
+  /** Tous les domaines dédiés (avant limite TOP5) — pour détection réseau / locator. */
+  readonly allDedicated: readonly string[];
   readonly platformUrls: readonly string[];
   readonly droppedUrls: readonly string[];
 };
@@ -196,6 +198,7 @@ export function prepareTop5ScannerCandidates(args: {
 
   return {
     candidates: rankedDedicated.slice(0, max),
+    allDedicated: rankedDedicated,
     platformUrls,
     droppedUrls: [...platformUrls, ...rankedDedicated.slice(max)],
   };
@@ -482,6 +485,35 @@ export async function scanTop5CandidatesDetailed(args: {
   const timeoutMs = args.config.RADAR_TOP5_GROQ_TIMEOUT_MS;
   const fetchPage = args.deps?.fetchPage ?? fetchJinaReaderMarkdown;
   const askOfficial = args.deps?.askOfficialSite ?? askGroqOfficialSite;
+
+  const sharedLocatorEarly = resolveSharedParentDomainLocator(
+    prep.allDedicated,
+    args.companyName,
+  );
+  if (sharedLocatorEarly) {
+    const result = corporateParentFromLocator({
+      url: sharedLocatorEarly,
+      companyName: args.companyName,
+    });
+    return {
+      result,
+      trace: buildScannerTrace({
+        companyName: args.companyName,
+        city: args.city,
+        urlsInput,
+        prep,
+        model: 'structural',
+        timeoutMs,
+        startedAt,
+        rawResponse: '',
+        usage: {
+          promptTokens: null,
+          completionTokens: null,
+          totalTokens: null,
+        },
+      }),
+    };
+  }
 
   const emptyUsage = {
     promptTokens: null as number | null,
@@ -874,7 +906,7 @@ export async function scanTop5CandidatesDetailed(args: {
   }
 
   const sharedLocatorUrl = resolveSharedParentDomainLocator(
-    prep.candidates,
+    prep.allDedicated,
     args.companyName,
   );
   if (sharedLocatorUrl) {

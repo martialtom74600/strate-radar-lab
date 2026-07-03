@@ -9,6 +9,7 @@ import {
   groqRejectionIsContentUncertaintyOnly,
   groqRejectionIsDirectoryOnly,
   markdownIndicatesPressOrDirectoryListing,
+  isBrandStoreLocatorPage,
   resolveSharedParentDomainLocator,
 } from './top5-corporate-signals.js';
 import { isWebsiteBuilderUrl } from '../website-builder-hosts.js';
@@ -34,6 +35,16 @@ describe('groqRejectionIsDirectoryOnly', () => {
         "Cette page est un article de presse sur un événement lié au commerce.",
       ),
       true,
+    );
+    assert.equal(
+      groqRejectionIsDirectoryOnly(
+        "Cette page est un listing sur l'annuaire Bonial, pas le site officiel.",
+      ),
+      true,
+    );
+    assert.equal(
+      groqRejectionIsDirectoryOnly('Page listing interne sur carrefour.fr/magasin.'),
+      false,
     );
   });
 });
@@ -101,7 +112,29 @@ describe('assessAlignedHomepageOwnerRescue', () => {
   });
 });
 
+describe('isBrandStoreLocatorPage', () => {
+  it('Carrefour City sur carrefour.fr/magasin/…', () => {
+    assert.equal(
+      isBrandStoreLocatorPage({
+        url: 'https://www.carrefour.fr/magasin/city-annecy-chambery',
+        companyName: 'Carrefour City',
+      }),
+      true,
+    );
+  });
+});
+
 describe('assessCorporateParentCandidate', () => {
+  it('Groq FALSE + motif « listing » sur carrefour.fr/magasin → corporate', () => {
+    const assessment = assessCorporateParentCandidate({
+      companyName: 'Carrefour City',
+      url: 'https://www.carrefour.fr/magasin/city-annecy-chambery',
+      markdown: '# Carrefour City Annecy',
+      groqOfficial: false,
+      groqReason: 'Page listing interne sur le site Carrefour, pas un site indépendant.',
+    });
+    assert.equal(assessment.match, true);
+  });
   it('Groq FALSE + motif franchise → corporate', () => {
     const assessment = assessCorporateParentCandidate({
       companyName: 'Carrefour City',
