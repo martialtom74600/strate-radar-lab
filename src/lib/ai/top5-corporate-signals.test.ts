@@ -8,8 +8,9 @@ import {
   groqRejectionIndicatesCorporateParent,
   groqRejectionIsContentUncertaintyOnly,
   groqRejectionIsDirectoryOnly,
+  groqRejectionTargetsBrandDomain,
+  isDomainAlignedBranchPath,
   markdownIndicatesPressOrDirectoryListing,
-  isBrandStoreLocatorPage,
   resolveSharedParentDomainLocator,
 } from './top5-corporate-signals.js';
 import { isWebsiteBuilderUrl } from '../website-builder-hosts.js';
@@ -112,26 +113,53 @@ describe('assessAlignedHomepageOwnerRescue', () => {
   });
 });
 
-describe('isBrandStoreLocatorPage', () => {
-  it('Carrefour City sur carrefour.fr/magasin/…', () => {
+describe('isDomainAlignedBranchPath', () => {
+  it('détecte une succursale par alignement domaine + chemin profond', () => {
     assert.equal(
-      isBrandStoreLocatorPage({
-        url: 'https://www.carrefour.fr/magasin/city-annecy-chambery',
-        companyName: 'Carrefour City',
-      }),
+      isDomainAlignedBranchPath(
+        'https://www.nocibe.fr/fr/l/annecy-vaugelas/parfumeries/02560178',
+        'Nocibé - ANNECY VAUGELAS',
+      ),
       true,
+    );
+    assert.equal(
+      isDomainAlignedBranchPath(
+        'https://www.yves-rocher.fr/magasins-instituts-de-beaute/annecy/S-FRYROC10',
+        'Yves Rocher',
+      ),
+      true,
+    );
+    assert.equal(
+      isDomainAlignedBranchPath('https://www.example.fr/', 'Example Shop'),
+      false,
+    );
+  });
+});
+
+describe('groqRejectionTargetsBrandDomain', () => {
+  it('repère quand Groq cite le domaine marque (pas un annuaire tiers)', () => {
+    assert.equal(
+      groqRejectionTargetsBrandDomain(
+        'Page listing interne sur nocibe.fr, pas un site indépendant.',
+        'nocibe.fr',
+      ),
+      true,
+    );
+    assert.equal(
+      groqRejectionTargetsBrandDomain("Fiche sur l'annuaire Bonial.", 'nocibe.fr'),
+      false,
     );
   });
 });
 
 describe('assessCorporateParentCandidate', () => {
-  it('Groq FALSE + motif « listing » sur carrefour.fr/magasin → corporate', () => {
+  it('Groq FALSE + domaine aligné cité dans la raison → corporate', () => {
     const assessment = assessCorporateParentCandidate({
-      companyName: 'Carrefour City',
-      url: 'https://www.carrefour.fr/magasin/city-annecy-chambery',
-      markdown: '# Carrefour City Annecy',
+      companyName: 'Nocibé - ANNECY VAUGELAS',
+      url: 'https://www.nocibe.fr/fr/l/annecy-vaugelas/parfumeries/02560178',
+      markdown: '# Nocibé Annecy',
       groqOfficial: false,
-      groqReason: 'Page listing interne sur le site Carrefour, pas un site indépendant.',
+      groqReason: 'Page listing interne sur nocibe.fr — pas le site du point de vente indépendant.',
     });
     assert.equal(assessment.match, true);
   });
@@ -193,16 +221,16 @@ describe('assessCorporateParentCandidate', () => {
 });
 
 describe('resolveSharedParentDomainLocator', () => {
-  it('≥2 URLs locator même domaine parent', () => {
+  it('≥2 URLs branche sur le même domaine parent (réseau)', () => {
     const pick = resolveSharedParentDomainLocator(
       [
-        'https://www.carrefour.fr/magasin/annecy-centre',
-        'https://www.carrefour.fr/magasin/annecy-nord',
+        'https://enseigne.example.fr/succursales/annecy-centre',
+        'https://enseigne.example.fr/succursales/annecy-nord',
         'https://www.mappy.com/poi/foo',
       ],
-      'Carrefour City',
+      'Enseigne Example Annecy',
     );
-    assert.ok(pick?.includes('carrefour.fr'));
+    assert.ok(pick?.includes('enseigne.example.fr'));
   });
 
   it('une seule URL locator → null', () => {

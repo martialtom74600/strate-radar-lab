@@ -12,8 +12,10 @@ import { isWebsiteBuilderUrl } from '../website-builder-hosts.js';
 import {
   contentConfirmsBusinessName,
   domainMatchesBusinessName,
+  domainSlugFromRegistrable,
   isDirectoryStylePath,
   isHomepageUrl,
+  normalizeAlphanumeric,
   scoreOwnerCandidateUrl,
 } from './top5-owner-signals.js';
 
@@ -40,7 +42,7 @@ export function groqRejectionIndicatesCorporateParent(reason: string): boolean {
 const DIRECTORY_ONLY_REJECTION =
   /\b(annuaire|comparateur|r[ée]seau\s+social|pages?\s*jaunes|mappy|bonial|custplace|118712|petit\s*fute|fiche\s+(sur|dans)|article\s+de\s+presse|presse\s+locale|journal(?:iste)?|r[ée]daction)\b/i;
 
-/** « listing » seul est trop large (Groq le dit aussi sur carrefour.fr/magasin). */
+/** « listing » seul est trop large — Groq l’emploie aussi sur des pages du domaine marque. */
 const DIRECTORY_LISTING_PHRASE =
   /\blisting\b.*\b(annuaire|bonial|mappy|pages?\s*jaunes|comparateur|externe|tiers)\b|\b(annuaire|bonial|mappy)\b.*\blisting\b/i;
 
@@ -50,29 +52,28 @@ export function groqRejectionIsDirectoryOnly(reason: string): boolean {
   return DIRECTORY_ONLY_REJECTION.test(hay) || DIRECTORY_LISTING_PHRASE.test(hay);
 }
 
-const STORE_LOCATOR_PATH =
-  /\/(magasin|magasins|stores|store|boutiques?|shops?|magasins-instituts-de-beaute|instituts-de-beaute|point-de-vente|locator)\b/i;
-
 /**
- * Succursale sur le domaine de la marque (ex. carrefour.fr/magasin/… pour « Carrefour City »).
- * Structurelle — pas de blocklist enseigne.
+ * Page succursale sur le domaine parent : nom commerce ↔ domaine (inclusion normalisée)
+ * + chemin profond structurel (isDirectoryStylePath — profondeur / segments, sans liste de marques).
  */
-export function isBrandStoreLocatorPage(args: {
-  readonly url: string;
-  readonly companyName: string;
-}): boolean {
-  if (!isDedicatedOwnerUrl(args.url)) return false;
-  const host = hostnameFromUrl(args.url);
+export function isDomainAlignedBranchPath(url: string, companyName: string): boolean {
+  if (!isDedicatedOwnerUrl(url)) return false;
+  const host = hostnameFromUrl(url);
   const registrable = host ? getRegistrableDomain(host) : null;
-  if (!registrable || !domainMatchesBusinessName(registrable, args.companyName)) return false;
-  if (isHomepageUrl(args.url)) return false;
-  try {
-    const path = new URL(args.url.startsWith('http') ? args.url : `https://${args.url}`).pathname;
-    if (STORE_LOCATOR_PATH.test(path)) return true;
-  } catch {
-    // ignore
-  }
-  return isDirectoryStylePath(args.url);
+  if (!registrable || !domainMatchesBusinessName(registrable, companyName)) return false;
+  if (isHomepageUrl(url)) return false;
+  return isDirectoryStylePath(url);
+}
+
+/** Groq cite le domaine marque ou un site groupe — pas un annuaire tiers. */
+export function groqRejectionTargetsBrandDomain(reason: string, registrable: string): boolean {
+  const hay = normalizeAlphanumeric(reason);
+  if (!hay) return false;
+  const slug = domainSlugFromRegistrable(registrable);
+  if (slug.length >= 4 && hay.includes(slug)) return true;
+  return /\b(site|domaine|page)\s+(du|de la|de l['’])\s*(groupe|marque|enseigne|r[ée]seau)\b/i.test(
+    reason.trim(),
+  );
 }
 
 const PRESS_OR_DIRECTORY_MARKDOWN =
@@ -142,16 +143,6 @@ export function assessCorporateParentCandidate(args: {
 
   const groqReason = args.groqReason?.trim() ?? '';
 
-  if (isBrandStoreLocatorPage({ url: args.url, companyName: args.companyName })) {
-    return {
-      match: true,
-      confidence: 0.91,
-      reason: formatCorporateReason(
-        `Fiche succursale sur ${registrable} — domaine marque aligné, pas un site vitrine indépendant.`,
-      ),
-    };
-  }
-
   if (
     shouldSuppressCorporateParent({
       url: args.url,
@@ -160,6 +151,23 @@ export function assessCorporateParentCandidate(args: {
     })
   ) {
     return none;
+  }
+
+  if (
+    isDomainAlignedBranchPath(args.url, args.companyName) &&
+    args.groqOfficial === false &&
+    groqReason &&
+    !groqRejectionIsDirectoryOnly(groqReason) &&
+    (groqRejectionIndicatesCorporateParent(groqReason) ||
+      groqRejectionTargetsBrandDomain(groqReason, registrable))
+  ) {
+    return {
+      match: true,
+      confidence: 0.91,
+      reason: formatCorporateReason(
+        `Succursale sur ${registrable} (domaine aligné au commerce) — pas un site vitrine indépendant.`,
+      ),
+    };
   }
 
   if (args.groqOfficial === false && groqReason) {
@@ -214,7 +222,7 @@ export function assessCorporateParentCandidate(args: {
   return none;
 }
 
-/** Plusieurs URLs « magasin » sur le même domaine parent (ex. carrefour.fr/magasin/…). */
+/** ≥2 URLs « branche » structurelles sur le même domaine parent (réseau / franchise). */
 export function resolveSharedParentDomainLocator(
   candidates: readonly string[],
   companyName: string,
@@ -271,7 +279,7 @@ export function corporateParentFromLocator(args: {
   const detail =
     args.detail ??
     (registrable
-      ? `Plusieurs fiches magasin sur ${registrable} — réseau / succursale.`
+      ? `Plusieurs fiches succursale sur ${registrable} — réseau / domaine parent partagé.`
       : 'Plusieurs fiches sur le même domaine parent — réseau / succursale.');
 
   return {

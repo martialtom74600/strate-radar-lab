@@ -369,7 +369,7 @@ describe('scanTop5CandidatesDetailed', () => {
     assert.equal(detailed.result.status, 'presence_only');
   });
 
-  it('corporate_parent si plusieurs fiches magasin sur le même domaine parent (réseau)', async () => {
+  it('corporate_parent si ≥2 fiches succursale sur le même domaine parent (early exit)', async () => {
     let jinaCalls = 0;
     const detailed = await scanTop5CandidatesDetailed({
       config: baseConfig,
