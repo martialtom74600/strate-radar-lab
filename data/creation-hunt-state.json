@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "exportedAt": "2026-07-02T04:43:15.067Z",
+  "exportedAt": "2026-07-03T07:43:38.154Z",
   "zones": [
     {
       "zone": "Annecy, France",
       "priority": 200,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-07-02T04:27:22.556Z",
+      "last_run_at": "2026-07-03T06:33:28.729Z",
       "last_creations": 5,
-      "total_scanned": 4206,
+      "total_scanned": 4465,
       "consecutive_low_runs": 0,
-      "updated_at": "2026-07-02T04:27:22.556Z"
+      "updated_at": "2026-07-03T06:33:28.729Z"
     }
   ],
   "sectorRuns": [
@@ -630,6 +630,34 @@
       "creations_found": 5,
       "scanned_count": 88,
       "run_at": "2026-07-02T04:27:22.556Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Ostéopathe",
+      "creations_found": 1,
+      "scanned_count": 120,
+      "run_at": "2026-07-03T06:33:28.729Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Toilettage",
+      "creations_found": 0,
+      "scanned_count": 20,
+      "run_at": "2026-07-03T06:33:28.729Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Lavage",
+      "creations_found": 2,
+      "scanned_count": 95,
+      "run_at": "2026-07-03T06:33:28.729Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Kiné",
+      "creations_found": 2,
+      "scanned_count": 24,
+      "run_at": "2026-07-03T06:33:28.729Z"
     }
   ]
 }
