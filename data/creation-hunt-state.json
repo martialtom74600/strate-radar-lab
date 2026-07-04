@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "exportedAt": "2026-07-03T07:43:38.154Z",
+  "exportedAt": "2026-07-04T06:59:07.292Z",
   "zones": [
     {
       "zone": "Annecy, France",
       "priority": 200,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-07-03T06:33:28.729Z",
+      "last_run_at": "2026-07-04T06:21:09.901Z",
       "last_creations": 5,
-      "total_scanned": 4465,
+      "total_scanned": 4666,
       "consecutive_low_runs": 0,
-      "updated_at": "2026-07-03T06:33:28.729Z"
+      "updated_at": "2026-07-04T06:21:09.901Z"
     }
   ],
   "sectorRuns": [
@@ -658,6 +658,27 @@
       "creations_found": 2,
       "scanned_count": 24,
       "run_at": "2026-07-03T06:33:28.729Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Tatoueur",
+      "creations_found": 3,
+      "scanned_count": 120,
+      "run_at": "2026-07-04T06:21:09.901Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Antiquaire",
+      "creations_found": 0,
+      "scanned_count": 37,
+      "run_at": "2026-07-04T06:21:09.901Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Nettoyage",
+      "creations_found": 2,
+      "scanned_count": 44,
+      "run_at": "2026-07-04T06:21:09.901Z"
     }
   ]
 }
