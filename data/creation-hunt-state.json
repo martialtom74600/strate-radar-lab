@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "exportedAt": "2026-07-04T06:59:07.292Z",
+  "exportedAt": "2026-07-05T08:06:15.239Z",
   "zones": [
     {
       "zone": "Annecy, France",
       "priority": 200,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-07-04T06:21:09.901Z",
-      "last_creations": 5,
-      "total_scanned": 4666,
+      "last_run_at": "2026-07-05T06:41:27.021Z",
+      "last_creations": 2,
+      "total_scanned": 5055,
       "consecutive_low_runs": 0,
-      "updated_at": "2026-07-04T06:21:09.901Z"
+      "updated_at": "2026-07-05T06:41:27.021Z"
     }
   ],
   "sectorRuns": [
@@ -679,6 +679,41 @@
       "creations_found": 2,
       "scanned_count": 44,
       "run_at": "2026-07-04T06:21:09.901Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Chiropracteur",
+      "creations_found": 0,
+      "scanned_count": 60,
+      "run_at": "2026-07-05T06:41:27.021Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Pépinière",
+      "creations_found": 0,
+      "scanned_count": 87,
+      "run_at": "2026-07-05T06:41:27.021Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Jardinier",
+      "creations_found": 2,
+      "scanned_count": 93,
+      "run_at": "2026-07-05T06:41:27.021Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Bijoutier",
+      "creations_found": 0,
+      "scanned_count": 119,
+      "run_at": "2026-07-05T06:41:27.021Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Façade",
+      "creations_found": 0,
+      "scanned_count": 30,
+      "run_at": "2026-07-05T06:41:27.021Z"
     }
   ]
 }
