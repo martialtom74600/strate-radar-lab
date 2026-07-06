@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "exportedAt": "2026-07-05T08:06:15.239Z",
+  "exportedAt": "2026-07-06T08:27:06.843Z",
   "zones": [
     {
       "zone": "Annecy, France",
       "priority": 200,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-07-05T06:41:27.021Z",
-      "last_creations": 2,
-      "total_scanned": 5055,
+      "last_run_at": "2026-07-06T07:13:45.442Z",
+      "last_creations": 5,
+      "total_scanned": 5306,
       "consecutive_low_runs": 0,
-      "updated_at": "2026-07-05T06:41:27.021Z"
+      "updated_at": "2026-07-06T07:13:45.442Z"
     }
   ],
   "sectorRuns": [
@@ -714,6 +714,27 @@
       "creations_found": 0,
       "scanned_count": 30,
       "run_at": "2026-07-05T06:41:27.021Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Kiné",
+      "creations_found": 1,
+      "scanned_count": 120,
+      "run_at": "2026-07-06T07:13:45.442Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Esthétique",
+      "creations_found": 3,
+      "scanned_count": 120,
+      "run_at": "2026-07-06T07:13:45.442Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Artisan",
+      "creations_found": 1,
+      "scanned_count": 11,
+      "run_at": "2026-07-06T07:13:45.442Z"
     }
   ]
 }
