@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "exportedAt": "2026-07-07T07:10:25.510Z",
+  "exportedAt": "2026-07-08T07:18:23.320Z",
   "zones": [
     {
       "zone": "Annecy, France",
       "priority": 200,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-07-07T06:47:30.666Z",
+      "last_run_at": "2026-07-08T05:52:20.750Z",
       "last_creations": 5,
-      "total_scanned": 5402,
+      "total_scanned": 5708,
       "consecutive_low_runs": 0,
-      "updated_at": "2026-07-07T06:47:30.666Z"
+      "updated_at": "2026-07-08T05:52:20.750Z"
     }
   ],
   "sectorRuns": [
@@ -749,6 +749,34 @@
       "creations_found": 4,
       "scanned_count": 36,
       "run_at": "2026-07-07T06:47:30.666Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Coiffure",
+      "creations_found": 1,
+      "scanned_count": 93,
+      "run_at": "2026-07-08T05:52:20.750Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Peintre",
+      "creations_found": 1,
+      "scanned_count": 61,
+      "run_at": "2026-07-08T05:52:20.750Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Orthodontiste",
+      "creations_found": 2,
+      "scanned_count": 120,
+      "run_at": "2026-07-08T05:52:20.750Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Blanchisserie",
+      "creations_found": 1,
+      "scanned_count": 32,
+      "run_at": "2026-07-08T05:52:20.750Z"
     }
   ]
 }
