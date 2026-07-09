@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "exportedAt": "2026-07-08T07:18:23.320Z",
+  "exportedAt": "2026-07-09T08:35:10.943Z",
   "zones": [
     {
       "zone": "Annecy, France",
       "priority": 200,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-07-08T05:52:20.750Z",
-      "last_creations": 5,
-      "total_scanned": 5708,
+      "last_run_at": "2026-07-09T06:50:49.966Z",
+      "last_creations": 4,
+      "total_scanned": 6151,
       "consecutive_low_runs": 0,
-      "updated_at": "2026-07-08T05:52:20.750Z"
+      "updated_at": "2026-07-09T06:50:49.966Z"
     }
   ],
   "sectorRuns": [
@@ -777,6 +777,41 @@
       "creations_found": 1,
       "scanned_count": 32,
       "run_at": "2026-07-08T05:52:20.750Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Tatoueur",
+      "creations_found": 1,
+      "scanned_count": 113,
+      "run_at": "2026-07-09T06:50:49.966Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Fleuriste",
+      "creations_found": 0,
+      "scanned_count": 109,
+      "run_at": "2026-07-09T06:50:49.966Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Chauffage",
+      "creations_found": 3,
+      "scanned_count": 97,
+      "run_at": "2026-07-09T06:50:49.966Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Podologue",
+      "creations_found": 0,
+      "scanned_count": 120,
+      "run_at": "2026-07-09T06:50:49.966Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Carrosserie",
+      "creations_found": 0,
+      "scanned_count": 4,
+      "run_at": "2026-07-09T06:50:49.966Z"
     }
   ]
 }
