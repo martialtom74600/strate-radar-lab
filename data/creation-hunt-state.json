@@ -1,17 +1,50 @@
 {
   "version": 1,
-  "exportedAt": "2026-07-09T08:35:10.943Z",
+  "exportedAt": "2026-07-10T07:43:45.745Z",
   "zones": [
     {
       "zone": "Annecy, France",
       "priority": 200,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-07-09T06:50:49.966Z",
+      "last_run_at": "2026-07-10T06:46:51.404Z",
       "last_creations": 4,
-      "total_scanned": 6151,
+      "total_scanned": 6465,
       "consecutive_low_runs": 0,
-      "updated_at": "2026-07-09T06:50:49.966Z"
+      "updated_at": "2026-07-10T06:46:51.404Z"
+    },
+    {
+      "zone": "Chambéry, France",
+      "priority": 100,
+      "source": "groq",
+      "ring": 2,
+      "last_run_at": "2026-07-10T06:46:51.404Z",
+      "last_creations": 1,
+      "total_scanned": 1,
+      "consecutive_low_runs": 1,
+      "updated_at": "2026-07-10T06:46:51.404Z"
+    },
+    {
+      "zone": "Grenoble, France",
+      "priority": 100,
+      "source": "groq",
+      "ring": 2,
+      "last_run_at": "2026-07-10T06:46:51.404Z",
+      "last_creations": 0,
+      "total_scanned": 0,
+      "consecutive_low_runs": 1,
+      "updated_at": "2026-07-10T06:46:51.404Z"
+    },
+    {
+      "zone": "Lyon, France",
+      "priority": 100,
+      "source": "groq",
+      "ring": 2,
+      "last_run_at": "2026-07-10T06:46:51.404Z",
+      "last_creations": 0,
+      "total_scanned": 0,
+      "consecutive_low_runs": 1,
+      "updated_at": "2026-07-10T06:46:51.404Z"
     }
   ],
   "sectorRuns": [
@@ -812,6 +845,55 @@
       "creations_found": 0,
       "scanned_count": 4,
       "run_at": "2026-07-09T06:50:49.966Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Toilettage",
+      "creations_found": 0,
+      "scanned_count": 18,
+      "run_at": "2026-07-10T06:46:51.404Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Audit",
+      "creations_found": 1,
+      "scanned_count": 71,
+      "run_at": "2026-07-10T06:46:51.404Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Antiquaire",
+      "creations_found": 1,
+      "scanned_count": 35,
+      "run_at": "2026-07-10T06:46:51.404Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Décorateur",
+      "creations_found": 2,
+      "scanned_count": 94,
+      "run_at": "2026-07-10T06:46:51.404Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Nettoyage",
+      "creations_found": 0,
+      "scanned_count": 83,
+      "run_at": "2026-07-10T06:46:51.404Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Ramoneur",
+      "creations_found": 0,
+      "scanned_count": 13,
+      "run_at": "2026-07-10T06:46:51.404Z"
+    },
+    {
+      "zone": "Chambéry, France",
+      "sector": "Artisan",
+      "creations_found": 1,
+      "scanned_count": 1,
+      "run_at": "2026-07-10T06:46:51.404Z"
     }
   ]
 }
