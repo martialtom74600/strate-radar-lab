@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "exportedAt": "2026-07-10T07:43:45.745Z",
+  "exportedAt": "2026-07-11T05:47:09.024Z",
   "zones": [
     {
       "zone": "Annecy, France",
       "priority": 200,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-07-10T06:46:51.404Z",
-      "last_creations": 4,
-      "total_scanned": 6465,
+      "last_run_at": "2026-07-11T05:41:41.321Z",
+      "last_creations": 5,
+      "total_scanned": 6484,
       "consecutive_low_runs": 0,
-      "updated_at": "2026-07-10T06:46:51.404Z"
+      "updated_at": "2026-07-11T05:41:41.321Z"
     },
     {
       "zone": "Chambéry, France",
@@ -894,6 +894,13 @@
       "creations_found": 1,
       "scanned_count": 1,
       "run_at": "2026-07-10T06:46:51.404Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Carrosserie",
+      "creations_found": 5,
+      "scanned_count": 19,
+      "run_at": "2026-07-11T05:41:41.321Z"
     }
   ]
 }
