@@ -1,50 +1,50 @@
 {
   "version": 1,
-  "exportedAt": "2026-07-11T05:47:09.024Z",
+  "exportedAt": "2026-07-12T07:49:08.891Z",
   "zones": [
     {
       "zone": "Annecy, France",
       "priority": 200,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-07-11T05:41:41.321Z",
-      "last_creations": 5,
-      "total_scanned": 6484,
+      "last_run_at": "2026-07-12T06:04:44.956Z",
+      "last_creations": 3,
+      "total_scanned": 7060,
       "consecutive_low_runs": 0,
-      "updated_at": "2026-07-11T05:41:41.321Z"
+      "updated_at": "2026-07-12T06:04:44.956Z"
     },
     {
       "zone": "Chambéry, France",
       "priority": 100,
       "source": "groq",
       "ring": 2,
-      "last_run_at": "2026-07-10T06:46:51.404Z",
-      "last_creations": 1,
-      "total_scanned": 1,
-      "consecutive_low_runs": 1,
-      "updated_at": "2026-07-10T06:46:51.404Z"
+      "last_run_at": "2026-07-12T06:04:44.956Z",
+      "last_creations": 0,
+      "total_scanned": 121,
+      "consecutive_low_runs": 2,
+      "updated_at": "2026-07-12T06:04:44.956Z"
     },
     {
       "zone": "Grenoble, France",
       "priority": 100,
       "source": "groq",
       "ring": 2,
-      "last_run_at": "2026-07-10T06:46:51.404Z",
+      "last_run_at": "2026-07-12T06:04:44.956Z",
       "last_creations": 0,
       "total_scanned": 0,
-      "consecutive_low_runs": 1,
-      "updated_at": "2026-07-10T06:46:51.404Z"
+      "consecutive_low_runs": 2,
+      "updated_at": "2026-07-12T06:04:44.956Z"
     },
     {
       "zone": "Lyon, France",
       "priority": 100,
       "source": "groq",
       "ring": 2,
-      "last_run_at": "2026-07-10T06:46:51.404Z",
+      "last_run_at": "2026-07-12T06:04:44.956Z",
       "last_creations": 0,
       "total_scanned": 0,
-      "consecutive_low_runs": 1,
-      "updated_at": "2026-07-10T06:46:51.404Z"
+      "consecutive_low_runs": 2,
+      "updated_at": "2026-07-12T06:04:44.956Z"
     }
   ],
   "sectorRuns": [
@@ -901,6 +901,62 @@
       "creations_found": 5,
       "scanned_count": 19,
       "run_at": "2026-07-11T05:41:41.321Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Carrosserie",
+      "creations_found": 3,
+      "scanned_count": 120,
+      "run_at": "2026-07-12T06:04:44.956Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Coiffure",
+      "creations_found": 0,
+      "scanned_count": 120,
+      "run_at": "2026-07-12T06:04:44.956Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Esthétique",
+      "creations_found": 0,
+      "scanned_count": 120,
+      "run_at": "2026-07-12T06:04:44.956Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Artisan",
+      "creations_found": 0,
+      "scanned_count": 58,
+      "run_at": "2026-07-12T06:04:44.956Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Blanchisserie",
+      "creations_found": 0,
+      "scanned_count": 96,
+      "run_at": "2026-07-12T06:04:44.956Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Chiropracteur",
+      "creations_found": 0,
+      "scanned_count": 62,
+      "run_at": "2026-07-12T06:04:44.956Z"
+    },
+    {
+      "zone": "Chambéry, France",
+      "sector": "Service",
+      "creations_found": 0,
+      "scanned_count": 116,
+      "run_at": "2026-07-12T06:04:44.956Z"
+    },
+    {
+      "zone": "Chambéry, France",
+      "sector": "Garage",
+      "creations_found": 0,
+      "scanned_count": 4,
+      "run_at": "2026-07-12T06:04:44.956Z"
     }
   ]
 }
