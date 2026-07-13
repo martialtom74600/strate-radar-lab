@@ -1,50 +1,50 @@
 {
   "version": 1,
-  "exportedAt": "2026-07-12T07:49:08.891Z",
+  "exportedAt": "2026-07-13T07:32:18.580Z",
   "zones": [
     {
       "zone": "Annecy, France",
       "priority": 200,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-07-12T06:04:44.956Z",
-      "last_creations": 3,
-      "total_scanned": 7060,
-      "consecutive_low_runs": 0,
-      "updated_at": "2026-07-12T06:04:44.956Z"
+      "last_run_at": "2026-07-13T06:20:14.712Z",
+      "last_creations": 0,
+      "total_scanned": 7505,
+      "consecutive_low_runs": 1,
+      "updated_at": "2026-07-13T06:20:14.712Z"
     },
     {
       "zone": "Chambéry, France",
-      "priority": 100,
+      "priority": 0,
       "source": "groq",
       "ring": 2,
-      "last_run_at": "2026-07-12T06:04:44.956Z",
+      "last_run_at": "2026-07-13T06:20:14.712Z",
       "last_creations": 0,
       "total_scanned": 121,
-      "consecutive_low_runs": 2,
-      "updated_at": "2026-07-12T06:04:44.956Z"
+      "consecutive_low_runs": 3,
+      "updated_at": "2026-07-13T06:20:14.712Z"
     },
     {
       "zone": "Grenoble, France",
-      "priority": 100,
+      "priority": 0,
       "source": "groq",
       "ring": 2,
-      "last_run_at": "2026-07-12T06:04:44.956Z",
+      "last_run_at": "2026-07-13T06:20:14.712Z",
       "last_creations": 0,
-      "total_scanned": 0,
-      "consecutive_low_runs": 2,
-      "updated_at": "2026-07-12T06:04:44.956Z"
+      "total_scanned": 42,
+      "consecutive_low_runs": 3,
+      "updated_at": "2026-07-13T06:20:14.712Z"
     },
     {
       "zone": "Lyon, France",
-      "priority": 100,
+      "priority": 0,
       "source": "groq",
       "ring": 2,
-      "last_run_at": "2026-07-12T06:04:44.956Z",
+      "last_run_at": "2026-07-13T06:20:14.712Z",
       "last_creations": 0,
       "total_scanned": 0,
-      "consecutive_low_runs": 2,
-      "updated_at": "2026-07-12T06:04:44.956Z"
+      "consecutive_low_runs": 3,
+      "updated_at": "2026-07-13T06:20:14.712Z"
     }
   ],
   "sectorRuns": [
@@ -957,6 +957,55 @@
       "creations_found": 0,
       "scanned_count": 4,
       "run_at": "2026-07-12T06:04:44.956Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Tatoueur",
+      "creations_found": 0,
+      "scanned_count": 120,
+      "run_at": "2026-07-13T06:20:14.712Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Façade",
+      "creations_found": 0,
+      "scanned_count": 104,
+      "run_at": "2026-07-13T06:20:14.712Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Dépannage",
+      "creations_found": 0,
+      "scanned_count": 36,
+      "run_at": "2026-07-13T06:20:14.712Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Toiture",
+      "creations_found": 0,
+      "scanned_count": 83,
+      "run_at": "2026-07-13T06:20:14.712Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Lavage",
+      "creations_found": 0,
+      "scanned_count": 82,
+      "run_at": "2026-07-13T06:20:14.712Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Solaire",
+      "creations_found": 0,
+      "scanned_count": 20,
+      "run_at": "2026-07-13T06:20:14.712Z"
+    },
+    {
+      "zone": "Grenoble, France",
+      "sector": "Artisan",
+      "creations_found": 0,
+      "scanned_count": 42,
+      "run_at": "2026-07-13T06:20:14.712Z"
     }
   ]
 }
