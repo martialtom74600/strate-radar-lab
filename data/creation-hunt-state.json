@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "exportedAt": "2026-07-14T07:07:41.200Z",
+  "exportedAt": "2026-07-15T06:38:45.717Z",
   "zones": [
     {
       "zone": "Annecy, France",
-      "priority": 200,
+      "priority": 0,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-07-14T05:30:56.145Z",
+      "last_run_at": "2026-07-15T05:32:07.875Z",
       "last_creations": 0,
-      "total_scanned": 7979,
-      "consecutive_low_runs": 2,
-      "updated_at": "2026-07-14T05:30:56.145Z"
+      "total_scanned": 8432,
+      "consecutive_low_runs": 3,
+      "updated_at": "2026-07-15T05:32:07.875Z"
     },
     {
       "zone": "Chambéry, France",
@@ -1069,6 +1069,41 @@
       "creations_found": 0,
       "scanned_count": 47,
       "run_at": "2026-07-14T05:30:56.145Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Carrosserie",
+      "creations_found": 0,
+      "scanned_count": 120,
+      "run_at": "2026-07-15T05:32:07.875Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Cuisiniste",
+      "creations_found": 0,
+      "scanned_count": 89,
+      "run_at": "2026-07-15T05:32:07.875Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Ostéopathe",
+      "creations_found": 0,
+      "scanned_count": 120,
+      "run_at": "2026-07-15T05:32:07.875Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Plombier",
+      "creations_found": 0,
+      "scanned_count": 79,
+      "run_at": "2026-07-15T05:32:07.875Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Charpente",
+      "creations_found": 0,
+      "scanned_count": 45,
+      "run_at": "2026-07-15T05:32:07.875Z"
     }
   ]
 }
