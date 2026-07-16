@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-07-15T06:38:45.717Z",
+  "exportedAt": "2026-07-16T05:51:57.430Z",
   "zones": [
     {
       "zone": "Annecy, France",
@@ -18,11 +18,11 @@
       "priority": 80,
       "source": "groq",
       "ring": 2,
-      "last_run_at": "2026-07-14T05:30:56.145Z",
-      "last_creations": 0,
-      "total_scanned": 121,
-      "consecutive_low_runs": 1,
-      "updated_at": "2026-07-14T05:30:56.145Z"
+      "last_run_at": "2026-07-16T05:41:22.164Z",
+      "last_creations": 5,
+      "total_scanned": 181,
+      "consecutive_low_runs": 0,
+      "updated_at": "2026-07-16T05:41:22.164Z"
     },
     {
       "zone": "Grenoble, France",
@@ -1104,6 +1104,13 @@
       "creations_found": 0,
       "scanned_count": 45,
       "run_at": "2026-07-15T05:32:07.875Z"
+    },
+    {
+      "zone": "Chambéry, France",
+      "sector": "Coiffure",
+      "creations_found": 5,
+      "scanned_count": 60,
+      "run_at": "2026-07-16T05:41:22.164Z"
     }
   ]
 }
