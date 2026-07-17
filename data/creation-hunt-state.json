@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-07-16T05:51:57.430Z",
+  "exportedAt": "2026-07-17T06:31:09.821Z",
   "zones": [
     {
       "zone": "Annecy, France",
@@ -18,11 +18,11 @@
       "priority": 80,
       "source": "groq",
       "ring": 2,
-      "last_run_at": "2026-07-16T05:41:22.164Z",
-      "last_creations": 5,
-      "total_scanned": 181,
-      "consecutive_low_runs": 0,
-      "updated_at": "2026-07-16T05:41:22.164Z"
+      "last_run_at": "2026-07-17T05:43:03.071Z",
+      "last_creations": 0,
+      "total_scanned": 482,
+      "consecutive_low_runs": 1,
+      "updated_at": "2026-07-17T05:43:03.071Z"
     },
     {
       "zone": "Grenoble, France",
@@ -1111,6 +1111,41 @@
       "creations_found": 5,
       "scanned_count": 60,
       "run_at": "2026-07-16T05:41:22.164Z"
+    },
+    {
+      "zone": "Chambéry, France",
+      "sector": "Électricien",
+      "creations_found": 0,
+      "scanned_count": 98,
+      "run_at": "2026-07-17T05:43:03.071Z"
+    },
+    {
+      "zone": "Chambéry, France",
+      "sector": "Plombier",
+      "creations_found": 0,
+      "scanned_count": 57,
+      "run_at": "2026-07-17T05:43:03.071Z"
+    },
+    {
+      "zone": "Chambéry, France",
+      "sector": "Paysagiste",
+      "creations_found": 0,
+      "scanned_count": 91,
+      "run_at": "2026-07-17T05:43:03.071Z"
+    },
+    {
+      "zone": "Chambéry, France",
+      "sector": "Pisciniste",
+      "creations_found": 0,
+      "scanned_count": 33,
+      "run_at": "2026-07-17T05:43:03.071Z"
+    },
+    {
+      "zone": "Chambéry, France",
+      "sector": "Menuisier",
+      "creations_found": 0,
+      "scanned_count": 22,
+      "run_at": "2026-07-17T05:43:03.071Z"
     }
   ]
 }
