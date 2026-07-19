@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-07-18T06:10:48.929Z",
+  "exportedAt": "2026-07-19T06:40:11.400Z",
   "zones": [
     {
       "zone": "Annecy, France",
@@ -29,11 +29,11 @@
       "priority": 80,
       "source": "groq",
       "ring": 2,
-      "last_run_at": "2026-07-18T05:26:49.790Z",
-      "last_creations": 3,
-      "total_scanned": 324,
-      "consecutive_low_runs": 0,
-      "updated_at": "2026-07-18T05:26:49.790Z"
+      "last_run_at": "2026-07-19T05:53:54.794Z",
+      "last_creations": 1,
+      "total_scanned": 644,
+      "consecutive_low_runs": 1,
+      "updated_at": "2026-07-19T05:53:54.794Z"
     },
     {
       "zone": "Lyon, France",
@@ -1167,6 +1167,41 @@
       "creations_found": 0,
       "scanned_count": 42,
       "run_at": "2026-07-18T05:26:49.790Z"
+    },
+    {
+      "zone": "Grenoble, France",
+      "sector": "Plombier",
+      "creations_found": 1,
+      "scanned_count": 83,
+      "run_at": "2026-07-19T05:53:54.794Z"
+    },
+    {
+      "zone": "Grenoble, France",
+      "sector": "Paysagiste",
+      "creations_found": 0,
+      "scanned_count": 76,
+      "run_at": "2026-07-19T05:53:54.794Z"
+    },
+    {
+      "zone": "Grenoble, France",
+      "sector": "Pisciniste",
+      "creations_found": 0,
+      "scanned_count": 57,
+      "run_at": "2026-07-19T05:53:54.794Z"
+    },
+    {
+      "zone": "Grenoble, France",
+      "sector": "Menuisier",
+      "creations_found": 0,
+      "scanned_count": 96,
+      "run_at": "2026-07-19T05:53:54.794Z"
+    },
+    {
+      "zone": "Grenoble, France",
+      "sector": "Cuisiniste",
+      "creations_found": 0,
+      "scanned_count": 8,
+      "run_at": "2026-07-19T05:53:54.794Z"
     }
   ]
 }
