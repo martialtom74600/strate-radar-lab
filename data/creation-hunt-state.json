@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-07-19T06:40:11.400Z",
+  "exportedAt": "2026-07-20T07:16:39.889Z",
   "zones": [
     {
       "zone": "Annecy, France",
@@ -29,11 +29,11 @@
       "priority": 80,
       "source": "groq",
       "ring": 2,
-      "last_run_at": "2026-07-19T05:53:54.794Z",
-      "last_creations": 1,
-      "total_scanned": 644,
-      "consecutive_low_runs": 1,
-      "updated_at": "2026-07-19T05:53:54.794Z"
+      "last_run_at": "2026-07-20T06:18:45.979Z",
+      "last_creations": 0,
+      "total_scanned": 1054,
+      "consecutive_low_runs": 2,
+      "updated_at": "2026-07-20T06:18:45.979Z"
     },
     {
       "zone": "Lyon, France",
@@ -1202,6 +1202,41 @@
       "creations_found": 0,
       "scanned_count": 8,
       "run_at": "2026-07-19T05:53:54.794Z"
+    },
+    {
+      "zone": "Grenoble, France",
+      "sector": "Service",
+      "creations_found": 0,
+      "scanned_count": 120,
+      "run_at": "2026-07-20T06:18:45.979Z"
+    },
+    {
+      "zone": "Grenoble, France",
+      "sector": "Couvreur",
+      "creations_found": 0,
+      "scanned_count": 91,
+      "run_at": "2026-07-20T06:18:45.979Z"
+    },
+    {
+      "zone": "Grenoble, France",
+      "sector": "Charpentier",
+      "creations_found": 0,
+      "scanned_count": 87,
+      "run_at": "2026-07-20T06:18:45.979Z"
+    },
+    {
+      "zone": "Grenoble, France",
+      "sector": "Chauffagiste",
+      "creations_found": 0,
+      "scanned_count": 102,
+      "run_at": "2026-07-20T06:18:45.979Z"
+    },
+    {
+      "zone": "Grenoble, France",
+      "sector": "Maçon",
+      "creations_found": 0,
+      "scanned_count": 10,
+      "run_at": "2026-07-20T06:18:45.979Z"
     }
   ]
 }
