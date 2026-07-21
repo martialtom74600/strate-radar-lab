@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-07-20T07:16:39.889Z",
+  "exportedAt": "2026-07-21T06:27:20.186Z",
   "zones": [
     {
       "zone": "Annecy, France",
@@ -40,11 +40,11 @@
       "priority": 80,
       "source": "groq",
       "ring": 2,
-      "last_run_at": "2026-07-14T05:30:56.145Z",
+      "last_run_at": "2026-07-21T05:51:29.304Z",
       "last_creations": 0,
-      "total_scanned": 198,
-      "consecutive_low_runs": 1,
-      "updated_at": "2026-07-14T05:30:56.145Z"
+      "total_scanned": 443,
+      "consecutive_low_runs": 2,
+      "updated_at": "2026-07-21T05:51:29.304Z"
     }
   ],
   "sectorRuns": [
@@ -1237,6 +1237,27 @@
       "creations_found": 0,
       "scanned_count": 10,
       "run_at": "2026-07-20T06:18:45.979Z"
+    },
+    {
+      "zone": "Lyon, France",
+      "sector": "Coiffure",
+      "creations_found": 0,
+      "scanned_count": 120,
+      "run_at": "2026-07-21T05:51:29.304Z"
+    },
+    {
+      "zone": "Lyon, France",
+      "sector": "Électricien",
+      "creations_found": 0,
+      "scanned_count": 103,
+      "run_at": "2026-07-21T05:51:29.304Z"
+    },
+    {
+      "zone": "Lyon, France",
+      "sector": "Paysagiste",
+      "creations_found": 0,
+      "scanned_count": 22,
+      "run_at": "2026-07-21T05:51:29.304Z"
     }
   ]
 }
