@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-07-21T06:27:20.186Z",
+  "exportedAt": "2026-07-22T06:42:22.225Z",
   "zones": [
     {
       "zone": "Annecy, France",
@@ -18,11 +18,11 @@
       "priority": 80,
       "source": "groq",
       "ring": 2,
-      "last_run_at": "2026-07-17T05:43:03.071Z",
+      "last_run_at": "2026-07-22T05:50:51.755Z",
       "last_creations": 0,
-      "total_scanned": 482,
-      "consecutive_low_runs": 1,
-      "updated_at": "2026-07-17T05:43:03.071Z"
+      "total_scanned": 844,
+      "consecutive_low_runs": 2,
+      "updated_at": "2026-07-22T05:50:51.755Z"
     },
     {
       "zone": "Grenoble, France",
@@ -1258,6 +1258,41 @@
       "creations_found": 0,
       "scanned_count": 22,
       "run_at": "2026-07-21T05:51:29.304Z"
+    },
+    {
+      "zone": "Chambéry, France",
+      "sector": "Cuisiniste",
+      "creations_found": 0,
+      "scanned_count": 46,
+      "run_at": "2026-07-22T05:50:51.755Z"
+    },
+    {
+      "zone": "Chambéry, France",
+      "sector": "Couvreur",
+      "creations_found": 0,
+      "scanned_count": 86,
+      "run_at": "2026-07-22T05:50:51.755Z"
+    },
+    {
+      "zone": "Chambéry, France",
+      "sector": "Charpentier",
+      "creations_found": 0,
+      "scanned_count": 97,
+      "run_at": "2026-07-22T05:50:51.755Z"
+    },
+    {
+      "zone": "Chambéry, France",
+      "sector": "Chauffagiste",
+      "creations_found": 0,
+      "scanned_count": 90,
+      "run_at": "2026-07-22T05:50:51.755Z"
+    },
+    {
+      "zone": "Chambéry, France",
+      "sector": "Maçon",
+      "creations_found": 0,
+      "scanned_count": 43,
+      "run_at": "2026-07-22T05:50:51.755Z"
     }
   ]
 }
