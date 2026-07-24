@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-07-23T06:33:23.032Z",
+  "exportedAt": "2026-07-24T06:39:21.868Z",
   "zones": [
     {
       "zone": "Annecy, France",
@@ -37,14 +37,14 @@
     },
     {
       "zone": "Lyon, France",
-      "priority": 80,
+      "priority": 0,
       "source": "groq",
       "ring": 2,
-      "last_run_at": "2026-07-21T05:51:29.304Z",
+      "last_run_at": "2026-07-24T05:50:40.153Z",
       "last_creations": 0,
-      "total_scanned": 443,
-      "consecutive_low_runs": 2,
-      "updated_at": "2026-07-21T05:51:29.304Z"
+      "total_scanned": 776,
+      "consecutive_low_runs": 3,
+      "updated_at": "2026-07-24T05:50:40.153Z"
     }
   ],
   "sectorRuns": [
@@ -1321,6 +1321,34 @@
       "creations_found": 0,
       "scanned_count": 55,
       "run_at": "2026-07-23T05:54:59.389Z"
+    },
+    {
+      "zone": "Lyon, France",
+      "sector": "Plombier",
+      "creations_found": 0,
+      "scanned_count": 88,
+      "run_at": "2026-07-24T05:50:40.153Z"
+    },
+    {
+      "zone": "Lyon, France",
+      "sector": "Pisciniste",
+      "creations_found": 0,
+      "scanned_count": 114,
+      "run_at": "2026-07-24T05:50:40.153Z"
+    },
+    {
+      "zone": "Lyon, France",
+      "sector": "Menuisier",
+      "creations_found": 0,
+      "scanned_count": 107,
+      "run_at": "2026-07-24T05:50:40.153Z"
+    },
+    {
+      "zone": "Lyon, France",
+      "sector": "Cuisiniste",
+      "creations_found": 0,
+      "scanned_count": 24,
+      "run_at": "2026-07-24T05:50:40.153Z"
     }
   ]
 }
