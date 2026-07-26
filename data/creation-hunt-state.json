@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-07-25T06:23:59.148Z",
+  "exportedAt": "2026-07-26T06:48:33.850Z",
   "zones": [
     {
       "zone": "Annecy, France",
@@ -15,36 +15,36 @@
     },
     {
       "zone": "Chambéry, France",
-      "priority": 0,
+      "priority": 100,
       "source": "groq",
-      "ring": 2,
+      "ring": 1,
       "last_run_at": "2026-07-25T05:43:18.967Z",
       "last_creations": 0,
       "total_scanned": 1125,
       "consecutive_low_runs": 3,
-      "updated_at": "2026-07-25T05:43:18.967Z"
+      "updated_at": "2026-07-26T06:06:27.836Z"
     },
     {
       "zone": "Grenoble, France",
       "priority": 0,
       "source": "groq",
-      "ring": 2,
-      "last_run_at": "2026-07-23T05:54:59.389Z",
+      "ring": 1,
+      "last_run_at": "2026-07-26T06:06:27.336Z",
       "last_creations": 0,
-      "total_scanned": 1316,
-      "consecutive_low_runs": 3,
-      "updated_at": "2026-07-23T05:54:59.389Z"
+      "total_scanned": 1611,
+      "consecutive_low_runs": 4,
+      "updated_at": "2026-07-26T06:06:27.336Z"
     },
     {
       "zone": "Lyon, France",
-      "priority": 0,
+      "priority": 100,
       "source": "groq",
-      "ring": 2,
+      "ring": 1,
       "last_run_at": "2026-07-24T05:50:40.153Z",
       "last_creations": 0,
       "total_scanned": 776,
       "consecutive_low_runs": 3,
-      "updated_at": "2026-07-24T05:50:40.153Z"
+      "updated_at": "2026-07-26T06:06:27.836Z"
     }
   ],
   "sectorRuns": [
@@ -1377,6 +1377,34 @@
       "creations_found": 0,
       "scanned_count": 95,
       "run_at": "2026-07-25T05:43:18.967Z"
+    },
+    {
+      "zone": "Grenoble, France",
+      "sector": "Ostéopathe",
+      "creations_found": 0,
+      "scanned_count": 120,
+      "run_at": "2026-07-26T06:06:27.336Z"
+    },
+    {
+      "zone": "Grenoble, France",
+      "sector": "Chiropracteur",
+      "creations_found": 0,
+      "scanned_count": 53,
+      "run_at": "2026-07-26T06:06:27.336Z"
+    },
+    {
+      "zone": "Grenoble, France",
+      "sector": "Esthétique",
+      "creations_found": 0,
+      "scanned_count": 120,
+      "run_at": "2026-07-26T06:06:27.336Z"
+    },
+    {
+      "zone": "Grenoble, France",
+      "sector": "Kiné",
+      "creations_found": 0,
+      "scanned_count": 2,
+      "run_at": "2026-07-26T06:06:27.336Z"
     }
   ]
 }
