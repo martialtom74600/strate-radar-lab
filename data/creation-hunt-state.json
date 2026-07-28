@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-07-27T07:13:06.466Z",
+  "exportedAt": "2026-07-28T06:24:40.327Z",
   "zones": [
     {
       "zone": "Annecy, France",
@@ -15,14 +15,14 @@
     },
     {
       "zone": "Chambéry, France",
-      "priority": 100,
+      "priority": 0,
       "source": "groq",
       "ring": 1,
-      "last_run_at": "2026-07-25T05:43:18.967Z",
+      "last_run_at": "2026-07-28T05:46:32.172Z",
       "last_creations": 0,
-      "total_scanned": 1125,
-      "consecutive_low_runs": 3,
-      "updated_at": "2026-07-26T06:06:27.836Z"
+      "total_scanned": 1395,
+      "consecutive_low_runs": 4,
+      "updated_at": "2026-07-28T05:46:32.172Z"
     },
     {
       "zone": "Grenoble, France",
@@ -1433,6 +1433,34 @@
       "creations_found": 0,
       "scanned_count": 10,
       "run_at": "2026-07-27T06:31:12.871Z"
+    },
+    {
+      "zone": "Chambéry, France",
+      "sector": "Ostéopathe",
+      "creations_found": 0,
+      "scanned_count": 120,
+      "run_at": "2026-07-28T05:46:32.172Z"
+    },
+    {
+      "zone": "Chambéry, France",
+      "sector": "Chiropracteur",
+      "creations_found": 0,
+      "scanned_count": 48,
+      "run_at": "2026-07-28T05:46:32.172Z"
+    },
+    {
+      "zone": "Chambéry, France",
+      "sector": "Esthétique",
+      "creations_found": 0,
+      "scanned_count": 85,
+      "run_at": "2026-07-28T05:46:32.172Z"
+    },
+    {
+      "zone": "Chambéry, France",
+      "sector": "Kiné",
+      "creations_found": 0,
+      "scanned_count": 17,
+      "run_at": "2026-07-28T05:46:32.172Z"
     }
   ]
 }
