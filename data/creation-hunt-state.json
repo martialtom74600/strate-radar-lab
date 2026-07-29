@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "exportedAt": "2026-07-28T06:24:40.327Z",
+  "exportedAt": "2026-07-29T06:36:50.585Z",
   "zones": [
     {
       "zone": "Annecy, France",
-      "priority": 0,
+      "priority": 80,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-07-15T05:32:07.875Z",
+      "last_run_at": "2026-07-29T05:52:38.077Z",
       "last_creations": 0,
-      "total_scanned": 8432,
-      "consecutive_low_runs": 3,
-      "updated_at": "2026-07-15T05:32:07.875Z"
+      "total_scanned": 8736,
+      "consecutive_low_runs": 1,
+      "updated_at": "2026-07-29T05:52:38.077Z"
     },
     {
       "zone": "Chambéry, France",
@@ -1461,6 +1461,34 @@
       "creations_found": 0,
       "scanned_count": 17,
       "run_at": "2026-07-28T05:46:32.172Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Radiologie",
+      "creations_found": 0,
+      "scanned_count": 104,
+      "run_at": "2026-07-29T05:52:38.077Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Élagage",
+      "creations_found": 0,
+      "scanned_count": 40,
+      "run_at": "2026-07-29T05:52:38.077Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Kiné",
+      "creations_found": 0,
+      "scanned_count": 120,
+      "run_at": "2026-07-29T05:52:38.077Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Coiffure",
+      "creations_found": 0,
+      "scanned_count": 40,
+      "run_at": "2026-07-29T05:52:38.077Z"
     }
   ]
 }
