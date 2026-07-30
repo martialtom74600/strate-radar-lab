@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "exportedAt": "2026-07-29T06:36:50.585Z",
+  "exportedAt": "2026-07-30T06:25:18.280Z",
   "zones": [
     {
       "zone": "Annecy, France",
       "priority": 80,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-07-29T05:52:38.077Z",
+      "last_run_at": "2026-07-30T05:41:42.027Z",
       "last_creations": 0,
-      "total_scanned": 8736,
-      "consecutive_low_runs": 1,
-      "updated_at": "2026-07-29T05:52:38.077Z"
+      "total_scanned": 9039,
+      "consecutive_low_runs": 2,
+      "updated_at": "2026-07-30T05:41:42.027Z"
     },
     {
       "zone": "Chambéry, France",
@@ -1489,6 +1489,34 @@
       "creations_found": 0,
       "scanned_count": 40,
       "run_at": "2026-07-29T05:52:38.077Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Esthétique",
+      "creations_found": 0,
+      "scanned_count": 120,
+      "run_at": "2026-07-30T05:41:42.027Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Peintre",
+      "creations_found": 0,
+      "scanned_count": 59,
+      "run_at": "2026-07-30T05:41:42.027Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Garage",
+      "creations_found": 0,
+      "scanned_count": 120,
+      "run_at": "2026-07-30T05:41:42.027Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Nettoyage",
+      "creations_found": 0,
+      "scanned_count": 4,
+      "run_at": "2026-07-30T05:41:42.027Z"
     }
   ]
 }
