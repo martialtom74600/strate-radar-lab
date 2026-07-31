@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "exportedAt": "2026-07-30T06:25:18.280Z",
+  "exportedAt": "2026-07-31T06:55:53.172Z",
   "zones": [
     {
       "zone": "Annecy, France",
-      "priority": 80,
+      "priority": 0,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-07-30T05:41:42.027Z",
+      "last_run_at": "2026-07-31T06:14:14.499Z",
       "last_creations": 0,
-      "total_scanned": 9039,
-      "consecutive_low_runs": 2,
-      "updated_at": "2026-07-30T05:41:42.027Z"
+      "total_scanned": 9322,
+      "consecutive_low_runs": 3,
+      "updated_at": "2026-07-31T06:14:14.499Z"
     },
     {
       "zone": "Chambéry, France",
@@ -1517,6 +1517,34 @@
       "creations_found": 0,
       "scanned_count": 4,
       "run_at": "2026-07-30T05:41:42.027Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Carreleur",
+      "creations_found": 0,
+      "scanned_count": 80,
+      "run_at": "2026-07-31T06:14:14.499Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Maçon",
+      "creations_found": 0,
+      "scanned_count": 84,
+      "run_at": "2026-07-31T06:14:14.499Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Menuisier",
+      "creations_found": 0,
+      "scanned_count": 103,
+      "run_at": "2026-07-31T06:14:14.499Z"
+    },
+    {
+      "zone": "Annecy, France",
+      "sector": "Couvreur",
+      "creations_found": 0,
+      "scanned_count": 16,
+      "run_at": "2026-07-31T06:14:14.499Z"
     }
   ]
 }
