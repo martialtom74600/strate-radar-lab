@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-07-31T06:55:53.172Z",
+  "exportedAt": "2026-08-01T06:45:36.273Z",
   "zones": [
     {
       "zone": "Annecy, France",
@@ -15,36 +15,36 @@
     },
     {
       "zone": "Chambéry, France",
-      "priority": 0,
+      "priority": 100,
       "source": "groq",
       "ring": 1,
       "last_run_at": "2026-07-28T05:46:32.172Z",
       "last_creations": 0,
       "total_scanned": 1395,
       "consecutive_low_runs": 4,
-      "updated_at": "2026-07-28T05:46:32.172Z"
+      "updated_at": "2026-08-01T05:55:11.948Z"
     },
     {
       "zone": "Grenoble, France",
       "priority": 0,
       "source": "groq",
       "ring": 1,
-      "last_run_at": "2026-07-26T06:06:27.336Z",
+      "last_run_at": "2026-08-01T05:55:11.560Z",
       "last_creations": 0,
-      "total_scanned": 1611,
-      "consecutive_low_runs": 4,
-      "updated_at": "2026-07-26T06:06:27.336Z"
+      "total_scanned": 1960,
+      "consecutive_low_runs": 5,
+      "updated_at": "2026-08-01T05:55:11.560Z"
     },
     {
       "zone": "Lyon, France",
-      "priority": 0,
+      "priority": 100,
       "source": "groq",
       "ring": 1,
       "last_run_at": "2026-07-27T06:31:12.871Z",
       "last_creations": 0,
       "total_scanned": 1058,
       "consecutive_low_runs": 4,
-      "updated_at": "2026-07-27T06:31:12.871Z"
+      "updated_at": "2026-08-01T05:55:11.948Z"
     }
   ],
   "sectorRuns": [
@@ -1545,6 +1545,41 @@
       "creations_found": 0,
       "scanned_count": 16,
       "run_at": "2026-07-31T06:14:14.499Z"
+    },
+    {
+      "zone": "Grenoble, France",
+      "sector": "Opticien",
+      "creations_found": 0,
+      "scanned_count": 120,
+      "run_at": "2026-08-01T05:55:11.560Z"
+    },
+    {
+      "zone": "Grenoble, France",
+      "sector": "Géomètre",
+      "creations_found": 0,
+      "scanned_count": 25,
+      "run_at": "2026-08-01T05:55:11.560Z"
+    },
+    {
+      "zone": "Grenoble, France",
+      "sector": "Ingénieur",
+      "creations_found": 0,
+      "scanned_count": 120,
+      "run_at": "2026-08-01T05:55:11.560Z"
+    },
+    {
+      "zone": "Grenoble, France",
+      "sector": "Sécurité",
+      "creations_found": 0,
+      "scanned_count": 74,
+      "run_at": "2026-08-01T05:55:11.560Z"
+    },
+    {
+      "zone": "Grenoble, France",
+      "sector": "Nettoyage",
+      "creations_found": 0,
+      "scanned_count": 10,
+      "run_at": "2026-08-01T05:55:11.560Z"
     }
   ]
 }
