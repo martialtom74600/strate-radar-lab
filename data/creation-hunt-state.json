@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-01T06:45:36.273Z",
+  "exportedAt": "2026-08-02T06:43:54.522Z",
   "zones": [
     {
       "zone": "Annecy, France",
@@ -37,14 +37,14 @@
     },
     {
       "zone": "Lyon, France",
-      "priority": 100,
+      "priority": 0,
       "source": "groq",
       "ring": 1,
-      "last_run_at": "2026-07-27T06:31:12.871Z",
+      "last_run_at": "2026-08-02T05:59:34.311Z",
       "last_creations": 0,
-      "total_scanned": 1058,
-      "consecutive_low_runs": 4,
-      "updated_at": "2026-08-01T05:55:11.948Z"
+      "total_scanned": 1344,
+      "consecutive_low_runs": 5,
+      "updated_at": "2026-08-02T05:59:34.311Z"
     }
   ],
   "sectorRuns": [
@@ -1580,6 +1580,34 @@
       "creations_found": 0,
       "scanned_count": 10,
       "run_at": "2026-08-01T05:55:11.560Z"
+    },
+    {
+      "zone": "Lyon, France",
+      "sector": "Peintre",
+      "creations_found": 0,
+      "scanned_count": 106,
+      "run_at": "2026-08-02T05:59:34.311Z"
+    },
+    {
+      "zone": "Lyon, France",
+      "sector": "Carreleur",
+      "creations_found": 0,
+      "scanned_count": 67,
+      "run_at": "2026-08-02T05:59:34.311Z"
+    },
+    {
+      "zone": "Lyon, France",
+      "sector": "Serrurier",
+      "creations_found": 0,
+      "scanned_count": 105,
+      "run_at": "2026-08-02T05:59:34.311Z"
+    },
+    {
+      "zone": "Lyon, France",
+      "sector": "Orthodontiste",
+      "creations_found": 0,
+      "scanned_count": 8,
+      "run_at": "2026-08-02T05:59:34.311Z"
     }
   ]
 }
