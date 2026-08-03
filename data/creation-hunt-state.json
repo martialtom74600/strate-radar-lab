@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-02T06:43:54.522Z",
+  "exportedAt": "2026-08-03T07:19:15.572Z",
   "zones": [
     {
       "zone": "Annecy, France",
@@ -15,14 +15,14 @@
     },
     {
       "zone": "Chambéry, France",
-      "priority": 100,
+      "priority": 0,
       "source": "groq",
       "ring": 1,
-      "last_run_at": "2026-07-28T05:46:32.172Z",
+      "last_run_at": "2026-08-03T06:23:52.445Z",
       "last_creations": 0,
-      "total_scanned": 1395,
-      "consecutive_low_runs": 4,
-      "updated_at": "2026-08-01T05:55:11.948Z"
+      "total_scanned": 1777,
+      "consecutive_low_runs": 5,
+      "updated_at": "2026-08-03T06:23:52.445Z"
     },
     {
       "zone": "Grenoble, France",
@@ -1608,6 +1608,41 @@
       "creations_found": 0,
       "scanned_count": 8,
       "run_at": "2026-08-02T05:59:34.311Z"
+    },
+    {
+      "zone": "Chambéry, France",
+      "sector": "Opticien",
+      "creations_found": 0,
+      "scanned_count": 81,
+      "run_at": "2026-08-03T06:23:52.445Z"
+    },
+    {
+      "zone": "Chambéry, France",
+      "sector": "Géomètre",
+      "creations_found": 0,
+      "scanned_count": 28,
+      "run_at": "2026-08-03T06:23:52.445Z"
+    },
+    {
+      "zone": "Chambéry, France",
+      "sector": "Ingénieur",
+      "creations_found": 0,
+      "scanned_count": 120,
+      "run_at": "2026-08-03T06:23:52.445Z"
+    },
+    {
+      "zone": "Chambéry, France",
+      "sector": "Sécurité",
+      "creations_found": 0,
+      "scanned_count": 120,
+      "run_at": "2026-08-03T06:23:52.445Z"
+    },
+    {
+      "zone": "Chambéry, France",
+      "sector": "Nettoyage",
+      "creations_found": 0,
+      "scanned_count": 33,
+      "run_at": "2026-08-03T06:23:52.445Z"
     }
   ]
 }
