@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-03T07:19:15.572Z",
+  "exportedAt": "2026-08-04T06:33:36.437Z",
   "zones": [
     {
       "zone": "Annecy, France",
@@ -15,36 +15,36 @@
     },
     {
       "zone": "Chambéry, France",
-      "priority": 0,
+      "priority": 100,
       "source": "groq",
       "ring": 1,
       "last_run_at": "2026-08-03T06:23:52.445Z",
       "last_creations": 0,
       "total_scanned": 1777,
       "consecutive_low_runs": 5,
-      "updated_at": "2026-08-03T06:23:52.445Z"
+      "updated_at": "2026-08-04T05:46:51.280Z"
     },
     {
       "zone": "Grenoble, France",
       "priority": 0,
       "source": "groq",
       "ring": 1,
-      "last_run_at": "2026-08-01T05:55:11.560Z",
+      "last_run_at": "2026-08-04T05:46:50.833Z",
       "last_creations": 0,
-      "total_scanned": 1960,
-      "consecutive_low_runs": 5,
-      "updated_at": "2026-08-01T05:55:11.560Z"
+      "total_scanned": 2284,
+      "consecutive_low_runs": 6,
+      "updated_at": "2026-08-04T05:46:50.833Z"
     },
     {
       "zone": "Lyon, France",
-      "priority": 0,
+      "priority": 100,
       "source": "groq",
       "ring": 1,
       "last_run_at": "2026-08-02T05:59:34.311Z",
       "last_creations": 0,
       "total_scanned": 1344,
       "consecutive_low_runs": 5,
-      "updated_at": "2026-08-02T05:59:34.311Z"
+      "updated_at": "2026-08-04T05:46:51.280Z"
     }
   ],
   "sectorRuns": [
@@ -1643,6 +1643,48 @@
       "creations_found": 0,
       "scanned_count": 33,
       "run_at": "2026-08-03T06:23:52.445Z"
+    },
+    {
+      "zone": "Grenoble, France",
+      "sector": "Déménageur",
+      "creations_found": 0,
+      "scanned_count": 98,
+      "run_at": "2026-08-04T05:46:50.833Z"
+    },
+    {
+      "zone": "Grenoble, France",
+      "sector": "Traiteur",
+      "creations_found": 0,
+      "scanned_count": 117,
+      "run_at": "2026-08-04T05:46:50.833Z"
+    },
+    {
+      "zone": "Grenoble, France",
+      "sector": "Conciergerie",
+      "creations_found": 0,
+      "scanned_count": 44,
+      "run_at": "2026-08-04T05:46:50.833Z"
+    },
+    {
+      "zone": "Grenoble, France",
+      "sector": "Parapente",
+      "creations_found": 0,
+      "scanned_count": 6,
+      "run_at": "2026-08-04T05:46:50.833Z"
+    },
+    {
+      "zone": "Grenoble, France",
+      "sector": "Funèbres",
+      "creations_found": 0,
+      "scanned_count": 32,
+      "run_at": "2026-08-04T05:46:50.833Z"
+    },
+    {
+      "zone": "Grenoble, France",
+      "sector": "Carrosserie",
+      "creations_found": 0,
+      "scanned_count": 27,
+      "run_at": "2026-08-04T05:46:50.833Z"
     }
   ]
 }
