@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-04T06:33:36.437Z",
+  "exportedAt": "2026-08-05T06:23:52.658Z",
   "zones": [
     {
       "zone": "Annecy, France",
@@ -37,14 +37,14 @@
     },
     {
       "zone": "Lyon, France",
-      "priority": 100,
+      "priority": 0,
       "source": "groq",
       "ring": 1,
-      "last_run_at": "2026-08-02T05:59:34.311Z",
+      "last_run_at": "2026-08-05T05:46:11.322Z",
       "last_creations": 0,
-      "total_scanned": 1344,
-      "consecutive_low_runs": 5,
-      "updated_at": "2026-08-04T05:46:51.280Z"
+      "total_scanned": 1602,
+      "consecutive_low_runs": 6,
+      "updated_at": "2026-08-05T05:46:11.322Z"
     }
   ],
   "sectorRuns": [
@@ -1685,6 +1685,27 @@
       "creations_found": 0,
       "scanned_count": 27,
       "run_at": "2026-08-04T05:46:50.833Z"
+    },
+    {
+      "zone": "Lyon, France",
+      "sector": "Ostéopathe",
+      "creations_found": 0,
+      "scanned_count": 120,
+      "run_at": "2026-08-05T05:46:11.322Z"
+    },
+    {
+      "zone": "Lyon, France",
+      "sector": "Chiropracteur",
+      "creations_found": 0,
+      "scanned_count": 104,
+      "run_at": "2026-08-05T05:46:11.322Z"
+    },
+    {
+      "zone": "Lyon, France",
+      "sector": "Esthétique",
+      "creations_found": 0,
+      "scanned_count": 34,
+      "run_at": "2026-08-05T05:46:11.322Z"
     }
   ]
 }
