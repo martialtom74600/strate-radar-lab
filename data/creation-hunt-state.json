@@ -1,50 +1,50 @@
 {
   "version": 1,
-  "exportedAt": "2026-08-05T06:23:52.658Z",
+  "exportedAt": "2026-08-06T06:42:57.991Z",
   "zones": [
     {
       "zone": "Annecy, France",
-      "priority": 0,
+      "priority": 80,
       "source": "anchor",
       "ring": 0,
-      "last_run_at": "2026-07-31T06:14:14.499Z",
+      "last_run_at": "2026-08-06T05:48:53.945Z",
       "last_creations": 0,
       "total_scanned": 9322,
-      "consecutive_low_runs": 3,
-      "updated_at": "2026-07-31T06:14:14.499Z"
+      "consecutive_low_runs": 1,
+      "updated_at": "2026-08-06T05:48:53.945Z"
     },
     {
       "zone": "Chambéry, France",
-      "priority": 100,
+      "priority": 0,
       "source": "groq",
       "ring": 1,
-      "last_run_at": "2026-08-03T06:23:52.445Z",
+      "last_run_at": "2026-08-06T05:48:53.945Z",
       "last_creations": 0,
-      "total_scanned": 1777,
-      "consecutive_low_runs": 5,
-      "updated_at": "2026-08-04T05:46:51.280Z"
+      "total_scanned": 2146,
+      "consecutive_low_runs": 6,
+      "updated_at": "2026-08-06T05:48:53.945Z"
     },
     {
       "zone": "Grenoble, France",
-      "priority": 0,
+      "priority": 80,
       "source": "groq",
       "ring": 1,
-      "last_run_at": "2026-08-04T05:46:50.833Z",
+      "last_run_at": "2026-08-06T05:48:53.945Z",
       "last_creations": 0,
       "total_scanned": 2284,
-      "consecutive_low_runs": 6,
-      "updated_at": "2026-08-04T05:46:50.833Z"
+      "consecutive_low_runs": 1,
+      "updated_at": "2026-08-06T05:48:53.945Z"
     },
     {
       "zone": "Lyon, France",
-      "priority": 0,
+      "priority": 80,
       "source": "groq",
       "ring": 1,
-      "last_run_at": "2026-08-05T05:46:11.322Z",
+      "last_run_at": "2026-08-06T05:48:53.945Z",
       "last_creations": 0,
       "total_scanned": 1602,
-      "consecutive_low_runs": 6,
-      "updated_at": "2026-08-05T05:46:11.322Z"
+      "consecutive_low_runs": 1,
+      "updated_at": "2026-08-06T05:48:53.945Z"
     }
   ],
   "sectorRuns": [
@@ -1706,6 +1706,48 @@
       "creations_found": 0,
       "scanned_count": 34,
       "run_at": "2026-08-05T05:46:11.322Z"
+    },
+    {
+      "zone": "Chambéry, France",
+      "sector": "Déménageur",
+      "creations_found": 0,
+      "scanned_count": 75,
+      "run_at": "2026-08-06T05:48:53.945Z"
+    },
+    {
+      "zone": "Chambéry, France",
+      "sector": "Traiteur",
+      "creations_found": 0,
+      "scanned_count": 109,
+      "run_at": "2026-08-06T05:48:53.945Z"
+    },
+    {
+      "zone": "Chambéry, France",
+      "sector": "Conciergerie",
+      "creations_found": 0,
+      "scanned_count": 43,
+      "run_at": "2026-08-06T05:48:53.945Z"
+    },
+    {
+      "zone": "Chambéry, France",
+      "sector": "Parapente",
+      "creations_found": 0,
+      "scanned_count": 11,
+      "run_at": "2026-08-06T05:48:53.945Z"
+    },
+    {
+      "zone": "Chambéry, France",
+      "sector": "Funèbres",
+      "creations_found": 0,
+      "scanned_count": 20,
+      "run_at": "2026-08-06T05:48:53.945Z"
+    },
+    {
+      "zone": "Chambéry, France",
+      "sector": "Carrosserie",
+      "creations_found": 0,
+      "scanned_count": 111,
+      "run_at": "2026-08-06T05:48:53.945Z"
     }
   ]
 }
